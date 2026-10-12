@@ -1,0 +1,32 @@
+# Local environment and secrets
+.venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+*.pid
+*.tmp
+
+# Fixed dataset: retain only download instructions and the destination marker.
+assets/*
+!assets/README.md
+!assets/nanobrain_v3_100k_metadata_v2/
+assets/nanobrain_v3_100k_metadata_v2/*
+!assets/nanobrain_v3_100k_metadata_v2/README.md
+!assets/nanobrain_v3_100k_metadata_v2/.gitkeep
+
+# Training outputs and local execution state
+results/
+checkpoints/
+logs/
+runtime/
+triton/
+torchinductor/
+dist/
+*.egg-info/
+
+# Users supply optional upstream source and pretrained model assets.
+reference_methods/

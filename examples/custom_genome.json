@@ -1,0 +1,10 @@
+{
+  "encoder": "tutorial_encoder",
+  "hidden_dim": 64,
+  "attention": "differential_linear",
+  "spatial": "neighbor_mean",
+  "residual": "nbeats",
+  "pairing": "sinkhorn",
+  "flow": "fmt",
+  "seed": 20260915
+}
