@@ -13,6 +13,8 @@
   <a href="#contributing">Contributing</a>
 </p>
 
+**Language:** English · [简体中文](README_zh-CN.md)
+
 ![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![Package manager](https://img.shields.io/badge/package%20manager-uv-6E56CF)
 ![Dataset](https://img.shields.io/badge/frozen%20benchmark-100k%20cells-2da44e)
@@ -322,14 +324,6 @@ The repository provides training and evaluation CLIs, not a production online se
 
 </details>
 
-## Project position
-
-nanoBrain prioritizes low setup cost, readability, and reproducibility. Its product goal is to keep a core experiment path within an understandable sub-500-line surface and make a verifiable smoke run possible in minutes; the complete repository still includes data contracts, task implementations, evaluators, and tests. It lets researchers validate ideas on tens of thousands to hundreds of thousands of cells using a single GPU, workstation, or cloud instance before committing them to a larger Brain World Model campaign. It is intended for research, teaching, and prototyping; it is not a clinical decision system and makes no performance claim beyond the frozen release.
-
-## Citation, license, and release
-
-Citation metadata, the internal open-source license, data-release permissions, and the company data host should be filled in through the internal release process. See [third-party notes](docs/third_party.md) for reuse information.
-
 <details>
 <summary>Related documentation</summary>
 
@@ -342,6 +336,4 @@ Citation metadata, the internal open-source license, data-release permissions, a
 - [Third-party notes](docs/third_party.md)
 
 </details>
-
-
 

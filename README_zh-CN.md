@@ -13,6 +13,8 @@
   <a href="#开发与贡献">开发与贡献</a>
 </p>
 
+**Language:** [English](README.md) · 简体中文
+
 ![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![Package manager](https://img.shields.io/badge/package%20manager-uv-6E56CF)
 ![Dataset](https://img.shields.io/badge/frozen%20benchmark-100k%20cells-2da44e)
@@ -322,14 +324,6 @@ assets/              数据目录说明；实际数据不进 Git
 
 </details>
 
-## 项目定位
-
-nanoBrain 以低门槛、可理解、可复现为优先级，产品目标是让一条核心实验路径保持在不到 500 行的可读范围内，并在数分钟级 smoke run 中完成一次可验证实验；完整仓库仍包含数据契约、任务实现、评估器和测试。先让研究人员在数万到数十万细胞规模、单卡 GPU、工作站或云端实例上验证想法，再把有效方案交给更大规模的 Brain World Model 训练。它适合科研、教学和原型验证，不是临床决策系统，也不对固定数据集之外的人群作性能承诺。
-
-## 引用、许可证与发布
-
-当前版本的引用、内部开源许可证、数据发布许可和公司数据主机信息应按内部发布流程补充。第三方复用说明见 [docs/third_party.md](docs/third_party.md)。
-
 <details>
 <summary>相关文档</summary>
 
@@ -342,6 +336,4 @@ nanoBrain 以低门槛、可理解、可复现为优先级，产品目标是让�
 - [第三方依赖](docs/third_party.md)
 
 </details>
-
-
 
