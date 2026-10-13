@@ -50,9 +50,7 @@ cp .env.example .env
 bash scripts/bootstrap.sh
 ```
 
-如果数据包已经放在 assets/nanobrain_v3_100k_metadata_v2/，准备步骤只会校验清单和文件哈希。数据包不会提交到 Git。
-
-或者，如果你有内部数据 URL，可以在 .env 中填写 NANOBRAIN_DATA_URL（如果有归档校验值，再填写 NANOBRAIN_DATA_SHA256）。
+> **注意**：如果你有内部数据 URL，也可以在 .env 中填写 NANOBRAIN_DATA_URL 和 NANOBRAIN_DATA_SHA256。
 
 也可以分步执行：
 

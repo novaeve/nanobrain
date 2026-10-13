@@ -50,9 +50,7 @@ cp .env.example .env
 bash scripts/bootstrap.sh
 ```
 
-If the dataset bundle is already at assets/nanobrain_v3_100k_metadata_v2/, setup only validates the manifest and file checksums. The dataset bundle is excluded from Git.
-
-Alternatively, if you have an internal data URL, set NANOBRAIN_DATA_URL in .env (optionally with NANOBRAIN_DATA_SHA256 for archive verification).
+> **Note**: Alternatively, if you have an internal data URL, set NANOBRAIN_DATA_URL and NANOBRAIN_DATA_SHA256 in .env.
 
 For a step-by-step setup:
 
