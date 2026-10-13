@@ -26,7 +26,7 @@ nanoBrain 是面向科研、教学和原型验证的小型虚拟细胞建模项�
 nanoBrain 是 Brain World Model 的快速实验入口，不是 Brain World Model 的缩小部署版本。新结构、新损失函数、新采样策略和新任务可以先在 nanoBrain 的小型数据集上验证，再将有效方案扩展到更大规模的细胞数据和模型训练中。
 
 > [!IMPORTANT]
-> 当前仓库随附的基准是经过冻结和校验的 100,000 细胞 metadata-v2 数据：60,000 train / 20,000 validation / 20,000 test。10M 级数据属于内部规模化接入路线，不随当前 Git 仓库提交，也不会在没有授权的数据地址时自动下载。
+> 当前仓库包含经过冻结和校验的 100,000 细胞（10万细胞）metadata-v2 数据集：60,000 train / 20,000 validation / 20,000 test。
 
 > [!WARNING]
 > 固定测试集的标签和历史结果已经开放。新的模型选择只能使用 train/validation；Leaderboard 中的 test 分数用于描述性比较，不是新的盲测结果。
@@ -162,15 +162,12 @@ flowchart LR
 
 详见 [数据契约](docs/data.md) 和 [数据目录说明](assets/README.md)。
 
-### 数据规模路线
+### 数据规模说明
 
 | 级别 | 目标用途 | 状态 |
 |---|---|---|
 | Teaching | 课程、教程和 CPU 冒烟实验 | 当前 quick start 可运行 |
-| Benchmark | 固定 100k 数据和四项任务 | 当前发布基准 |
-| Scale-up | 10M 级数据、更多 shard 和服务器训练 | 内部数据接入路线 |
-
-10M 数据需要经过批准的数据主机、访问权限、存储和服务器配置。仓库中的数据准备接口已经保留了 URL、归档校验和清单校验入口；规模化数据的具体路径、授权和发布许可会在内部数据契约中补充。
+| Benchmark | 固定 100k（10万）细胞数据和四项任务 | 当前发布基准 |
 
 ## Leaderboard
 
@@ -238,7 +235,7 @@ uv run python scripts/train_nanobrain.py \
 --device cuda
 ```
 
-nanoBrain 当前提供实验 CLI、训练回执和统一评估流程，不把实验 CLI 伪装成在线推理服务。内部部署、远程数据主机和 10M shard 训练应在对应服务器上配置独立的数据路径和权限。
+nanoBrain 当前提供实验 CLI、训练回执和统一评估流程，不把实验 CLI 伪装成在线推理服务。
 
 ## 复现与公平比较
 
@@ -281,8 +278,6 @@ assets/              数据目录说明；实际数据不进 Git
 - [x] 整合、注释、发育和 spatial niche 四项任务
 - [x] CPU quick start、训练回执和统一 leaderboard
 - [x] 可替换组件注册表和自定义编码器示例
-- [ ] 10M 级数据 shard 与权限化下载配置
-- [ ] Teaching / benchmark / scale-up 多级数据配置
 - [ ] 更完整的 GPU、云端和服务器运行模板
 - [ ] 自动化实验搜索、预算控制和结果保留策略
 - [ ] 面向生信数据库与科研智能体的本地推理接口
@@ -313,10 +308,6 @@ assets/              数据目录说明；实际数据不进 Git
 ### 可以直接把 test 用于调参吗？
 
 不可以。当前 test 标签已经开放，新的模型搜索应只使用 train/validation。
-
-### 是否包含完整 10M 数据？
-
-当前仓库不包含 10M 数据。10M 规模需要内部数据主机、权限、存储和单独的数据发布契约。
 
 ### 是否提供在线 API？
 

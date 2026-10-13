@@ -26,7 +26,7 @@ nanoBrain is a compact virtual-cell research, teaching, and prototyping project.
 nanoBrain is a fast experimentation entry point for Brain World Model, not a smaller deployment of Brain World Model. New architectures, objectives, sampling strategies, and tasks can be tested on a manageable dataset before the useful ideas move to larger cell datasets and model campaigns.
 
 > [!IMPORTANT]
-> The current repository targets a frozen and verified 100,000-cell metadata-v2 release: 60,000 train / 20,000 validation / 20,000 test. The 10M-cell track is an internal scale-up route. It is not committed to Git and is never downloaded without an approved data URL.
+> This repository contains a frozen and verified 100,000-cell (100k) metadata-v2 dataset: 60,000 train / 20,000 validation / 20,000 test.
 
 > [!WARNING]
 > The fixed test labels and historical results have already been opened. Use train/validation for new model selection; test leaderboard scores are descriptive historical results, not a new blind holdout.
@@ -162,15 +162,12 @@ flowchart LR
 
 See the [dataset contract](docs/data.md) and [data folder notes](assets/README.md).
 
-### Data scale roadmap
+### Data scale overview
 
 | Tier | Intended use | Status |
 |---|---|---|
 | Teaching | Courses, tutorials, and CPU smoke runs | Available through the quick start |
-| Benchmark | Frozen 100k data and four tasks | Current release |
-| Scale-up | 10M cells, more shards, and server training | Internal data integration track |
-
-The 10M track needs an approved data host, access control, storage plan, and server configuration. The preparation interface already supports URL, archive checksum, and manifest validation; the scale-specific paths and release permissions belong in the internal data contract.
+| Benchmark | Frozen 100k (100,000 cells) data and four tasks | Current release |
 
 ## Leaderboard
 
@@ -238,7 +235,7 @@ The quick start targets Linux CPU and works well for small servers, workstations
 --device cuda
 ```
 
-nanoBrain currently provides experiment CLIs, receipts, and common evaluation. It does not present the experiment CLI as a production inference service. Internal deployments, remote data hosts, and 10M-shard campaigns should use explicit data paths and permissions on the target server.
+nanoBrain currently provides experiment CLIs, receipts, and common evaluation. It does not present the experiment CLI as a production inference service.
 
 ## Reproducibility and fair comparison
 
@@ -281,8 +278,6 @@ assets/               Dataset notes; the actual bundle is not tracked
 - [x] Integration, annotation, development, and spatial niche tasks
 - [x] CPU quick start, receipts, and common leaderboard
 - [x] Replaceable component registry and custom encoder example
-- [ ] 10M-cell shards and permissioned download configuration
-- [ ] Teaching / benchmark / scale-up data tiers
 - [ ] More complete GPU, cloud, and server templates
 - [ ] Automated experiment search, budget control, and result retention
 - [ ] Local inference interfaces for bioinformatics databases and research agents
@@ -313,10 +308,6 @@ No. It verifies the pipeline. The fixed nanoBrain reference uses 2,000 optimizer
 ### Can I tune on test?
 
 No. Test labels are already open. Use train/validation for new model selection.
-
-### Is the full 10M dataset included?
-
-No. The 10M track requires an internal data host, permissions, storage, and a separate release contract.
 
 ### Is there an online API?
 
