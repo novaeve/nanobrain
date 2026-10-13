@@ -306,8 +306,6 @@ assets/              数据目录说明；实际数据不进 Git
 
 从 [GitHub Releases](https://github.com/novaeve/nanobrain/releases) 页面下载 `nanobrain-v3-100k-metadata-v2.zip` 文件，解压到 `assets/nanobrain_v3_100k_metadata_v2/` 目录，然后运行数据准备命令。该数据集包含 100,000 个细胞（10万细胞），划分为 60k train / 20k validation / 20k test。
 
-如果你有公司内部数据 URL，也可以在 .env 中设置 NANOBRAIN_DATA_URL，并可选设置 NANOBRAIN_DATA_SHA256。
-
 ### 20 步能得到正式结果吗？
 
 不能。20 步只验证流程；固定 benchmark 的 nanoBrain 参考训练为每个 seed 2,000 步。

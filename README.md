@@ -306,8 +306,6 @@ Read the [component guide](docs/components.md), [dataset contract](docs/data.md)
 
 Download the `nanobrain-v3-100k-metadata-v2.zip` file from the [GitHub Releases](https://github.com/novaeve/nanobrain/releases) page, extract it to `assets/nanobrain_v3_100k_metadata_v2/`, and run the data preparation command. The dataset contains 100,000 cells (100k) split into 60k train / 20k validation / 20k test.
 
-Alternatively, if you have a company data URL, set NANOBRAIN_DATA_URL in .env, with NANOBRAIN_DATA_SHA256 when an archive checksum is available.
-
 ### Does a 20-step run produce a final result?
 
 No. It verifies the pipeline. The fixed nanoBrain reference uses 2,000 optimizer steps per seed.
