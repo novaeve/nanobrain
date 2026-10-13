@@ -50,8 +50,6 @@ cp .env.example .env
 bash scripts/bootstrap.sh
 ```
 
-> **注意**：如果你有内部数据 URL，也可以在 .env 中填写 NANOBRAIN_DATA_URL 和 NANOBRAIN_DATA_SHA256。
-
 也可以分步执行：
 
 ```
