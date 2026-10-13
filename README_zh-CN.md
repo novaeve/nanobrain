@@ -37,18 +37,22 @@ nanoBrain 是 Brain World Model 的快速实验入口，不是 Brain World Model
 
 推荐 Linux x86_64、Python 3.12 和 [uv](https://docs.astral.sh/uv/)。在服务器或工作站上：
 
-```
-git clone <your-internal-repository-url> nanobrain
+```bash
+git clone https://github.com/novaeve/nanobrain.git
 cd nanobrain
+
+# 下载数据集（100k 细胞，约 70MB）
+wget https://github.com/novaeve/nanobrain/releases/download/v1.0.0-data/nanobrain-v3-100k-metadata-v2.zip
+unzip nanobrain-v3-100k-metadata-v2.zip -d assets/
 
 # 一键安装 CPU 版 PyTorch、开发依赖并准备数据
 cp .env.example .env
-# 如果数据尚未落盘，在 .env 中填写 NANOBRAIN_DATA_URL；
-# 如果数据包有归档校验值，再填写 NANOBRAIN_DATA_SHA256。
 bash scripts/bootstrap.sh
 ```
 
-如果公司数据包已经放在 assets/nanobrain_v3_100k_metadata_v2/，准备步骤只会校验清单和文件哈希。数据包不会提交到 Git。
+如果数据包已经放在 assets/nanobrain_v3_100k_metadata_v2/，准备步骤只会校验清单和文件哈希。数据包不会提交到 Git。
+
+或者，如果你有内部数据 URL，可以在 .env 中填写 NANOBRAIN_DATA_URL（如果有归档校验值，再填写 NANOBRAIN_DATA_SHA256）。
 
 也可以分步执行：
 
@@ -302,9 +306,11 @@ assets/              数据目录说明；实际数据不进 Git
 <details>
 <summary>常见问题</summary>
 
-### 没有公司数据 URL 能启动吗？
+### 如何下载数据集？
 
-如果已把批准的数据包放在默认目录，可以直接运行训练。否则需要在 .env 中设置 NANOBRAIN_DATA_URL，并可选设置 NANOBRAIN_DATA_SHA256。
+从 [GitHub Releases](https://github.com/novaeve/nanobrain/releases) 页面下载 `nanobrain-v3-100k-metadata-v2.zip` 文件，解压到 `assets/nanobrain_v3_100k_metadata_v2/` 目录，然后运行数据准备命令。该数据集包含 100,000 个细胞（10万细胞），划分为 60k train / 20k validation / 20k test。
+
+如果你有公司内部数据 URL，也可以在 .env 中设置 NANOBRAIN_DATA_URL，并可选设置 NANOBRAIN_DATA_SHA256。
 
 ### 20 步能得到正式结果吗？
 

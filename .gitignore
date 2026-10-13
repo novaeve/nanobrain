@@ -30,3 +30,5 @@ dist/
 
 # Users supply optional upstream source and pretrained model assets.
 reference_methods/
+nanobrain_v3_100k_metadata_v2.zip
+nanobrain-v3-100k-metadata-v2.zip

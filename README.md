@@ -37,18 +37,22 @@ nanoBrain is a fast experimentation entry point for Brain World Model, not a sma
 
 The supported quick-start environment is Linux x86_64, Python 3.12, and [uv](https://docs.astral.sh/uv/):
 
-```
-git clone <your-internal-repository-url> nanobrain
+```bash
+git clone https://github.com/novaeve/nanobrain.git
 cd nanobrain
+
+# Download the dataset (100k cells, ~70MB)
+wget https://github.com/novaeve/nanobrain/releases/download/v1.0.0-data/nanobrain-v3-100k-metadata-v2.zip
+unzip nanobrain-v3-100k-metadata-v2.zip -d assets/
 
 # Install CPU PyTorch, development tools, and prepare the dataset
 cp .env.example .env
-# If the dataset is not already materialized, set NANOBRAIN_DATA_URL.
-# Optionally set NANOBRAIN_DATA_SHA256 for archive verification.
 bash scripts/bootstrap.sh
 ```
 
-If the approved bundle is already at assets/nanobrain_v3_100k_metadata_v2/, setup only validates the manifest and file checksums. The dataset bundle is excluded from Git.
+If the dataset bundle is already at assets/nanobrain_v3_100k_metadata_v2/, setup only validates the manifest and file checksums. The dataset bundle is excluded from Git.
+
+Alternatively, if you have an internal data URL, set NANOBRAIN_DATA_URL in .env (optionally with NANOBRAIN_DATA_SHA256 for archive verification).
 
 For a step-by-step setup:
 
@@ -302,9 +306,11 @@ Read the [component guide](docs/components.md), [dataset contract](docs/data.md)
 <details>
 <summary>FAQ</summary>
 
-### Can I start without a company data URL?
+### How do I download the dataset?
 
-Yes, if the approved bundle is already in the default directory. Otherwise set NANOBRAIN_DATA_URL in .env, with NANOBRAIN_DATA_SHA256 when an archive checksum is available.
+Download the `nanobrain-v3-100k-metadata-v2.zip` file from the [GitHub Releases](https://github.com/novaeve/nanobrain/releases) page, extract it to `assets/nanobrain_v3_100k_metadata_v2/`, and run the data preparation command. The dataset contains 100,000 cells (100k) split into 60k train / 20k validation / 20k test.
+
+Alternatively, if you have a company data URL, set NANOBRAIN_DATA_URL in .env, with NANOBRAIN_DATA_SHA256 when an archive checksum is available.
 
 ### Does a 20-step run produce a final result?
 
