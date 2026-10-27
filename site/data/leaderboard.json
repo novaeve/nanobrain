@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-27T03:00:00Z",
-  "source": "benchmarks/nanobrain_v3_100k/overall_metrics.csv",
+  "generated_at": "2026-10-27T04:05:19Z",
+  "source": "repository snapshot + live submissions",
   "rows": [
     {
       "split_id": "BRAINWM-HUMAN-GLOBAL-6-2-2-V3",

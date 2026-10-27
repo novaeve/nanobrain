@@ -1,11 +1,11 @@
 [Unit]
-Description=nanoBrain public research site
+Description=nanoBrain public research site and leaderboard API
 After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory=/mnt/aliyunsb/zim_rider/nanobrain/nanobrain-github/site
-ExecStart=/usr/bin/python3 -m http.server 4173 --bind 0.0.0.0
+ExecStart=/usr/bin/python3 /mnt/aliyunsb/zim_rider/nanobrain/nanobrain-github/site/site_server.py
 Restart=always
 RestartSec=3
 
