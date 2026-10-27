@@ -7,7 +7,7 @@ let catalog=(window.__NB_CATALOG__||[]).map((r,i)=>Object.assign({_id:String(i)}
 let leaderboardTask='all',frontierTask='annotation',query='';
 
 const fmt=v=>Number.isFinite(Number(v))?Number(v).toFixed(4):'—';
-const num=v=>Number.isFinite(Number(v))?Number(v):null;
+const num=v=>(v===null||v===undefined||v==="")?null:(Number.isFinite(Number(v))?Number(v):null);
 const isMax=task=>task!=='development';
 const paramOf=r=>{const n=num(r.parameter_count);return n&&n>0?n:null;};
 const esc=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -66,11 +66,11 @@ function rowSearchText(r){
   return [r.display_name,r.method,r.method_family,r.training_regime,r.notes,r.task,r.metric].filter(Boolean).join(' ').toLowerCase();
 }
 function rowHtml(r,rank){
-  const sd=num(r.std), params=paramOf(r);
+  const sd=num(r.std);
   return '<tr class="leaderboard-row" data-row-id="'+esc(r._id)+'" tabindex="0">'+
     '<td>'+rank+'</td><td><span class="model-name">'+esc(r.display_name)+'</span><span class="model-sub">'+esc((r.method_family||'benchmark')+' · '+(r.training_regime||'benchmark'))+'</span></td>'+
     '<td><span class="task-chip">'+esc(displayTask(r.task))+'</span></td><td>'+esc(metricLabel[r.metric]||r.metric)+'</td>'+
-    '<td class="score">'+scoreText(r)+(params?'':'<span class="model-sub">params N/A</span>')+'</td><td>'+fmt(sd)+'</td><td>'+esc(r.n_runs==null?'—':r.n_runs)+'</td>'+
+    '<td class="score">'+scoreText(r)+'</td><td>'+fmt(sd)+'</td><td>'+esc(r.n_runs==null?'—':r.n_runs)+'</td>'+
     '<td><span class="status-pill">'+(r.status==='complete'?'verified':esc(r.status||'recorded'))+'</span></td></tr>';
 }
 function renderLeaderboard(){
