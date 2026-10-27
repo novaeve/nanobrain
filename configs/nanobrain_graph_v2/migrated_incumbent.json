@@ -1,0 +1,176 @@
+{
+  "architecture": {
+    "version": 2,
+    "input_dim": 256,
+    "width": 96,
+    "backbone": {
+      "nodes": [
+        {
+          "id": "node_0",
+          "kind": "encoder",
+          "name": "residual_mlp",
+          "inputs": [
+            "features"
+          ],
+          "params": {
+            "hidden_dim": 96,
+            "depth": 2,
+            "dropout": 0.05
+          },
+          "repeat": 1
+        },
+        {
+          "id": "node_1",
+          "kind": "attention",
+          "name": "scfit_block",
+          "inputs": [
+            "node_0"
+          ],
+          "params": {
+            "hidden_dim": 96,
+            "heads": 4,
+            "dropout": 0.05
+          },
+          "repeat": 1
+        },
+        {
+          "id": "node_2",
+          "kind": "spatial",
+          "name": "neighbor_mean",
+          "inputs": [
+            "node_1"
+          ],
+          "params": {
+            "hidden_dim": 96
+          },
+          "repeat": 1
+        },
+        {
+          "id": "node_3",
+          "kind": "residual",
+          "name": "nbeats",
+          "inputs": [
+            "node_2"
+          ],
+          "params": {
+            "hidden_dim": 96,
+            "expansion": 2.0
+          },
+          "repeat": 1
+        }
+      ],
+      "output": "node_3"
+    },
+    "flow": {
+      "nodes": [
+        {
+          "id": "node_0",
+          "kind": "flow",
+          "name": "trajectorynet",
+          "inputs": [
+            "state",
+            "context",
+            "time"
+          ],
+          "params": {
+            "hidden_dim": 96,
+            "depth": 3
+          },
+          "repeat": 1
+        }
+      ],
+      "output": "node_0"
+    },
+    "pairing": {
+      "name": "sinkhorn",
+      "params": {
+        "epsilon": 0.03,
+        "iterations": 50
+      }
+    },
+    "heads": {
+      "annotation": {
+        "name": "scbrain",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "integration": {
+        "name": "scbrain",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "integration_reconstruction": {
+        "name": "scfit",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "niche": {
+        "name": "scbrain",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "development": {
+        "name": "scfit",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "completion": {
+        "name": "scfit",
+        "params": {
+          "dropout": 0.05
+        }
+      }
+    },
+    "objectives": {
+      "annotation": {
+        "name": "classification",
+        "params": {
+          "label_smoothing": 0.0
+        }
+      },
+      "spatial_niche": {
+        "name": "classification",
+        "params": {
+          "label_smoothing": 0.0
+        }
+      },
+      "integration": {
+        "name": "adversarial_reconstruction",
+        "params": {
+          "regression": "mse",
+          "reconstruction_weight": 1.0,
+          "batch_weight": 1.0,
+          "adversarial_strength": 0.25
+        }
+      },
+      "spatial_completion": {
+        "name": "masked_regression",
+        "params": {
+          "regression": "mse"
+        }
+      },
+      "development": {
+        "name": "conditional_flow_matching",
+        "params": {
+          "velocity_regression": "mse",
+          "endpoint_regression": "mse",
+          "expression_regression": "mse",
+          "velocity_weight": 1.0,
+          "endpoint_weight": 1.0,
+          "expression_weight": 1.0
+        }
+      }
+    },
+    "solver": {
+      "name": "heun",
+      "steps": 12
+    }
+  },
+  "learning_rate": 0.0001,
+  "seed": 202609180
+}

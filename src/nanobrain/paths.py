@@ -16,8 +16,8 @@ from typing import Any, Iterable
 
 SPLITS = ("train", "validation", "test")
 SPLIT_ID = "BRAINWM-HUMAN-GLOBAL-6-2-2-V3"
-DEFAULT_EXTERNAL_ROOT = Path("assets/v3_numpy_shards")
-DEFAULT_NAS_ROOT: Path | None = None
+DEFAULT_EXTERNAL_ROOT = Path("/data/brainwm/BrainWM-Training-Benchmark/assets/v3_numpy_shards")
+DEFAULT_NAS_ROOT = Path("/mnt/zim_rider/Brain-Word-Model/brainwm_training_benchmark/assets/v3_numpy_shards")
 
 
 @dataclass(frozen=True)
@@ -145,7 +145,9 @@ def _validate(path: Path, *, require_complete: bool) -> DatasetLocation | None:
             return None
     source = "local_project" if str(path).startswith(str(Path.cwd())) else "external"
     if path == DEFAULT_EXTERNAL_ROOT.resolve():
-        source = "local_project"
+        source = "local_essd"
+    elif path == DEFAULT_NAS_ROOT.resolve() or str(path).startswith("/mnt/"):
+        source = "nas_fallback"
     return DatasetLocation(path, source, typed)
 
 
@@ -175,12 +177,10 @@ def candidate_roots(
     root = Path(project_root).resolve() if project_root is not None else Path(__file__).resolve().parents[2]
     for value, source in add(root / "assets" / "v3_numpy_shards", "local_project"):
         yield value, source
-    if DEFAULT_EXTERNAL_ROOT.is_absolute():
-        for value, source in add(DEFAULT_EXTERNAL_ROOT, "external"):
-            yield value, source
-    if DEFAULT_NAS_ROOT is not None:
-        for value, source in add(DEFAULT_NAS_ROOT, "external_fallback"):
-            yield value, source
+    for value, source in add(DEFAULT_EXTERNAL_ROOT, "local_essd"):
+        yield value, source
+    for value, source in add(DEFAULT_NAS_ROOT, "nas_fallback"):
+        yield value, source
 
 
 def locate_v3_shards(
@@ -229,7 +229,7 @@ def describe_v3_shards(
             "mount_free_bytes": int(stat.f_bavail * stat.f_frsize),
             "mount_total_bytes": int(stat.f_blocks * stat.f_frsize),
         }
-    except (OSError, AttributeError):
+    except OSError:
         payload["filesystem"] = None
     return payload
 

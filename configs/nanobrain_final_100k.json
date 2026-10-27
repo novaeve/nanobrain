@@ -1,0 +1,92 @@
+{
+  "format": "nanobrain_frozen_protocol_v1",
+  "protocol_id": "NANOBRAIN-100K-FMT-EMA-EQUAL-20260916",
+  "data": {
+    "path": "assets/nanobrain_v3_100k",
+    "split_id": "BRAINWM-HUMAN-GLOBAL-6-2-2-V3",
+    "rows": {
+      "train": 60000,
+      "validation": 20000,
+      "test": 20000
+    }
+  },
+  "nanobrain": {
+    "architecture": {
+      "encoder": "mlp",
+      "encoder_depth": 2,
+      "hidden_dim": 64,
+      "attention": "differential_linear",
+      "attention_heads": 4,
+      "spatial": "neighbor_mean",
+      "residual": "nbeats",
+      "pairing": "sinkhorn",
+      "flow": "fmt",
+      "flow_depth": 2,
+      "dropout": 0.05,
+      "sinkhorn_epsilon": 0.05,
+      "sinkhorn_iterations": 30,
+      "rollout_steps": 8,
+      "flow_endpoint_weight": 1.0,
+      "flow_expression_weight": 0.5,
+      "integration_adversarial_strength": 0.5
+    },
+    "training": {
+      "optimizer": "AdamW",
+      "learning_rate": 0.0002,
+      "weight_decay": 0.0001,
+      "precision": "bf16",
+      "batch_size": 256,
+      "development_cells": 64,
+      "max_steps": 2000,
+      "validation_interval": 200,
+      "validation_development_groups": 32,
+      "loss_balance": "ema_equal",
+      "loss_balance_decay": 0.99,
+      "selection": "maximum joint validation quality within the fixed budget",
+      "seeds": [
+        20260915,
+        20260916,
+        20260917
+      ]
+    },
+    "frozen_checkpoints": [
+      "results/nanobrain/fmt-2000steps-3seed-emaequal-20260916-v1/seed_20260915/candidate-e3952fab711f23f2-best.pt",
+      "results/nanobrain/fmt-2000steps-3seed-emaequal-20260916-v1/seed_20260916/candidate-23ecf3eb9381ed9f-best.pt",
+      "results/nanobrain/fmt-2000steps-3seed-emaequal-20260916-v1/seed_20260917/candidate-61bbc3c3c5fe7ce8-best.pt"
+    ]
+  },
+  "development_baselines": {
+    "scfit": {
+      "steps": 2000,
+      "checkpoint": "results/nanobrain/external-development-full2000-scfit-20260916-v1/checkpoints/scfit.pt"
+    },
+    "scnode": {
+      "pretrain_steps": 500,
+      "steps": 2000,
+      "checkpoint": "results/nanobrain/external-development-full2000-scnode-20260916-v1/checkpoints/scnode.pt"
+    },
+    "trajectorynet": {
+      "upstream_commit": "810c89b081f95405bc0ad42bfb3cb41038e13700",
+      "steps": 2000,
+      "checkpoint": "results/nanobrain/external-development-full2000-trajectorynet-20260916-v1/checkpoints/trajectorynet.pt",
+      "preprocessing": "results/nanobrain/external-development-full2000-trajectorynet-20260916-v1/checkpoints/trajectorynet_preprocessing.joblib"
+    }
+  },
+  "external_baselines": {
+    "bbknn": {},
+    "celltypist": {"celltypist_epochs": 30},
+    "geneformer_v1_10m": {"geneformer_batch_size": 1024},
+    "graphst": {"graphst_epochs": 100},
+    "harmony": {},
+    "scanorama": {},
+    "scgpt_brain": {"scgpt_batch_size": 256},
+    "scgpt_human": {"scgpt_batch_size": 256},
+    "scvi_scanvi": {"scvi_epochs": 20, "scanvi_epochs": 15},
+    "xgboost": {"xgboost_estimators": 120}
+  },
+  "test_policy": {
+    "state": "sealed",
+    "access": "one campaign after this protocol and every checkpoint are hashed",
+    "hyperparameter_changes_after_open": false
+  }
+}

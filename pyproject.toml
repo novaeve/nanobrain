@@ -16,6 +16,7 @@ dependencies = [
   "scipy>=1.14",
   "POT>=0.9.5",
   "PyYAML>=6.0.2",
+  "jsonpatch>=1.33,<2",
 ]
 
 [project.optional-dependencies]

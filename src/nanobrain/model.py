@@ -177,8 +177,12 @@ class NanoBrainModel(nn.Module):
             neighbors = F.pad(neighbors, (0, 0, 0, len(context)), value=0)
             neighbor_mask = F.pad(neighbor_mask, (0, 0, 0, len(context)), value=False)
         if self.genome.architecture is not None:
+            from .integration_components import METHODS, PREFIX
+            views = {name: torch.as_tensor(batch.metadata[PREFIX + name][:len(features)],
+                         device=features.device, dtype=features.dtype)
+                     for name in METHODS if PREFIX + name in batch.metadata}
             return self.backbone({"features": features}, neighbors=neighbors, neighbor_mask=neighbor_mask,
-                                 coordinates=batch.coordinates)[:batch.batch_size]
+                                 coordinates=batch.coordinates, integration_views=views)[:batch.batch_size]
         state = self.encoder(features)
         if state.ndim not in (2, 3) or state.shape[0] != len(features) or state.shape[-1] != self.genome.hidden_dim:
             raise ValueError("encoder must return [B,H] or [B,T,H] with configured H")

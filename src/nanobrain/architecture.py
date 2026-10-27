@@ -18,6 +18,7 @@ from torch import nn
 from . import modules as _modules
 from . import graph_ops as _graph_ops
 from .registry import registry, backend_catalog
+from .integration_components import METHODS as INTEGRATION_INPUTS
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,8 @@ def checked_parameters(kind, name, params, automatic):
             raise ValueError(f"{k} must be boolean")
         if k == "inplace" and v:
             raise ValueError("in-place operations would mutate inputs shared by graph branches")
+        if k == "strength" and (isinstance(v, bool) or not isinstance(v, (int, float)) or not 0 <= v <= 1):
+            raise ValueError("integration strength must be in [0,1]")
         if k == "approximate" and v not in {"none", "tanh"}:
             raise ValueError("GELU approximate must be none/tanh")
     if "heads" in result and result["hidden_dim"] % result["heads"]:
@@ -132,6 +135,9 @@ def plan_graph(spec, inputs, *, allow_spatial=False):
             if len(values) != 3 or first.rank != 2 or values[1] != first or values[2] != Shape(3):
                 raise ValueError("flow inputs must be state[P,H], context[P,H], time[P,3]")
         elif kind == "operation":
+            if name in INTEGRATION_INPUTS:
+                if not allow_spatial or refs != ["features"] or repeat != 1:
+                    raise ValueError("integration components are backbone input-only nodes: inputs=['features'], repeat=1")
             if name in {"mean_pool", "first_pool"}:
                 if first.rank != 3:
                     raise ValueError("pool requires tokens; cell axis cannot be pooled")
@@ -199,7 +205,7 @@ class ModuleGraph(nn.Module):
             for i in range(n["repeat"])) for n in self.plan})
         self.uses_spatial = any(n["kind"] == "spatial" and n["name"] != "identity" for n in self.plan)
 
-    def forward(self, values, *, neighbors=None, neighbor_mask=None, coordinates=None):
+    def forward(self, values, *, neighbors=None, neighbor_mask=None, coordinates=None, integration_views=None):
         values = dict(values)
         count = len(next(iter(values.values())))
         for key, shape in self.input_shapes.items():
@@ -207,7 +213,12 @@ class ModuleGraph(nn.Module):
         for node in self.plan:
             args = [values[k] for k in node["inputs"]]
             for layer in self.layers[node["id"]]:
-                output = (layer(*args, neighbors=neighbors, neighbor_mask=neighbor_mask, coordinates=coordinates)
+                if node["kind"] == "operation" and node["name"] in INTEGRATION_INPUTS:
+                    if integration_views is None or node["name"] not in integration_views:
+                        raise ValueError(f"missing prepared integration view: {node['name']}")
+                    output = layer(*args, integrated=integration_views[node["name"]])
+                else:
+                    output = (layer(*args, neighbors=neighbors, neighbor_mask=neighbor_mask, coordinates=coordinates)
                           if node["kind"] == "spatial" else layer(*args))
                 self._check(output, node["shape"], count, node["id"])
                 args = [output]
