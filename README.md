@@ -227,6 +227,20 @@ uv run python scripts/train_nanobrain.py \
 
 See the [custom model tutorial](docs/custom-model.md). Receipts record plugin module names and source hashes.
 
+## Baselines inside evolution
+
+Baselines can now be recorded as generation-specific references during model evolution. Pass a generation number and a campaign ledger to the baseline CLI; it selects the strongest non-nanoBrain method for each primary metric on validation and appends a resumable JSON snapshot. Candidate promotion can then apply the same baseline regression gate.
+
+```bash
+uv run python scripts/run_nanobrain_baselines.py \
+  --data assets/nanobrain_v3_100k_metadata_v2 \
+  --generation 0 \
+  --campaign-ledger results/nanobrain/evolution/campaign.json \
+  --output results/nanobrain/evolution/generation-00-baselines
+```
+
+Use `nanobrain.load_generation_baseline` to read a generation snapshot and `nanobrain.baseline_regression_gate` to check a candidate against it. The ledger follows the train/validation protocol; the test split remains outside search and selection. The interface is independent of the LLM or search driver so it can be reused by longer, multi-GPU Brain World Model campaigns.
+
 ## Servers and GPUs
 
 The quick start targets Linux CPU and works well for small servers, workstations, and cloud instances. For GPU training, install a PyTorch wheel matching the server CUDA runtime using the [PyTorch selector](https://pytorch.org/get-started/locally/), then use:
