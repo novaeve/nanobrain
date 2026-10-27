@@ -342,3 +342,11 @@ The repository provides training and evaluation CLIs, not a production online se
 
 </details>
 
+
+## Current evolution protocol: Graph V2
+
+Graph V2 is the canonical nanoBrain evolution protocol. Candidates are explicit backbone and flow computation graphs proposed as validated full genomes or constrained JSON Patches. Each candidate is trained independently for annotation, integration, spatial niche, and development, then screened on validation, reproduced with three paired seeds, and confirmed with a longer matched budget. The published test split is used only after selection freeze for descriptive reevaluation.
+
+The active component campaign is defined in configs/nanobrain_graph_v2/evolution_components_50g_20261023.json. Its focus is the registered input and task components bbknn, harmony, scanorama, and celltypist_linear. The scoring and promotion rules are implemented in src/nanobrain/evolution.py and scripts/run_nanobrain_evolution.py.
+
+The previous public protocol remains under configs/legacy/ for reproducibility. It is not the default evolution route.

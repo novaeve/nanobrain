@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Train an independent nanoBrain task on the frozen 100k metadata-v2 dataset.
+"""Run a bounded nanoBrain experiment on a materialized V3 subset.
 
-The run uses a finite step budget and writes model, validation, and data receipts.
+This is the executable research loop for nanoBrain.  It intentionally has a
+finite step budget and writes a receipt before returning; use the formal
+BrainWM trainer for the 42.8M-row campaign after this check passes.
 """
 
 from __future__ import annotations
 
 import argparse
 from dataclasses import asdict
-import hashlib
-import importlib
 import json
-import os
 from pathlib import Path
 import sys
 import time
@@ -21,7 +20,6 @@ import torch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from nanobrain.data import (  # noqa: E402
@@ -31,8 +29,8 @@ from nanobrain.data import (  # noqa: E402
 )
 from nanobrain.genome import CandidateGenome, default_genome  # noqa: E402
 from nanobrain.model import NanoBrainModelConfig  # noqa: E402
-from nanobrain.task_training import CORE_TASKS  # noqa: E402
 from nanobrain.training import TrainConfig, train_candidate  # noqa: E402
+from nanobrain.task_training import TASKS  # noqa: E402
 
 
 def _json_default(value: object) -> object:
@@ -48,15 +46,12 @@ def main() -> None:
     parser.add_argument(
         "--data",
         type=Path,
-        default=Path(os.environ.get(
-            "NANOBRAIN_DATA_DIR",
-            ROOT / "assets" / "nanobrain_v3_100k_metadata_v2",
-        )),
+        default=ROOT / "assets" / "nanobrain_v3_100k",
         help="materialized nanoBrain subset directory",
     )
     parser.add_argument("--steps", type=int, default=2)
-    parser.add_argument("--task", choices=("joint", *CORE_TASKS), default="joint",
-                        help="joint trains all four benchmark tasks; choose one task only for diagnostics")
+    parser.add_argument("--task", choices=("joint", *TASKS), default="joint",
+                        help="one task per independent model/optimizer/checkpoint")
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--validation-batch-size", type=int, default=256)
     parser.add_argument("--development-cells", type=int, default=64)
@@ -89,26 +84,11 @@ def main() -> None:
         help="directory for checkpoint and receipt",
     )
     parser.add_argument("--verify", action="store_true", help="verify every subset checksum before loading")
-    parser.add_argument("--plugin", action="append", default=[],
-                        help="import a module that registers custom model components; repeatable")
     args = parser.parse_args()
     if args.steps < 1 or args.batch_size < 1 or args.validation_batch_size < 1:
         parser.error("steps and batch sizes must be positive")
     if not 0.0 <= args.loss_balance_decay < 1.0:
         parser.error("--loss-balance-decay must be in [0, 1)")
-
-    plugins = []
-    for name in args.plugin:
-        try:
-            module = importlib.import_module(name)
-        except (ImportError, ValueError) as exc:
-            parser.error(f"cannot import plugin {name!r}: {exc}")
-        path = Path(module.__file__) if module.__file__ else None
-        plugins.append({
-            "module": name,
-            "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest()
-            if path and path.is_file() else None,
-        })
 
     started = time.perf_counter()
     manifest = verify_subset_manifest(
@@ -190,7 +170,6 @@ def main() -> None:
         "test_opened": False,
     }
     receipt["label_cardinalities"] = cardinalities
-    receipt["plugins"] = plugins
     receipt["elapsed_wall_seconds"] = time.perf_counter() - started
     # Preserve a failed-stability receipt so the campaign can record and skip
     # the candidate instead of mistaking an early-stop run for a valid model.

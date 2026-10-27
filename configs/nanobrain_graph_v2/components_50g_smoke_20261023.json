@@ -1,0 +1,541 @@
+{
+  "protocol_id": "NANOBRAIN-NEW-COMPONENTS-SMOKE-20261023",
+  "data": "assets/nanobrain_v3_100k_metadata_v2",
+  "generations": 50,
+  "candidates_per_generation": 12,
+  "screen_steps": 2,
+  "confirmation_steps": 10000,
+  "confirmation_candidates": 2,
+  "screen_seed": 202609180,
+  "propagation_seeds": [
+    202609180,
+    202609181,
+    202609182
+  ],
+  "propagation_candidates": 4,
+  "confirmation_seeds": [
+    202609190,
+    202609191,
+    202609192
+  ],
+  "evaluation_seed": 20260915,
+  "batch_size": 256,
+  "validation_batch_size": 512,
+  "evaluation_batch_size": 2048,
+  "development_cells": 64,
+  "validation_development_groups": 2,
+  "eval_interval": 0,
+  "precision": "bf16",
+  "loss_balance": "fixed",
+  "loss_balance_decay": 0.99,
+  "integration_adversarial_warmup_steps": 500,
+  "integration_logit_clip": 20.0,
+  "stability_max_loss": 100000000.0,
+  "stability_max_gradient_norm": 1000000.0,
+  "checkpoint_selection": "final_step_fixed_budget",
+  "threads_per_process": 2,
+  "gate": {
+    "minimum_joint_gain": 0.002,
+    "max_score_drop": 0.02,
+    "max_error_relative_increase": 0.05,
+    "tasks": [
+      "annotation",
+      "integration",
+      "spatial_niche",
+      "development"
+    ]
+  },
+  "objective": "mean(accuracy, integration_composite, (ARI+1)/2, 1/(1+population_MSE)); fixed configurable engineering choice",
+  "reference": "Previous validation-selected Graph V2 architecture 9b9d080756e228e9, retrained from scratch at matched budgets",
+  "propagation": "retain every qualified candidate; next round starts from best reproducible incumbent; if no improvement, retain incumbent and continue until configured round/patience limit",
+  "confirmation": "three matched independent seeds; mean gain >= 0.002, at least two positive paired gains, all seeds within task regression limits",
+  "test_policy": "validation-only search and selection; freeze selected checkpoints before one descriptive re-evaluation on the already published test split; no claim of a new untouched test",
+  "reference_genome": {
+    "architecture": {
+      "backbone": {
+        "nodes": [
+          {
+            "id": "harmony_input",
+            "kind": "operation",
+            "name": "harmony",
+            "inputs": [
+              "features"
+            ],
+            "params": {
+              "strength": 0.5
+            }
+          },
+          {
+            "id": "scanorama_input",
+            "kind": "operation",
+            "name": "scanorama",
+            "inputs": [
+              "features"
+            ],
+            "params": {
+              "strength": 0.5
+            }
+          },
+          {
+            "id": "bbknn_input",
+            "kind": "operation",
+            "name": "bbknn",
+            "inputs": [
+              "features"
+            ],
+            "params": {
+              "strength": 0.5
+            }
+          },
+          {
+            "id": "integrated_inputs",
+            "kind": "operation",
+            "name": "add",
+            "inputs": [
+              "harmony_input",
+              "scanorama_input",
+              "bbknn_input"
+            ],
+            "params": {}
+          },
+          {
+            "id": "node_0",
+            "inputs": [
+              "integrated_inputs"
+            ],
+            "kind": "encoder",
+            "name": "panel_patches",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_1",
+            "inputs": [
+              "node_0"
+            ],
+            "kind": "operation",
+            "name": "layer_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_2",
+            "inputs": [
+              "node_1"
+            ],
+            "kind": "operation",
+            "name": "scfit_attention",
+            "params": {
+              "dropout": 0.05,
+              "heads": 8,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_3",
+            "inputs": [
+              "node_0",
+              "node_2"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_4",
+            "inputs": [
+              "node_3"
+            ],
+            "kind": "operation",
+            "name": "rms_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_5",
+            "inputs": [
+              "node_4"
+            ],
+            "kind": "operation",
+            "name": "scbrain_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 2.67,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_6",
+            "inputs": [
+              "node_3",
+              "node_5"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_7",
+            "inputs": [
+              "node_6"
+            ],
+            "kind": "operation",
+            "name": "mean_pool",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_8",
+            "inputs": [
+              "node_7"
+            ],
+            "kind": "spatial",
+            "name": "neighbor_mean",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_9",
+            "inputs": [
+              "node_8"
+            ],
+            "kind": "operation",
+            "name": "scfit_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 2.0,
+              "hidden_dim": 96
+            },
+            "repeat": 2
+          },
+          {
+            "id": "node_10",
+            "inputs": [
+              "node_8",
+              "node_9"
+            ],
+            "kind": "operation",
+            "name": "subtract",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_11",
+            "inputs": [
+              "node_10"
+            ],
+            "kind": "operation",
+            "name": "scbrain_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 2.67,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_12",
+            "inputs": [
+              "node_8",
+              "node_11"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          }
+        ],
+        "output": "node_12"
+      },
+      "flow": {
+        "nodes": [
+          {
+            "id": "node_0",
+            "inputs": [
+              "time"
+            ],
+            "kind": "operation",
+            "name": "scfit_time",
+            "params": {
+              "dropout": 0.05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_1",
+            "inputs": [
+              "context",
+              "node_0"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_2",
+            "inputs": [
+              "state",
+              "context"
+            ],
+            "kind": "operation",
+            "name": "stack",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_3",
+            "inputs": [
+              "node_2"
+            ],
+            "kind": "operation",
+            "name": "rms_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_4",
+            "inputs": [
+              "node_3",
+              "node_1"
+            ],
+            "kind": "operation",
+            "name": "film",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_5",
+            "inputs": [
+              "node_4"
+            ],
+            "kind": "operation",
+            "name": "scfit_attention",
+            "params": {
+              "dropout": 0.05,
+              "heads": 4,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_6",
+            "inputs": [
+              "node_2",
+              "node_5"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_7",
+            "inputs": [
+              "node_6"
+            ],
+            "kind": "operation",
+            "name": "rms_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_8",
+            "inputs": [
+              "node_7"
+            ],
+            "kind": "operation",
+            "name": "scfit_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 4.0,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_9",
+            "inputs": [
+              "node_6",
+              "node_8"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_10",
+            "inputs": [
+              "node_9"
+            ],
+            "kind": "operation",
+            "name": "first_pool",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_11",
+            "inputs": [
+              "node_10"
+            ],
+            "kind": "operation",
+            "name": "linear",
+            "params": {
+              "bias": true,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          }
+        ],
+        "output": "node_11"
+      },
+      "heads": {
+        "annotation": {
+          "name": "celltypist_linear",
+          "params": {}
+        },
+        "completion": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "development": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "integration": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.1
+          }
+        },
+        "integration_reconstruction": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "niche": {
+          "name": "scbrain",
+          "params": {
+            "dropout": 0.05
+          }
+        }
+      },
+      "input_dim": 256,
+      "objectives": {
+        "annotation": {
+          "name": "classification",
+          "params": {
+            "label_smoothing": 0.05
+          }
+        },
+        "development": {
+          "name": "conditional_flow_matching",
+          "params": {
+            "endpoint_regression": "mse",
+            "endpoint_weight": 1.0,
+            "expression_regression": "smooth_l1",
+            "expression_weight": 1.0,
+            "velocity_regression": "mse",
+            "velocity_weight": 1.0
+          }
+        },
+        "integration": {
+          "name": "adversarial_reconstruction",
+          "params": {
+            "adversarial_strength": 0.25,
+            "batch_weight": 1.0,
+            "reconstruction_weight": 1.0,
+            "regression": "mse"
+          }
+        },
+        "spatial_completion": {
+          "name": "masked_regression",
+          "params": {
+            "regression": "mse"
+          }
+        },
+        "spatial_niche": {
+          "name": "classification",
+          "params": {
+            "label_smoothing": 0.0
+          }
+        }
+      },
+      "pairing": {
+        "name": "sinkhorn",
+        "params": {
+          "epsilon": 0.03,
+          "iterations": 50
+        }
+      },
+      "solver": {
+        "name": "heun",
+        "steps": 12
+      },
+      "version": 2,
+      "width": 96
+    },
+    "learning_rate": 0.0002
+  },
+  "training_mode": "independent",
+  "tasks": [
+    "annotation",
+    "integration",
+    "spatial_niche",
+    "development"
+  ],
+  "parent_count": 1,
+  "no_improvement_patience": 0,
+  "minimum_module_change_candidates": 4,
+  "integration_objective": "observed-expression reconstruction + gradient-reversal batch CE; no annotation/niche/development label supervision",
+  "scope": "Four independent tasks; optional spatial_completion uses a separate checkpoint",
+  "component_catalog": "graph_component_catalog.json; strict per-node parameters and explicit topology",
+  "completion_input": "held-out values masked in independent completion training and evaluation",
+  "spatial_context": "one-hop within-split expression context; independently verified sections only; missing geometry = self loop",
+  "llm_history_generations": 2,
+  "llm_history_best_candidates": 4,
+  "llm_response_max_tokens": 16000,
+  "proposal_semantic_attempts": 8,
+  "checkpoint_policy": "final_weights",
+  "parallelism": "one independent training/evaluation process per GPU, GPUs 0-7; no multi-task gradient sharing",
+  "checkpoint_retention": "final-step weights plus genome/config/seed per task; all train/validation metrics retained; interrupted unfinished tasks restart from scratch",
+  "llm_model": "gpt-6.1-sol",
+  "required_component_coverage": [
+    "celltypist_linear",
+    "harmony",
+    "scanorama",
+    "bbknn"
+  ],
+  "input_component_policy": "Official within-split transductive expression+technical-batch transforms; cached and frozen; no biological labels; 256-gene width preserved",
+  "continuation_from": "/mnt/aliyunsb/zim_rider/nanobrain/brain/results/nanobrain/llm-graph-v2-100g12-s3000-c10000-20260929T-start",
+  "historical_test_already_published": true
+}

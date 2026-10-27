@@ -1,0 +1,18 @@
+{
+  "protocol_id": "NANOBRAIN-100K-INDEPENDENT-PUBLIC-V1",
+  "data": "assets/nanobrain_v3_100k_metadata_v2",
+  "rows": {"train": 60000, "validation": 20000, "test": 20000},
+  "tasks": ["integration", "annotation", "development", "spatial_niche"],
+  "training_mode": "independent",
+  "steps": 2000,
+  "batch_size": 256,
+  "validation_batch_size": 512,
+  "validation_development_groups": 32,
+  "development_cells": 64,
+  "eval_interval": 200,
+  "precision": "bf16",
+  "loss_balance": "fixed",
+  "checkpoint_policy": "final_weights",
+  "seeds": [20260915, 20260916, 20260917],
+  "test_policy": "validation-only fitting and selection; published test is descriptive"
+}
