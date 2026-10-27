@@ -66,7 +66,7 @@
     </section>
 
     <section id="frontier" class="section-wrap section-block frontier-block">
-      <div class="section-heading"><div><p class="eyebrow">02 / Scaling frontier</p><h2>参数量与性能的<br /><span class="gradient-text">斩杀线。</span></h2></div><p class="section-note">图表来自 H20 上同一数据协议的 9 个历史演化候选：60,000 train / 20,000 validation。横轴是模型总参数量，线条连接当前指标下的 Pareto frontier。</p></div>
+      <div class="section-heading"><div><p class="eyebrow">02 / Scaling frontier</p><h2>参数量与性能的<br /><span class="gradient-text">斩杀线。</span></h2></div><p class="section-note">图表汇总同一数据协议下的全部 benchmark 结果：baseline、foundation、deep、nanoBrain 与历史演化候选都会显示。横轴按已核验参数量取对数；缺少参数记录的结果保留在 N/A 区域，蓝线连接可核验结果的 Pareto frontier。</p></div>
       <div class="chart-card wide"><div class="chart-toolbar"><select id="frontier-task"><option value="annotation">Annotation · Macro F1</option><option value="integration">Integration · composite</option><option value="development">Development · Population MSE</option><option value="spatial_niche">Spatial niche · ARI</option></select><span class="legend"><i class="legend-dot"></i> every benchmark method · hover any point for details</span></div><div id="full-comparison-chart" class="big-chart"></div><div id="point-popover" class="point-popover" hidden></div><div class="chart-caption">One unified comparison chart. Baselines, foundation models, deep models, nanoBrain, and historical candidates share the selected task metric.</div></div>
     </section>
 
