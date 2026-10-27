@@ -1,0 +1,2155 @@
+{
+  "schema_version": 1,
+  "cohort": "historical-pilot-validation-20260916",
+  "cohort_label": "历史架构演化 · Validation · 2026-09-15/16",
+  "dataset": "nanobrain_v3_100k",
+  "split_id": "BRAINWM-HUMAN-GLOBAL-6-2-2-V3",
+  "fit_rows": 60000,
+  "validation_rows": 20000,
+  "parameter_definition": "Total model parameters from the exact candidate training receipt",
+  "source_base": "H20 nanoBrain archived results/nanobrain",
+  "runs": [
+    {
+      "run_id": "f3aa82be1b19b70c",
+      "label": "G2 · C00",
+      "generation": 2,
+      "parameter_count": 112838,
+      "steps": 150,
+      "seed": 20260930,
+      "architecture": {
+        "attention": "identity",
+        "attention_heads": 1,
+        "dropout": 0.0,
+        "encoder": "identity",
+        "encoder_depth": 1,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 64,
+        "learning_rate": 0.001,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260930,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.5616416897289959,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.10906751101356349,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.5130273532238013,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.5075964305545915,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.12796384345605308,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.10506503354517584,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.10251336111691348,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.5616416897289959,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.5616416897289959,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.5616416897289959,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.5192931403949205,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.5616416897289959,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.5189699113271518,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.6232102255467387,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.5826967384620441,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.030571773995237275,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.7808991697561485,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.11388221737146517,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.06817662990327827,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.037940101335712226,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.42812248410748766,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.1496321194833902,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.853515128325091,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.38389947871701413,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.4540458472812515,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.7603496781372443,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7092868086788909,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.03819590694326755,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6178453218443831,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.24612087711225955,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.4691555439515337,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 849.1536363483648,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 849.1536363483648,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 171827.127050829,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 1.1690017047588577,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.07470703125,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 798.7720785856108,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 17.2700794906557,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260915-gpu5-7-gen2/candidate_00/receipt-f3aa82be1b19b70c-steps150.json",
+      "metrics_source": "benchmark-pilot-gen2-candidate00/benchmark_table.csv"
+    },
+    {
+      "run_id": "679c7fbd810228b6",
+      "label": "G2 · C01",
+      "generation": 2,
+      "parameter_count": 311814,
+      "steps": 150,
+      "seed": 20260931,
+      "architecture": {
+        "attention": "sdpa",
+        "attention_heads": 2,
+        "dropout": 0.05,
+        "encoder": "residual_mlp",
+        "encoder_depth": 2,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 96,
+        "learning_rate": 0.0005,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260931,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.5850869406297321,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.12157964021252622,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.5415620294655356,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.5377759764884972,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.15777194937192926,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.11820242798440049,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.11341295927268824,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.5850869406297321,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.5850869406297321,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.5850869406297321,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.5543188438959553,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.5850869406297321,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.5460893757941123,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.489456354032095,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.5613221415577414,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.03585632153581389,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.813691191060519,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.1178172787554578,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.07251586436295009,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.038779705152252174,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.45800706848279293,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.09407467896865525,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.902771413927477,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.4295457515720218,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.5004905808564504,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.6986411094829382,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7241370886972666,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.039968759767195335,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6174413165840756,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.2702296703118229,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.4785566580751745,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 1099.3452066730777,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 1099.3452066730777,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 186697.06393331848,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 1.3393477261412676,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.063232421875,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 947.6084591848557,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 19.925481189682426,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260915-gpu5-7-gen2/candidate_01/receipt-679c7fbd810228b6-steps150.json",
+      "metrics_source": "benchmark-pilot-gen2-candidate01/benchmark_table.csv"
+    },
+    {
+      "run_id": "230773410176717e",
+      "label": "G3 · C00",
+      "generation": 3,
+      "parameter_count": 311814,
+      "steps": 300,
+      "seed": 20260960,
+      "architecture": {
+        "attention": "sdpa",
+        "attention_heads": 2,
+        "dropout": 0.05,
+        "encoder": "residual_mlp",
+        "encoder_depth": 2,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 96,
+        "learning_rate": 0.0005,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260960,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.6422641115346457,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.2198059405690258,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.6053155124705526,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.600976187532976,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.26314741932989405,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.20981476145225186,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.2149731497378279,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.6422641115346457,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.6422641115346457,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.6422641115346457,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.6339483362943055,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.6422641115346457,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.6117185021137336,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.2933392827238401,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.5041823301428338,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.05907755235365207,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.8690929977546864,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.18960050021687794,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.04666714986123119,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.051389650918188826,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.4580256376618017,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.12254545261199998,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.8781886683403856,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.4420640497648442,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.4692630415421609,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.7768110973667002,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7506876838806898,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.037318876367491795,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6565209436707448,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.25329095895482634,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.49522894978437737,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 500.7669094670368,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 500.7669094670368,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 146979.35391110447,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 0.8396776068171476,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.05810546875,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 610.0878363534237,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 14.782705795561634,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260916-gpu5-7-gen3/candidate_00/receipt-230773410176717e-steps300.json",
+      "metrics_source": "benchmark-pilot-gen3-candidate00/benchmark_table.csv"
+    },
+    {
+      "run_id": "f65f4b5667d42a56",
+      "label": "G3 · C01",
+      "generation": 3,
+      "parameter_count": 163014,
+      "steps": 300,
+      "seed": 20260961,
+      "architecture": {
+        "attention": "sdpa",
+        "attention_heads": 1,
+        "dropout": 0.05,
+        "encoder": "residual_mlp",
+        "encoder_depth": 2,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 64,
+        "learning_rate": 0.0005,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260961,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.6246671192104851,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.16494523978662948,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.5856910194707107,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.5819195221903659,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.18130207541891513,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.15463616229996516,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.14910777088322555,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.6246671192104851,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.6246671192104851,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.6246671192104851,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.5873776429658105,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.6246671192104851,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.5877472469605641,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.3820644582851858,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.525699954949581,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.0372820168035951,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.8380763406610621,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.14257945904547262,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.052229300314792296,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.0348312455723585,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.4568068221021994,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.07440671845177717,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.9246019936832764,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.4294807264408361,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.48891956317809104,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.7401768030743686,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7336507306751306,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.03888932676198888,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6344360867301119,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.26390444497003995,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.4862234300260831,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 851.546009475394,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 851.546009475394,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 173093.72226132985,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 1.1728187679849214,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.071533203125,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 802.4595005089969,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 17.401245173370324,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260916-gpu5-7-gen3/candidate_01/receipt-f65f4b5667d42a56-steps300.json",
+      "metrics_source": "benchmark-pilot-gen3-candidate01/benchmark_table.csv"
+    },
+    {
+      "run_id": "d6e7b5f1eca82cdc",
+      "label": "G3 · C02",
+      "generation": 3,
+      "parameter_count": 146374,
+      "steps": 300,
+      "seed": 20260962,
+      "architecture": {
+        "attention": "sdpa",
+        "attention_heads": 2,
+        "dropout": 0.05,
+        "encoder": "mlp",
+        "encoder_depth": 2,
+        "flow": "mlp",
+        "flow_depth": 1,
+        "hidden_dim": 64,
+        "learning_rate": 0.0002,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260962,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.31831235966790244,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.02349762905071959,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.22965131230670127,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.21292202489753742,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.019972372695893928,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.022844917132644048,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.016084953635464805,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.31831235966790244,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.31831235966790244,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.31831235966790244,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.22372867068460034,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.31831235966790244,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.22559659741586158,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 2.49959594574944,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.8291085128612035,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.11219811666962588,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.575896820009399,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.028713999279359713,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.014684149403834801,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.04093151380533793,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.37084353574224066,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.2392081032752859,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.7641863771600151,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.24323416992751196,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.45070457879762105,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.512527211660674,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.597424473603906,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.042485804166206446,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.45106195173069735,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.24659519148191375,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.3692752476311839,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 1342.5398172302282,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 1342.5398172302282,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 195804.1877533763,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 1.4639903791421698,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.097900390625,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 1057.0094751990464,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 18.973284859614747,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260916-gpu5-7-gen3/candidate_02/receipt-d6e7b5f1eca82cdc-steps300.json",
+      "metrics_source": "benchmark-pilot-gen3-candidate02/benchmark_table.csv"
+    },
+    {
+      "run_id": "fa1bc0b431658e35",
+      "label": "G4 · C00",
+      "generation": 4,
+      "parameter_count": 311814,
+      "steps": 300,
+      "seed": 20260970,
+      "architecture": {
+        "attention": "sdpa",
+        "attention_heads": 2,
+        "dropout": 0.05,
+        "encoder": "residual_mlp",
+        "encoder_depth": 2,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 96,
+        "learning_rate": 0.0005,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260970,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.6539084120933633,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.2243215748351349,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.6182054823144234,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.6148223110642279,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.24556087442827315,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.21412513961535606,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.21340604802460544,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.6539084120933633,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.6539084120933633,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.6539084120933633,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.6291150832155702,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.6539084120933633,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.6262901537901103,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.2171190787730959,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.4896025648986848,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.04653340971508084,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.868257532243747,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.18872558520012264,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.048754777481677544,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.04730286039236663,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.46456532944796486,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.10516211675431633,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.8959097779461519,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.4362964107717546,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.47905692551707457,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.7689848544587258,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7533875926773753,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.03704403857703589,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6528896193026186,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.2580504820470552,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.49495396440039324,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 525.3510783532678,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 525.3510783532678,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 144389.46193012377,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 0.8600659560599928,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.0693359375,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 615.994517744894,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 15.121393951081952,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260916-gpu5-7-gen4/candidate_00/receipt-fa1bc0b431658e35-steps300.json",
+      "metrics_source": "benchmark-pilot-gen4-candidate00/benchmark_table.csv"
+    },
+    {
+      "run_id": "3d8a6c5061204040",
+      "label": "G4 · C01",
+      "generation": 4,
+      "parameter_count": 125574,
+      "steps": 300,
+      "seed": 20260971,
+      "architecture": {
+        "attention": "differential_linear",
+        "attention_heads": 2,
+        "dropout": 0.05,
+        "encoder": "mlp",
+        "encoder_depth": 2,
+        "flow": "mlp",
+        "flow_depth": 1,
+        "hidden_dim": 64,
+        "learning_rate": 0.0005,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "none",
+        "seed": 20260971,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.3407654952743982,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.03138163941964337,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.2561649062055358,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.24365442008073623,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.039544548213321526,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.03138163941964337,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.025189716824995528,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.3407654952743982,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.3407654952743982,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.3407654952743982,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.2812776098246384,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.3407654952743982,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.26098507999551995,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 2.408402918227465,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.7900057086500786,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.11655717682297305,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.6514020155605451,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.04038716954803429,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.05922446304910482,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.05569648840405463,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.41561519054562623,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.5180653395868436,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.49055154097496473,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.3438992262389753,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.44736774858441275,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.6406477666836914,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.646515046574413,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.042184435835509605,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.5436873464990266,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.2447760922099612,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.42412284478340045,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 856.9202533961741,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 856.9202533961741,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 172389.95648210534,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 1.1749247438165562,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.108642578125,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 783.8725187656939,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 16.00876376478931,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260916-gpu5-7-gen4/candidate_01/receipt-3d8a6c5061204040-steps300.json",
+      "metrics_source": "benchmark-pilot-gen4-candidate01/benchmark_table.csv"
+    },
+    {
+      "run_id": "61812589450b0a4e",
+      "label": "G4 · C02",
+      "generation": 4,
+      "parameter_count": 439366,
+      "steps": 300,
+      "seed": 20260972,
+      "architecture": {
+        "attention": "identity",
+        "attention_heads": 1,
+        "dropout": 0.1,
+        "encoder": "residual_mlp",
+        "encoder_depth": 2,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 128,
+        "learning_rate": 0.0002,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260972,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.5824238943136129,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.11817798332583333,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.5369542569005993,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.5325867411608325,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.14473080451728415,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.1148952615667824,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.10956299559177424,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.5824238943136129,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.5824238943136129,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.5824238943136129,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.5427151916589593,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.5824238943136129,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.5396523685559607,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.5086006211875862,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.5604437658768837,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.03572528065123066,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.8053365359511253,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.11563979038986238,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.06369412412557114,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.039204438799993274,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.44011754835013683,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.35471166051400876,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.647601081880315,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.4124393981698674,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.4639358566095009,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.7303792877860222,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7205827335566165,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.038602767382122365,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6211338065041687,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.2512693119958116,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.4731880087008259,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 1095.1681535571615,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 1095.1681535571615,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 186661.66775896397,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 1.3354325869366221,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.061767578125,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 944.2809471493268,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 19.65533150121764,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "campaign-20260916-gpu5-7-gen4/candidate_02/receipt-61812589450b0a4e-steps300.json",
+      "metrics_source": "benchmark-pilot-gen4-candidate02/benchmark_table.csv"
+    },
+    {
+      "run_id": "77f861004bbc4027",
+      "label": "Parent · seed 80",
+      "generation": null,
+      "parameter_count": 311814,
+      "steps": 300,
+      "seed": 20260980,
+      "architecture": {
+        "attention": "sdpa",
+        "attention_heads": 2,
+        "dropout": 0.05,
+        "encoder": "residual_mlp",
+        "encoder_depth": 2,
+        "flow": "none",
+        "flow_depth": 1,
+        "hidden_dim": 96,
+        "learning_rate": 0.0005,
+        "loss_weights": {
+          "annotation": 1.0,
+          "completion": 1.0,
+          "development": 1.0,
+          "integration": 1.0,
+          "niche": 1.0
+        },
+        "residual": "nbeats",
+        "seed": 20260980,
+        "spatial": "neighbor_mean"
+      },
+      "metrics": {
+        "annotation": {
+          "accuracy": {
+            "value": 0.6443005587175604,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "balanced_accuracy": {
+            "value": 0.22163461448119262,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "mcc": {
+            "value": 0.6068495501215481,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "cohen_kappa": {
+            "value": 0.60283907476235,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_macro": {
+            "value": 0.2639888406295922,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_macro": {
+            "value": 0.2115603138229566,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_macro": {
+            "value": 0.21695764495277126,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_micro": {
+            "value": 0.6443005587175604,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_micro": {
+            "value": 0.6443005587175604,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_micro": {
+            "value": 0.6443005587175604,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "precision_weighted": {
+            "value": 0.6263666730848315,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "recall_weighted": {
+            "value": 0.6443005587175604,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "f1_weighted": {
+            "value": 0.6155957855010709,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "nll": {
+            "value": 1.2836413951612184,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "brier_multiclass": {
+            "value": 0.500882298025528,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "ece": {
+            "value": 0.04974530562365954,
+            "direction": "min",
+            "eval_rows": 19151
+          },
+          "top3_accuracy": {
+            "value": 0.8665866012218683,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "auprc_macro": {
+            "value": 0.19178777475804992,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "spatial_niche": {
+          "ari": {
+            "value": 0.06849743228940779,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "nmi": {
+            "value": 0.05552820029399706,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "celltype_asw": {
+            "value": 0.4586672556124592,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "morans_i": {
+            "value": 0.08948614481019179,
+            "direction": "max",
+            "eval_rows": 11329
+          },
+          "gearys_c": {
+            "value": 0.9104970108603155,
+            "direction": "min",
+            "eval_rows": 11329
+          },
+          "neighbor_label_enrichment": {
+            "value": 0.414935122252626,
+            "direction": "max",
+            "eval_rows": 11329
+          }
+        },
+        "integration": {
+          "celltype_asw": {
+            "value": 0.4381243060332298,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_asw_inverse": {
+            "value": 0.46619126097386,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "graph_connectivity": {
+            "value": 0.7898077833708829,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "isolated_label_f1": {
+            "value": 0.7532225723288456,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "ilisi_normalized": {
+            "value": 0.037230685898853325,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "biology_conservation": {
+            "value": 0.6603848872443194,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "batch_removal": {
+            "value": 0.2517109734363567,
+            "direction": "max",
+            "eval_rows": 19151
+          },
+          "integration_composite": {
+            "value": 0.4969153217211343,
+            "direction": "max",
+            "eval_rows": 19151
+          }
+        },
+        "development": {
+          "population_mse": {
+            "value": 509.6839398399704,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mean_error": {
+            "value": 509.6839398399704,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "variance_error": {
+            "value": 146794.97085487092,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "mmd_rbf": {
+            "value": 0.8491483026072354,
+            "direction": "min",
+            "eval_rows": 19322
+          },
+          "output_floor_fraction": {
+            "value": 0.060546875,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mse": {
+            "value": 611.0169789244284,
+            "direction": "max",
+            "eval_rows": 19322
+          },
+          "row_mae": {
+            "value": 14.778959306053167,
+            "direction": "max",
+            "eval_rows": 19322
+          }
+        }
+      },
+      "protocol": "d2bfb68029713bfc016cf4e92d612c6079ae50787dbf3d935192a1e7b2107420",
+      "evaluation_split": "validation",
+      "receipt_source": "parent-replicate-seed20260980/receipt-77f861004bbc4027-steps300.json",
+      "metrics_source": "benchmark-pilot-parent-seed20260980/benchmark_table.csv"
+    }
+  ]
+}

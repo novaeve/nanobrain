@@ -12,7 +12,7 @@
   <div class="topline"></div>
   <header class="site-header">
     <a class="brand" href="#top" aria-label="nanoBrain home">
-      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <img class="brand-logo" src="assets/canchen-tech-logo.jpg" alt="Canchen Tech logo" /><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
       <span><b>Canchen Tech</b><em>AI Group</em></span>
     </a>
     <nav class="nav" aria-label="Primary navigation">
@@ -36,6 +36,7 @@
         <div class="hero-meta"><span>100k cells</span><span>4 benchmark tasks</span><span>reproducible receipts</span></div>
       </div>
       <div class="hero-art" aria-label="nanoBrain visual">
+        <video class="hero-video" autoplay muted loop playsinline poster="assets/canchen-tech-logo.jpg"><source src="assets/nanobrain-hero.mp4" type="video/mp4" /></video>
         <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div>
         <div class="art-grid"></div>
         <div class="art-caption"><span>nanoBrain</span><small>virtual-cell experiments</small></div>
@@ -65,8 +66,8 @@
     </section>
 
     <section id="frontier" class="section-wrap section-block frontier-block">
-      <div class="section-heading"><div><p class="eyebrow">02 / Scaling frontier</p><h2>参数量与性能的<br /><span class="gradient-text">斩杀线。</span></h2></div><p class="section-note">横轴使用对数参数量。带有 parameter_count 的自动提交会在这里形成 Pareto frontier；没有完整参数量的历史行会保留在排行榜中。</p></div>
-      <div class="frontier-layout"><div class="chart-card"><div class="chart-toolbar"><select id="frontier-task"><option value="annotation">Annotation · Macro F1</option><option value="integration">Integration · composite</option><option value="development">Development · Gene Spearman</option><option value="spatial_niche">Spatial niche · ARI</option></select><span class="legend"><i class="legend-dot"></i> verified run <i class="legend-line"></i> Pareto frontier</span></div><div id="frontier-chart" class="frontier-chart"><div class="empty-chart"><b>斩杀图已就位</b><span>新的自动提交包含参数量后，数据点会在这里出现。</span></div></div></div><aside class="frontier-aside"><div class="aside-kicker">What we track</div><ul><li><b>Model size</b><span>trainable parameters</span></li><li><b>Quality</b><span>task primary metric</span></li><li><b>Efficiency</b><span>latency · VRAM · steps</span></li><li><b>Evolution</b><span>generation · parent · commit</span></li></ul></aside></div>
+      <div class="section-heading"><div><p class="eyebrow">02 / Scaling frontier</p><h2>参数量与性能的<br /><span class="gradient-text">斩杀线。</span></h2></div><p class="section-note">图表来自 H20 上同一数据协议的 9 个历史演化候选：60,000 train / 20,000 validation。横轴是模型总参数量，线条连接当前指标下的 Pareto frontier。</p></div>
+      <div class="frontier-layout"><div class="chart-card"><div class="chart-toolbar"><select id="frontier-task"><option value="annotation">Annotation · Macro F1</option><option value="integration">Integration · composite</option><option value="development">Development · Population MSE</option><option value="spatial_niche">Spatial niche · ARI</option></select><span class="legend"><i class="legend-dot"></i> verified run <i class="legend-line"></i> Pareto frontier</span><a class="download-link" href="data/frontier.csv" download>Download data ↓</a></div><div id="frontier-chart" class="frontier-chart"><img id="frontier-image" src="assets/charts/frontier-annotation.png" alt="Annotation parameter-performance frontier" /></div></div><aside class="frontier-aside"><div class="aside-kicker">What we track</div><ul><li><b>Model size</b><span>trainable parameters</span></li><li><b>Quality</b><span>task primary metric</span></li><li><b>Efficiency</b><span>latency · VRAM · steps</span></li><li><b>Evolution</b><span>generation · parent · commit</span></li></ul></aside></div>
     </section>
 
     <section id="learn" class="section-wrap section-block learn-block">
@@ -80,7 +81,7 @@
       <div id="evolution" class="evolution-line"><div class="evo-step"><i>1</i><b>Parent genome</b><span>一个可复现的候选架构</span></div><div class="evo-arrow">→</div><div class="evo-step"><i>2</i><b>Mutation</b><span>产生下一代候选</span></div><div class="evo-arrow">→</div><div class="evo-step"><i>3</i><b>Evaluate</b><span>四任务共同衡量</span></div><div class="evo-arrow">→</div><div class="evo-step accent"><i>4</i><b>Promote</b><span>留下更好的架构</span></div></div>
     </section>
 
-    <section id="submit" class="section-wrap submit-banner"><div><p class="eyebrow">04 / Automatic publishing</p><h2>一次运行，自动留下记录。</h2><p>训练或演化完成后，nanoBrain 程序会生成 receipt，提交到 H20 leaderboard service，官网随后更新排行榜、斩杀图和演化时间线。</p></div><div class="code-card"><code>uv run nanobrain leaderboard submit<br />&nbsp;&nbsp;results/.../receipt.json</code><span>CLI integration · live on H20</span></div></section>
+    <section id="submit" class="section-wrap submit-banner"><div><p class="eyebrow">04 / Automatic publishing</p><h2>一次运行，自动留下记录。</h2><p>训练或演化完成后，nanoBrain 程序会生成 receipt，提交到 H20 leaderboard service，官网随后更新排行榜、斩杀图和演化时间线。</p></div><div class="code-card"><code>uv run nanobrain leaderboard submit<br />&nbsp;&nbsp;results/.../receipt.json</code><span>CLI integration · coming online on H20</span></div></section>
   </main>
   <footer class="site-footer section-wrap"><div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span><b>Canchen Tech</b><em>AI Group</em></span></div><p>nanoBrain · a readable, modifiable, reproducible entry point for virtual-cell experiments</p><div><a href="https://github.com/novaeve/nanobrain">GitHub ↗</a><span>Built for open evolution</span></div></footer>
   <script src="app.js"></script>
