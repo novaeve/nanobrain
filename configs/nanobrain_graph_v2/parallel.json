@@ -1,0 +1,428 @@
+{
+  "architecture": {
+    "version": 2,
+    "input_dim": 256,
+    "width": 96,
+    "backbone": {
+      "nodes": [
+        {
+          "id": "patches",
+          "kind": "encoder",
+          "name": "panel_patches",
+          "inputs": [
+            "features"
+          ],
+          "params": {
+            "hidden_dim": 96
+          }
+        },
+        {
+          "id": "pre_attention_norm",
+          "kind": "operation",
+          "name": "layer_norm",
+          "inputs": [
+            "patches"
+          ],
+          "params": {}
+        },
+        {
+          "id": "self_attention",
+          "kind": "operation",
+          "name": "scfit_attention",
+          "inputs": [
+            "pre_attention_norm"
+          ],
+          "params": {
+            "heads": 4,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "differential",
+          "kind": "attention",
+          "name": "differential_linear",
+          "inputs": [
+            "pre_attention_norm"
+          ],
+          "params": {
+            "heads": 4,
+            "correction_init": 0.2
+          }
+        },
+        {
+          "id": "parallel_concat",
+          "kind": "operation",
+          "name": "concat",
+          "inputs": [
+            "self_attention",
+            "differential"
+          ],
+          "params": {}
+        },
+        {
+          "id": "attention_residual",
+          "kind": "operation",
+          "name": "linear",
+          "inputs": [
+            "parallel_concat"
+          ],
+          "params": {
+            "hidden_dim": 96
+          }
+        },
+        {
+          "id": "pre_ffn_norm",
+          "kind": "operation",
+          "name": "rms_norm",
+          "inputs": [
+            "attention_residual"
+          ],
+          "params": {}
+        },
+        {
+          "id": "swiglu",
+          "kind": "operation",
+          "name": "scbrain_ffn",
+          "inputs": [
+            "pre_ffn_norm"
+          ],
+          "params": {
+            "expansion": 2.67,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "ffn_residual",
+          "kind": "operation",
+          "name": "add",
+          "inputs": [
+            "attention_residual",
+            "swiglu"
+          ],
+          "params": {}
+        },
+        {
+          "id": "pool",
+          "kind": "operation",
+          "name": "mean_pool",
+          "inputs": [
+            "ffn_residual"
+          ],
+          "params": {}
+        },
+        {
+          "id": "spatial",
+          "kind": "spatial",
+          "name": "neighbor_mean",
+          "inputs": [
+            "pool"
+          ],
+          "params": {}
+        },
+        {
+          "id": "backcast",
+          "kind": "operation",
+          "name": "scfit_ffn",
+          "inputs": [
+            "spatial"
+          ],
+          "params": {
+            "expansion": 2.0,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "residual_error",
+          "kind": "operation",
+          "name": "subtract",
+          "inputs": [
+            "spatial",
+            "backcast"
+          ],
+          "params": {}
+        },
+        {
+          "id": "forecast",
+          "kind": "operation",
+          "name": "scbrain_ffn",
+          "inputs": [
+            "residual_error"
+          ],
+          "params": {
+            "expansion": 2.67,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "corrected",
+          "kind": "operation",
+          "name": "add",
+          "inputs": [
+            "spatial",
+            "forecast"
+          ],
+          "params": {}
+        }
+      ],
+      "output": "corrected"
+    },
+    "flow": {
+      "nodes": [
+        {
+          "id": "time_embedding",
+          "kind": "operation",
+          "name": "scfit_time",
+          "inputs": [
+            "time"
+          ],
+          "params": {
+            "hidden_dim": 96,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "condition",
+          "kind": "operation",
+          "name": "add",
+          "inputs": [
+            "context",
+            "time_embedding"
+          ],
+          "params": {}
+        },
+        {
+          "id": "cell_tokens",
+          "kind": "operation",
+          "name": "stack",
+          "inputs": [
+            "state",
+            "context"
+          ],
+          "params": {}
+        },
+        {
+          "id": "normalized",
+          "kind": "operation",
+          "name": "layer_norm",
+          "inputs": [
+            "cell_tokens"
+          ],
+          "params": {}
+        },
+        {
+          "id": "modulated",
+          "kind": "operation",
+          "name": "film",
+          "inputs": [
+            "normalized",
+            "condition"
+          ],
+          "params": {}
+        },
+        {
+          "id": "attention",
+          "kind": "operation",
+          "name": "scfit_attention",
+          "inputs": [
+            "modulated"
+          ],
+          "params": {
+            "heads": 4,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "attention_skip",
+          "kind": "operation",
+          "name": "add",
+          "inputs": [
+            "cell_tokens",
+            "attention"
+          ],
+          "params": {}
+        },
+        {
+          "id": "ffn_norm",
+          "kind": "operation",
+          "name": "rms_norm",
+          "inputs": [
+            "attention_skip"
+          ],
+          "params": {}
+        },
+        {
+          "id": "ffn",
+          "kind": "operation",
+          "name": "scbrain_ffn",
+          "inputs": [
+            "ffn_norm"
+          ],
+          "params": {
+            "expansion": 2.67,
+            "dropout": 0.05
+          }
+        },
+        {
+          "id": "ffn_skip",
+          "kind": "operation",
+          "name": "add",
+          "inputs": [
+            "attention_skip",
+            "ffn"
+          ],
+          "params": {}
+        },
+        {
+          "id": "pooled",
+          "kind": "operation",
+          "name": "first_pool",
+          "inputs": [
+            "ffn_skip"
+          ],
+          "params": {}
+        },
+        {
+          "id": "velocity",
+          "kind": "operation",
+          "name": "linear",
+          "inputs": [
+            "pooled"
+          ],
+          "params": {
+            "hidden_dim": 96
+          },
+          "repeat": 2
+        }
+      ],
+      "output": "velocity"
+    },
+    "pairing": {
+      "name": "sinkhorn",
+      "params": {
+        "epsilon": 0.03,
+        "iterations": 50
+      }
+    },
+    "heads": {
+      "annotation": {
+        "name": "classification",
+        "params": {},
+        "pre": {
+          "nodes": [
+            {
+              "id": "project",
+              "kind": "operation",
+              "name": "linear",
+              "inputs": [
+                "state"
+              ],
+              "params": {
+                "hidden_dim": 64
+              }
+            },
+            {
+              "id": "ffn",
+              "kind": "operation",
+              "name": "scfit_ffn",
+              "inputs": [
+                "project"
+              ],
+              "params": {
+                "expansion": 2.0,
+                "dropout": 0.05
+              },
+              "repeat": 2
+            },
+            {
+              "id": "residual",
+              "kind": "operation",
+              "name": "add",
+              "inputs": [
+                "project",
+                "ffn"
+              ],
+              "params": {}
+            }
+          ],
+          "output": "residual"
+        }
+      },
+      "integration": {
+        "name": "scbrain",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "integration_reconstruction": {
+        "name": "scfit",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "niche": {
+        "name": "scbrain",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "development": {
+        "name": "scfit",
+        "params": {
+          "dropout": 0.05
+        }
+      },
+      "completion": {
+        "name": "scfit",
+        "params": {
+          "dropout": 0.05
+        }
+      }
+    },
+    "objectives": {
+      "annotation": {
+        "name": "classification",
+        "params": {
+          "label_smoothing": 0.05
+        }
+      },
+      "spatial_niche": {
+        "name": "classification",
+        "params": {
+          "label_smoothing": 0.0
+        }
+      },
+      "integration": {
+        "name": "adversarial_reconstruction",
+        "params": {
+          "regression": "mse",
+          "reconstruction_weight": 1.0,
+          "batch_weight": 1.0,
+          "adversarial_strength": 0.25
+        }
+      },
+      "spatial_completion": {
+        "name": "masked_regression",
+        "params": {
+          "regression": "mse"
+        }
+      },
+      "development": {
+        "name": "conditional_flow_matching",
+        "params": {
+          "velocity_regression": "mse",
+          "endpoint_regression": "mse",
+          "expression_regression": "smooth_l1",
+          "velocity_weight": 1.0,
+          "endpoint_weight": 1.0,
+          "expression_weight": 1.0
+        }
+      }
+    },
+    "solver": {
+      "name": "heun",
+      "steps": 12
+    }
+  },
+  "learning_rate": 0.0001,
+  "seed": 202609200
+}

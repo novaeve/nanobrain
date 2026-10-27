@@ -90,9 +90,10 @@ def test_integration_objective_does_not_read_other_tasks_labels():
     torch.testing.assert_close(original.total, without_other_labels.total)
 
 
-def test_public_protocol_keeps_four_independent_tasks_and_100k_split():
+def test_new_protocol_is_independent_and_keeps_searching_after_unsuccessful_rounds():
     from pathlib import Path
-    p = json.loads(Path("configs/nanobrain_public_100k.json").read_text())
+    p = json.loads(Path("configs/nanobrain_evolution_independent_100k.json").read_text())
     assert p["training_mode"] == "independent"
     assert len(p["tasks"]) == 4 and "spatial_completion" not in p["tasks"]
-    assert p["rows"] == {"train": 60000, "validation": 20000, "test": 20000}
+    assert p["gate"]["tasks"] == p["tasks"]
+    assert p["no_improvement_patience"] == 0 and p["parent_count"] == 1

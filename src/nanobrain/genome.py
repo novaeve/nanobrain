@@ -77,14 +77,12 @@ class CandidateGenome:
             self.rollout_steps = self.architecture["solver"]["steps"]
             self.flow = "graph"
             return self
-        for key in ("encoder", "attention", "spatial", "residual", "pairing", "flow", "classification_head", "regression_head"):
-            if getattr(self, key) not in SEARCH_SPACE[key]:
-                # Explicit registered plugins can extend the public module API.
-                # The built-in mutation search space stays frozen for reproducibility.
-                from .registry import registry
-                kind = "head" if key.endswith("_head") else key
-                if getattr(self, key) not in registry(kind).names():
-                    raise ValueError(f"unsupported {key}: {getattr(self, key)!r}")
+        plugin_kinds = {"encoder": "encoder", "attention": "attention", "spatial": "spatial", "residual": "residual", "pairing": "pairing", "flow": "flow", "classification_head": "head", "regression_head": "head"}
+        from .registry import registry
+        for key, kind in plugin_kinds.items():
+            value = getattr(self, key)
+            if value not in SEARCH_SPACE[key] and value not in registry(kind).names():
+                raise ValueError(f"unsupported {key}: {value!r}")
         for key in (
             "hidden_dim", "encoder_depth", "attention_heads", "flow_depth",
             "sinkhorn_iterations", "rollout_steps",

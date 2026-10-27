@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterator
 import warnings
@@ -158,7 +157,9 @@ class NanoDataset:
             completion_target=self.completion_target[indices] if self.completion_target is not None else None,
             completion_mask=self.completion_mask[indices] if self.completion_mask is not None else None,
             metadata={
-                key: value[indices.numpy()] if isinstance(value, np.ndarray) else value
+                key: (np.concatenate((value[indices.numpy()], value[context_indices.numpy()]), axis=0)
+                      if key.startswith("integration_component_") and context_indices is not None and len(context_indices)
+                      else value[indices.numpy()]) if isinstance(value, np.ndarray) else value
                 for key, value in (self.metadata or {}).items()
             },
         ).validate()
@@ -389,9 +390,7 @@ def _readonly_tensor(path: Path, *, dtype: np.dtype | None = None) -> torch.Tens
 
 def _subset_root(root: str | Path | None) -> Path:
     if root is None:
-        root = os.environ.get("NANOBRAIN_DATA_DIR")
-    if root is None:
-        return Path(__file__).resolve().parents[2] / "assets" / "nanobrain_v3_100k_metadata_v2"
+        return Path(__file__).resolve().parents[2] / "assets" / "nanobrain_v3_100k"
     return Path(root).expanduser().resolve()
 
 
@@ -548,6 +547,9 @@ def load_v3_subset(
             continue
         dataset.metadata = dict(dataset.metadata or {})
         dataset.metadata["subset_manifest"] = manifest
+    for name, dataset in (("train", train), ("validation", validation), ("test", test)):
+        if dataset is not None:
+            dataset.metadata["component_split"] = name
     return splits
 
 

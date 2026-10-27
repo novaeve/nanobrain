@@ -185,6 +185,10 @@ def train_candidate(
 ) -> dict[str, Any]:
     """Train one candidate and return an immutable, JSON-safe receipt."""
     genome.validate()
+    from .integration_components import prepare_component_views, selected_components
+    if train_config.task == "spatial_completion" and selected_components(genome):
+        raise ValueError("dataset-level input components are unavailable for masked completion")
+    component_receipts = prepare_component_views(splits, genome)
     _seed_everything(int(genome.seed) if genome.seed is not None else int(train_config.seed))
     device = resolve_device(train_config.device)
     model = NanoBrainModel(model_config, genome).to(device)
@@ -256,6 +260,7 @@ def train_candidate(
             "validation": validation,
             "best_validation_quality": best_quality,
             "test_opened": test_opened,
+            "integration_component_receipts": component_receipts,
         }
         if include_optimizer:
             payload["optimizer"] = optimizer.state_dict()
@@ -526,6 +531,7 @@ def train_candidate(
         "device": str(device),
         "parameter_count": model.parameter_count,
         "training_task": task,
+        "integration_component_receipts": component_receipts,
         "training_regime": "joint_from_scratch" if task == "joint" else "independent_task_from_scratch",
         "trainable_parameter_count": sum(p.numel() for p in model.parameters() if p.requires_grad),
         "trainable_parameters": trainable_names,
