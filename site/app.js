@@ -12,7 +12,7 @@ function flow(r){const pipeline=r.architecture_mermaid||r.architecture_summary||
 function svgEl(tag,attrs={},text=''){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text)e.textContent=text;return e;}
 function svgBase(){const el=document.querySelector('#full-comparison-chart');el.innerHTML='';const svg=svgEl('svg',{'viewBox':'0 0 1180 520','role':'img','aria-label':'Model parameter count versus benchmark performance'});el.appendChild(svg);return svg;}
 function show(r,x,y){const p=document.querySelector('#point-popover');p.innerHTML=flow(r);p.hidden=false;const w=390;p.style.left=Math.min(Math.max(x,10),window.innerWidth-w-10)+'px';p.style.top=Math.max(y-145,10)+'px';}
-function frontierPoints(known){const sorted=[...known].sort((a,b)=>a.x-b.x||(isMax(selectedTask)?b.mean-a.mean:a.mean-b.mean));const out=[];let best=null;sorted.forEach(r=>{const improves=best===null||(isMax(selectedTask)?r.mean>best:r.mean<best);if(improves){out.push(r);best=r.mean;}});return out;}
+function frontierPoints(known){const sorted=[...known].sort((a,b)=>a.__x-b.__x||(isMax(selectedTask)?b.mean-a.mean:a.mean-b.mean));const out=[];let best=null;sorted.forEach(r=>{const improves=best===null||(isMax(selectedTask)?r.mean>best:r.mean<best);if(improves){out.push(r);best=r.mean;}});return out;}
 function render(){
  const data=rowsFor(),svg=svgBase();if(!data.length)return;
  const W=1180,H=520,pad={l:92,r:28,t:35,b:82};const known=data.filter(r=>Number.isFinite(Number(r.parameter_count))&&Number(r.parameter_count)>0);const unknown=data.filter(r=>!Number.isFinite(Number(r.parameter_count))||Number(r.parameter_count)<=0);
