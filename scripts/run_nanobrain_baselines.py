@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from brainwm_benchmark import evaluate  # noqa: E402
+from nanobrain.campaign import append_generation_baseline, generation_baseline_record  # noqa: E402
 from nanobrain.data import DatasetSplits, NanoDataset, load_v3_subset, verify_subset_manifest  # noqa: E402
 
 
@@ -825,6 +826,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, default=ROOT / "assets" / "nanobrain_v3_100k_metadata_v2")
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--generation", type=int, default=None,
+                        help="generation number to attach to the baseline snapshot")
+    parser.add_argument("--campaign-ledger", type=Path, default=None,
+                        help="append the strongest validation baselines to this JSON ledger")
     parser.add_argument("--seed", type=int, default=20260915)
     parser.add_argument("--population-evaluation-seed", type=int, default=None,
                         help="fixed population sample shared across candidates and training seeds")
@@ -857,6 +862,10 @@ def main() -> None:
         help="required for an explicit descriptive re-evaluation of the published test split",
     )
     args = parser.parse_args()
+    if args.campaign_ledger is not None and args.generation is None:
+        parser.error("--campaign-ledger requires --generation")
+    if args.generation is not None and args.generation < 0:
+        parser.error("--generation must be non-negative")
     requested_tasks = {item.strip() for item in args.tasks.split(",") if item.strip()}
     if not requested_tasks or requested_tasks - set(PUBLIC_TASKS):
         parser.error(f"--tasks must select from {PUBLIC_TASKS}")
@@ -948,10 +957,24 @@ def main() -> None:
         "tasks_evaluated": sorted({row["task"] for row in rows}),
         "training_regimes": sorted({row["training_regime"] for row in rows}),
         "methods_requested": sorted(methods), "checkpoint": str(checkpoint.resolve()) if checkpoint and checkpoint.is_file() else None,
+        "generation": args.generation,
+        "campaign_ledger": str(args.campaign_ledger.resolve()) if args.campaign_ledger else None,
         "runtime_seconds": float(time.perf_counter() - started), "metric_rows": len(rows),
         "prediction_artifacts": sorted(str(path.relative_to(output)) for path in (output / "predictions").glob("*.npz")),
     }
     (output / "run_manifest.json").write_text(json.dumps(manifest_out, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.campaign_ledger is not None:
+        baseline_record = generation_baseline_record(
+            rows,
+            generation=args.generation,
+            evaluation_split=args.evaluation_split,
+            split_id=SPLIT_ID,
+        )
+        append_generation_baseline(args.campaign_ledger, baseline_record)
+        (output / "generation_baseline.json").write_text(
+            json.dumps(baseline_record, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     # A stable pointer makes the latest pilot discoverable without changing
     # the immutable, timestamped run directory.
     if args.update_latest:

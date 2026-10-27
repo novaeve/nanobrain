@@ -227,6 +227,20 @@ uv run python scripts/train_nanobrain.py \
 
 完整说明见 [自定义模型教程](docs/custom-model.md)。训练回执会记录插件模块名和源文件哈希。
 
+## 演化过程中的 baseline
+
+baseline 现在可以作为每一代演化的固定参照。运行 baseline CLI 时传入代数和 ledger 路径，它会在 validation 上选出每个主指标最强的非 nanoBrain 方法，并把结果写入可恢复的 JSON ledger；候选可以用同一份记录执行回归门禁。
+
+```bash
+uv run python scripts/run_nanobrain_baselines.py \
+  --data assets/nanobrain_v3_100k_metadata_v2 \
+  --generation 0 \
+  --campaign-ledger results/nanobrain/evolution/campaign.json \
+  --output results/nanobrain/evolution/generation-00-baselines
+```
+
+代码侧可通过 `nanobrain.load_generation_baseline` 读取某一代的 baseline，通过 `nanobrain.baseline_regression_gate` 检查候选是否相对该代参照发生退步。ledger 只记录 train/validation 协议；test 仍不能参与搜索或选择。这个接口不绑定 LLM 或具体搜索器，后续可直接接到 Brain World Model 的多 GPU、长预算演化器。
+
 ## 服务器与 GPU
 
 当前 quick start 面向 Linux CPU，也适合在小型云主机或工作站上验证方案。GPU 训练需要根据服务器 CUDA runtime，从 [PyTorch 安装选择器](https://pytorch.org/get-started/locally/)安装匹配的 PyTorch wheel，然后将设备改为：
