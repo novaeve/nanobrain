@@ -6,7 +6,7 @@ const taskOrder=['annotation','integration','development','spatial_niche'];
 let catalog=(window.__NB_CATALOG__||[]).map((r,i)=>Object.assign({_id:String(i)},r));
 let leaderboardTask='all',frontierTask='annotation',query='';
 
-const fmt=v=>Number.isFinite(Number(v))?Number(v).toFixed(4):'—';
+const fmt=v=>(v===null||v===undefined||v==='')?'—':(Number.isFinite(Number(v))?Number(v).toFixed(4):'—');
 const num=v=>(v===null||v===undefined||v==="")?null:(Number.isFinite(Number(v))?Number(v):null);
 const isMax=task=>task!=='development';
 const paramOf=r=>{const n=num(r.parameter_count);return n&&n>0?n:null;};
