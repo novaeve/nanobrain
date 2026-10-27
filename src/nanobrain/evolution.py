@@ -12,6 +12,8 @@ from typing import Any
 from .campaign import PRIMARY_METRICS, baseline_regression_gate
 from .genome import CandidateGenome
 
+EVOLUTION_TASKS: tuple[str, ...] = tuple(task for task, _, _ in PRIMARY_METRICS)
+
 
 def architecture_id(genome: Mapping[str, Any] | CandidateGenome) -> str:
     """Identify an architecture independently of its random training seed."""
@@ -76,4 +78,11 @@ def improvement_gate(candidate: Mapping[str, float], reference: Mapping[str, flo
     return {"passed": not reasons, "joint_gain": delta, "checks": checks, "reasons": reasons}
 
 
-__all__ = ["PRIMARY_METRICS", "architecture_id", "baseline_regression_gate", "improvement_gate", "joint_score"]
+__all__ = [
+    "EVOLUTION_TASKS",
+    "PRIMARY_METRICS",
+    "architecture_id",
+    "baseline_regression_gate",
+    "improvement_gate",
+    "joint_score",
+]

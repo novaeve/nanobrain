@@ -120,7 +120,7 @@ flowchart LR
     G --> H["Leaderboard"]
 ```
 
-Each task has an independent model and optimizer. Normal training opens train and validation only. Every run records the task, manifest, seed, step budget, validation results, checkpoint, and stability checks so experiments can be reproduced and compared on internal servers.
+Single-task diagnostics can use an independent model and optimizer. Evolution candidates default to `--task joint`: one model and optimizer jointly optimize annotation, integration, development, and spatial niche, and promotion uses all four primary metrics. Normal training opens train and validation only. Every run records the task, manifest, seed, step budget, validation results, checkpoint, and stability checks so experiments can be reproduced and compared on internal servers.
 
 ## Four benchmark tasks
 

@@ -11,13 +11,14 @@ from .campaign import (
 from .contracts import BrainBatch, LossBundle, PredictionBundle
 from .data import DatasetSplits, NanoDataset, infer_label_cardinalities, load_v3_subset
 from .development import DevelopmentPairDataset, DevelopmentPopulationBatch
-from .evolution import architecture_id, improvement_gate, joint_score
+from .evolution import EVOLUTION_TASKS, architecture_id, improvement_gate, joint_score
 from .genome import CandidateGenome, default_genome
 from .model import NanoBrainModel, NanoBrainModelConfig
 from .paths import DatasetLocation, describe_v3_shards, locate_v3_shards
 from .registry import REGISTRIES, ModuleRegistry, backend_catalog
 
 __all__ = [
+    "EVOLUTION_TASKS",
     "PRIMARY_METRICS",
     "REGISTRIES",
     "BrainBatch",

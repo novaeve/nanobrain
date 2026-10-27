@@ -31,6 +31,7 @@ from nanobrain.data import (  # noqa: E402
 )
 from nanobrain.genome import CandidateGenome, default_genome  # noqa: E402
 from nanobrain.model import NanoBrainModelConfig  # noqa: E402
+from nanobrain.task_training import CORE_TASKS  # noqa: E402
 from nanobrain.training import TrainConfig, train_candidate  # noqa: E402
 
 
@@ -54,8 +55,8 @@ def main() -> None:
         help="materialized nanoBrain subset directory",
     )
     parser.add_argument("--steps", type=int, default=2)
-    parser.add_argument("--task", choices=("annotation", "integration", "development", "spatial_niche"), default="annotation",
-                        help="one task per independent model/optimizer/checkpoint")
+    parser.add_argument("--task", choices=("joint", *CORE_TASKS), default="joint",
+                        help="joint trains all four benchmark tasks; choose one task only for diagnostics")
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--validation-batch-size", type=int, default=256)
     parser.add_argument("--development-cells", type=int, default=64)

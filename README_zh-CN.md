@@ -120,7 +120,7 @@ flowchart LR
     G --> H["Leaderboard"]
 ```
 
-每个任务独立训练模型和优化器。正常训练只读取 train 和 validation，不打开 test。每次运行都会记录任务、数据清单、随机种子、训练步数、验证结果、checkpoint 和稳定性信息，方便在内部服务器上复现实验和比较方案。
+单任务诊断可以独立训练模型和优化器；演化候选默认使用 `--task joint`，在同一个模型和优化器中联合优化 annotation、integration、development、spatial niche 四项任务，并用四项主指标共同评分。正常训练只读取 train 和 validation，不打开 test。每次运行都会记录任务、数据清单、随机种子、训练步数、验证结果、checkpoint 和稳定性信息，方便在内部服务器上复现实验和比较方案。
 
 ## 四项任务
 
