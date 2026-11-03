@@ -1,157 +1,232 @@
-const primary={annotation:'f1_macro',integration:'integration_composite',development:'population_mse',spatial_niche:'ari'};
-const taskLabel={annotation:'Annotation',integration:'Integration',development:'Development',spatial_niche:'Spatial niche'};
-const metricLabel={f1_macro:'Macro F1',integration_composite:'Integration composite',population_mse:'Population MSE',ari:'ARI'};
-const familyColor={classical:'#9aa3b2',foundation:'#9c82df',deep:'#5ab7ad',ours:'#557fe6',submitted:'#d89a62'};
-const taskOrder=['annotation','integration','development','spatial_niche'];
-let catalog=(window.__NB_CATALOG__||[]).map((r,i)=>Object.assign({_id:String(i)},r));
-let leaderboardTask='all',frontierTask='annotation',query='';
+(function () {
+  'use strict';
 
-const fmt=v=>(v===null||v===undefined||v==='')?'—':(Number.isFinite(Number(v))?Number(v).toFixed(4):'—');
-const num=v=>(v===null||v===undefined||v==="")?null:(Number.isFinite(Number(v))?Number(v):null);
-const isMax=task=>task!=='development';
-const paramOf=r=>{const n=num(r.parameter_count);return n&&n>0?n:null;};
-const esc=v=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const displayTask=t=>taskLabel[t]||t;
-const scoreText=r=>fmt(r.mean);
-const metadata=r=>r.display_name+' · '+displayTask(r.task)+' · '+(metricLabel[r.metric]||r.metric)+' · score '+scoreText(r)+' · '+(paramOf(r)?paramOf(r).toLocaleString()+' parameters':'parameter count unavailable')+' · '+(r.training_regime||'benchmark');
+  var TASKS = ['annotation', 'integration', 'development', 'spatial_niche'];
+  var TASK_LABEL = { annotation: '细胞注释', integration: '数据整合', development: '发育预测', spatial_niche: '空间生态位' };
+  var PRIMARY = { annotation: 'f1_macro', integration: 'integration_composite', development: 'population_mse', spatial_niche: 'ari' };
+  var METRIC_LABEL = {
+    f1_macro: 'Macro F1', accuracy: 'Accuracy', balanced_accuracy: 'Balanced accuracy', mcc: 'MCC', cohen_kappa: "Cohen's kappa",
+    top3_accuracy: 'Top-3 accuracy', f1_weighted: 'Weighted F1', f1_micro: 'Micro F1', precision_macro: 'Macro precision',
+    recall_macro: 'Macro recall', precision_micro: 'Micro precision', recall_micro: 'Micro recall', precision_weighted: 'Weighted precision',
+    recall_weighted: 'Weighted recall', auprc_macro: 'Macro AUPRC', nll: 'NLL', ece: 'ECE', brier_multiclass: 'Brier',
+    integration_composite: 'Integration composite', biology_conservation: 'Biology conservation', batch_removal: 'Batch removal',
+    celltype_asw: 'Cell-type ASW', batch_asw_inverse: 'Inverse batch ASW', graph_connectivity: 'Graph connectivity',
+    isolated_label_f1: 'Isolated-label F1', ilisi_normalized: 'iLISI (normalized)',
+    population_mse: 'Population MSE', gene_spearman: 'Gene Spearman', gene_pearson: 'Gene Pearson', mmd_rbf: 'MMD (RBF)',
+    mean_error: 'Mean error', variance_error: 'Variance error', output_floor_fraction: 'Output floor fraction',
+    ari: 'ARI', nmi: 'NMI', morans_i: "Moran's I", gearys_c: "Geary's C", neighbor_label_enrichment: 'Neighbor label enrichment'
+  };
+  var FAMILY_LABEL = { classical: '经典', foundation: '基础模型', deep: '深度', integration: '整合工具', development: '发育模型', ours: 'nanoBrain', submitted: '提交' };
 
-function flow(r){
-  const pipeline=r.architecture_mermaid||r.architecture_summary||'benchmark architecture';
-  return '<button class="popover-close" type="button" aria-label="Close details">×</button>'+
-    '<div class="popover-title">'+esc(r.display_name)+'</div>'+
-    '<div class="popover-meta">'+esc(metadata(r))+'</div>'+
-    '<div class="flow"><span>Input<br><b>expression matrix</b></span><i>→</i>'+
-    '<span>Architecture<br><b>'+esc(r.architecture_summary||'benchmark architecture')+'</b><small>'+esc(pipeline)+'</small></span><i>→</i>'+
-    '<span>Output<br><b>'+displayTask(r.task)+' · '+esc(metricLabel[r.metric]||r.metric)+'</b></span></div>'+
-    '<div class="popover-source">'+esc(r.receipt_source||r.metrics_source||r.notes||'benchmark record')+'</div>';
-}
-function svgEl(tag,attrs={},text=''){
-  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
-  Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
-  if(text)e.textContent=text;
-  return e;
-}
-function svgBase(){
-  const el=document.querySelector('#full-comparison-chart');el.innerHTML='';
-  const svg=svgEl('svg',{'viewBox':'0 0 1180 520','role':'img','aria-label':'Model parameter count versus benchmark performance'});
-  el.appendChild(svg);return svg;
-}
-function placePopover(p,x,y){
-  const w=Math.min(390,window.innerWidth-20);
-  p.style.width=w+'px';
-  p.style.left=Math.min(Math.max(x,10),window.innerWidth-w-10)+'px';
-  p.style.top=Math.max(Math.min(y,window.innerHeight-260),10)+'px';
-}
-function showHover(r,x,y){
-  const p=document.querySelector('#point-popover');
-  p.classList.remove('is-pinned');p.innerHTML=flow(r);p.hidden=false;placePopover(p,x,y);
-  p.querySelector('.popover-close').hidden=true;
-}
-function showPinned(r,x,y){
-  const p=document.querySelector('#point-popover');
-  p.classList.add('is-pinned');p.innerHTML=flow(r);p.hidden=false;placePopover(p,x,y);
-  p.querySelector('.popover-close').hidden=false;
-  p.querySelector('.popover-close').addEventListener('click',()=>{p.hidden=true;p.classList.remove('is-pinned');});
-}
-function hideHover(){
-  const p=document.querySelector('#point-popover');
-  if(!p.classList.contains('is-pinned'))p.hidden=true;
-}
-function compareScore(a,b,task){
-  const d=isMax(task)?-1:1;
-  return (num(a.mean)===null?1:num(b.mean)===null?-1:d*(num(a.mean)-num(b.mean)))||
-    String(a.display_name).localeCompare(String(b.display_name));
-}
-function rowSearchText(r){
-  return [r.display_name,r.method,r.method_family,r.training_regime,r.notes,r.task,r.metric].filter(Boolean).join(' ').toLowerCase();
-}
-function rowHtml(r,rank){
-  const sd=num(r.std);
-  return '<tr class="leaderboard-row" data-row-id="'+esc(r._id)+'" tabindex="0">'+
-    '<td>'+rank+'</td><td><span class="model-name">'+esc(r.display_name)+'</span><span class="model-sub">'+esc((r.method_family||'benchmark')+' · '+(r.training_regime||'benchmark'))+'</span></td>'+
-    '<td><span class="task-chip">'+esc(displayTask(r.task))+'</span></td><td>'+esc(metricLabel[r.metric]||r.metric)+'</td>'+
-    '<td class="score">'+scoreText(r)+'</td><td>'+fmt(sd)+'</td><td>'+esc(r.n_runs==null?'—':r.n_runs)+'</td>'+
-    '<td><span class="status-pill">'+(r.status==='complete'?'verified':esc(r.status||'recorded'))+'</span></td></tr>';
-}
-function renderLeaderboard(){
-  const body=document.querySelector('#leaderboard-body');
-  const q=query;
-  const groups=leaderboardTask==='all'?taskOrder:[leaderboardTask];
-  let html='';
-  groups.forEach(task=>{
-    const rows=catalog.filter(r=>r.task===task&&(!q||rowSearchText(r).includes(q))).sort((a,b)=>compareScore(a,b,task));
-    rows.forEach((r,i)=>{html+=rowHtml(r,i+1);});
-  });
-  body.innerHTML=html||'<tr><td colspan="8" class="empty-table">No benchmark rows match this task or search.</td></tr>';
-  body.querySelectorAll('.leaderboard-row').forEach(row=>{
-    const r=catalog.find(x=>x._id===row.dataset.rowId);
-    const open=()=>{const b=row.getBoundingClientRect();showPinned(r,Math.min(b.right+12,window.innerWidth-390),b.top+8);};
-    row.addEventListener('click',open);row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
-  });
-  document.querySelectorAll('.segmented button').forEach(b=>{
-    const active=b.dataset.task===leaderboardTask;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
-  });
-}
-function frontierPoints(known){
-  const sorted=[...known].sort((a,b)=>a.__xRaw-b.__xRaw||(isMax(frontierTask)?num(b.mean)-num(a.mean):num(a.mean)-num(b.mean)));
-  const out=[];let best=null;
-  sorted.forEach(r=>{const improves=best===null||(isMax(frontierTask)?num(r.mean)>best:num(r.mean)<best);if(improves){out.push(r);best=num(r.mean);}});
-  return out;
-}
-function renderFrontier(){
-  const data=catalog.filter(r=>r.task===frontierTask&&r.metric===primary[frontierTask]&&num(r.mean)!==null);
-  const svg=svgBase();
-  if(!data.length){svg.appendChild(svgEl('text',{x:590,y:250,'text-anchor':'middle',fill:'#8d96a3','font-size':'13'},'No benchmark data for this task.'));return;}
-  const W=1180,H=520,pad={l:92,r:28,t:35,b:82};
-  const known=data.filter(r=>paramOf(r)),unknown=data.filter(r=>!paramOf(r));
-  if(!known.length){svg.appendChild(svgEl('text',{x:590,y:250,'text-anchor':'middle',fill:'#8d96a3','font-size':'13'},'No verified parameter counts for this task.'));return;}
-  const minP=Math.min(...known.map(r=>paramOf(r))),maxP=Math.max(...known.map(r=>paramOf(r)));
-  const scores=data.map(r=>num(r.mean)),minRaw=Math.min(...scores),maxRaw=Math.max(...scores);
-  let minS=minRaw,maxS=maxRaw;if(minS===maxS){minS-=1;maxS+=1;}
-  const range=Math.max(1e-12,maxS-minS),yPad=range*.08;minS-=yPad;maxS+=yPad;
-  const y=v=>pad.t+(isMax(frontierTask)?(maxS-v):(v-minS))/(maxS-minS)*(H-pad.t-pad.b);
-  const knownStart=pad.l+86,knownEnd=W-pad.r;
-  const xKnown=p=>knownStart+(Math.log10(p)-Math.log10(minP))/Math.max(1e-9,Math.log10(maxP)-Math.log10(minP))*(knownEnd-knownStart);
-  const unknownX=pad.l+42;
-  const groups=new Map();known.forEach(r=>{const p=paramOf(r);if(!groups.has(p))groups.set(p,[]);groups.get(p).push(r);});
-  groups.forEach((rs,p)=>rs.forEach((r,i)=>{const raw=xKnown(p),offset=(i-(rs.length-1)/2)*9;r.__xRaw=raw;r.__x=raw+offset;r.__y=y(num(r.mean));}));
-  const unknownJitter=new Map();unknown.forEach((r,i)=>{unknownJitter.set(r,unknownX+((i%7)-3)*9);r.__x=unknownJitter.get(r);r.__y=y(num(r.mean));r.__xRaw=unknownX;});
-  for(let i=0;i<5;i++){
-    const gy=pad.t+i*(H-pad.t-pad.b)/4;
-    svg.appendChild(svgEl('line',{x1:pad.l,x2:W-pad.r,y1:gy,y2:gy,stroke:'#e8ebf0'}));
-    const val=isMax(frontierTask)?maxS-(maxS-minS)*i/4:minS+(maxS-minS)*i/4;
-    svg.appendChild(svgEl('text',{x:pad.l-12,y:gy+4,'text-anchor':'end',fill:'#8d96a3','font-size':'11'},fmt(val)));
+  var state = { rows: [], task: 'annotation', metric: PRIMARY.annotation, frTask: 'annotation', evidence: null };
+
+  function $(s, el) { return (el || document).querySelector(s); }
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function num(v) { if (v === null || v === undefined || v === '') return null; var n = Number(v); return isFinite(n) ? n : null; }
+  function fmt(v) { var n = num(v); return n === null ? '—' : (Math.abs(n) >= 100 ? n.toFixed(1) : n.toFixed(4)); }
+  function mlabel(m) { return METRIC_LABEL[m] || m; }
+  function isOurs(r) { return r.method_family === 'ours' || /^nanobrain/.test(r.method || ''); }
+
+  function tabs(el, current, onPick) {
+    el.innerHTML = TASKS.map(function (t) {
+      return '<button role="tab" type="button" data-t="' + t + '" aria-selected="' + (t === current) + '">' + TASK_LABEL[t] + '</button>';
+    }).join('');
+    el.onclick = function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      onPick(b.getAttribute('data-t'));
+    };
   }
-  svg.appendChild(svgEl('line',{x1:pad.l,x2:pad.l,y1:pad.t,y2:H-pad.b,stroke:'#cfd5df'}));
-  svg.appendChild(svgEl('line',{x1:pad.l,x2:W-pad.r,y1:H-pad.b,y2:H-pad.b,stroke:'#cfd5df'}));
-  svg.appendChild(svgEl('rect',{x:pad.l+8,y:pad.t+8,width:68,height:H-pad.t-pad.b-16,rx:10,fill:'#f7f8fa'}));
-  svg.appendChild(svgEl('text',{x:unknownX,y:H-pad.b+24,'text-anchor':'middle',fill:'#8d96a3','font-size':'10'},'N/A params'));
-  svg.appendChild(svgEl('text',{x:(knownStart+knownEnd)/2,y:H-22,'text-anchor':'middle',fill:'#7c8593','font-size':'11'},'Model parameters (log scale)'));
-  svg.appendChild(svgEl('text',{x:pad.l-58,y:pad.t-12,fill:'#7c8593','font-size':'11'},(metricLabel[primary[frontierTask]]||primary[frontierTask])+' · '+(isMax(frontierTask)?'higher is better':'lower is better')));
-  [minP,maxP].forEach(p=>svg.appendChild(svgEl('text',{x:xKnown(p),y:H-pad.b+24,'text-anchor':'middle',fill:'#8d96a3','font-size':'10'},p.toLocaleString())));
-  const front=frontierPoints(known);
-  if(front.length>1){
-    const d=front.map((r,i)=>(i?'L':'M')+' '+r.__x.toFixed(1)+' '+r.__y.toFixed(1)).join(' ');
-    svg.appendChild(svgEl('path',{d:d,fill:'none',stroke:'#557fe6','stroke-width':'3','stroke-linecap':'round','stroke-linejoin':'round',opacity:'.9'}));
-    front.forEach(r=>svg.appendChild(svgEl('circle',{cx:r.__x,cy:r.__y,r:12,fill:'none',stroke:'#557fe6','stroke-width':'1.5','stroke-dasharray':'3 3',opacity:'.8'})));
+
+  /* ---------- leaderboard ---------- */
+  function boardRows() {
+    return state.rows.filter(function (r) {
+      return r.task === state.task && r.metric === state.metric && (!r.evaluation_split || r.evaluation_split === 'test') && num(r.mean) !== null;
+    });
   }
-  data.forEach(r=>{
-    const c=svgEl('circle',{cx:r.__x,cy:r.__y,r:paramOf(r)?8:6,fill:familyColor[r.method_family]||'#9aa3b2',stroke:'#fff','stroke-width':'2',tabindex:'0','aria-label':metadata(r)});
-    c.style.cursor='pointer';c.addEventListener('mouseenter',e=>showHover(r,e.clientX,e.clientY));c.addEventListener('mouseleave',hideHover);c.addEventListener('focus',()=>showHover(r,Math.min(window.innerWidth-400,650),120));c.addEventListener('blur',hideHover);
-    c.addEventListener('click',e=>{e.stopPropagation();showPinned(r,e.clientX,e.clientY);});c.appendChild(svgEl('title',{},metadata(r)));svg.appendChild(c);
+
+  function renderBoard() {
+    tabs($('#task-tabs'), state.task, function (t) { state.task = t; state.metric = PRIMARY[t]; renderBoard(); });
+
+    var metrics = {};
+    state.rows.forEach(function (r) { if (r.task === state.task) metrics[r.metric] = true; });
+    var list = Object.keys(metrics).sort(function (a, b) { return (a === PRIMARY[state.task] ? -1 : 0) - (b === PRIMARY[state.task] ? -1 : 0) || mlabel(a).localeCompare(mlabel(b)); });
+    var sel = $('#metric-sel');
+    sel.innerHTML = list.map(function (m) {
+      return '<option value="' + esc(m) + '"' + (m === state.metric ? ' selected' : '') + '>' + esc(mlabel(m)) + (m === PRIMARY[state.task] ? '（主指标）' : '') + '</option>';
+    }).join('');
+    sel.onchange = function () { state.metric = sel.value; renderBoard(); };
+
+    var rows = boardRows();
+    var dir = rows.length && rows[0].direction === 'min' ? 'min' : 'max';
+    rows.sort(function (a, b) { return dir === 'min' ? num(a.mean) - num(b.mean) : num(b.mean) - num(a.mean); });
+    var vals = rows.map(function (r) { return num(r.mean); });
+    var lo = Math.min.apply(null, vals.concat([0])), hi = Math.max.apply(null, vals);
+    if (dir === 'min') { lo = Math.min.apply(null, vals); hi = Math.max.apply(null, vals); }
+
+    var rank = 0, prev = null;
+    var html = rows.map(function (r, i) {
+      var v = num(r.mean);
+      if (v !== prev) { rank = i + 1; prev = v; }
+      var frac = hi === lo ? 1 : (dir === 'min' ? (hi - v) / (hi - lo) : (v - lo) / (hi - lo));
+      var w = Math.max(3, Math.round(6 + 94 * frac));
+      var ours = isOurs(r);
+      var fam = FAMILY_LABEL[r.method_family] || r.method_family || '';
+      var sd = num(r.std);
+      return '<tr class="row' + (ours ? ' is-ours' : '') + '" data-i="' + i + '" tabindex="0" aria-expanded="false">' +
+        '<td class="r rank">' + rank + '</td>' +
+        '<td class="m"><b>' + esc(r.display_name || r.method) + '</b><small>' + esc(r.method) + '</small></td>' +
+        '<td class="fam hide-sm"><span class="chip' + (ours ? ' ours' : '') + '">' + esc(fam) + '</span>' + esc(String(r.training_regime || '').replace(/_/g, ' ')) + '</td>' +
+        '<td><div class="score"><span class="bar"><i style="width:' + w + '%"></i></span><span class="v">' + fmt(v) + '</span></div></td>' +
+        '<td class="r hide-sm">' + (sd === null ? '—' : fmt(sd)) + '</td>' +
+        '<td class="r hide-sm">' + esc(r.n_runs || '—') + '</td></tr>';
+    }).join('');
+    var tbody = $('#board-table tbody');
+    tbody.innerHTML = html || '<tr><td colspan="6" class="foot">暂无该指标的测试集结果。</td></tr>';
+
+    tbody.onclick = function (e) { var tr = e.target.closest('tr.row'); if (tr) toggleDetail(tr, rows); };
+    tbody.onkeydown = function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr.row')) { e.preventDefault(); toggleDetail(e.target, rows); } };
+
+    $('#board-foot').textContent = mlabel(state.metric) + (dir === 'min' ? ' · 越低越好' : ' · 越高越好') +
+      ' · ' + rows.length + ' 个方法 · 评估细胞 ' + (rows[0] && rows[0].eval_rows ? Number(rows[0].eval_rows).toLocaleString() : '—') +
+      ' · 仅 overall 层，不跨指标合成总分';
+  }
+
+  function toggleDetail(tr, rows) {
+    var next = tr.nextElementSibling;
+    if (next && next.classList.contains('detail')) { next.remove(); tr.setAttribute('aria-expanded', 'false'); return; }
+    var r = rows[Number(tr.getAttribute('data-i'))];
+    var d = document.createElement('tr');
+    d.className = 'detail';
+    d.innerHTML = '<td colspan="6">' +
+      '<div>' + esc(r.notes || '无额外说明') + '</div>' +
+      '<div style="margin-top:6px"><code>split ' + esc(r.evaluation_split || 'test') + '</code> · <code>' + esc(r.split_id || '') + '</code> · 评估细胞 ' +
+      esc(r.eval_rows ? Number(r.eval_rows).toLocaleString() : '—') + ' · 数值指标 ' + esc(r.n_numeric || '—') + ' / ' + esc(r.n_runs || '—') + ' runs</div></td>';
+    tr.after(d);
+    tr.setAttribute('aria-expanded', 'true');
+  }
+
+  /* ---------- frontier ---------- */
+  function svg(tag, attrs, text) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function renderFrontier() {
+    var ev = state.evidence; if (!ev) return;
+    tabs($('#fr-tabs'), state.frTask, function (t) { state.frTask = t; renderFrontier(); });
+    var task = state.frTask, metric = PRIMARY[task];
+    var pts = ev.runs.map(function (r) {
+      var m = r.metrics && r.metrics[task] && r.metrics[task][metric];
+      return m && num(r.parameter_count) ? { x: num(r.parameter_count), y: num(m.value), dir: m.direction, r: r } : null;
+    }).filter(Boolean);
+    var box = $('#frontier'); box.innerHTML = '';
+    if (!pts.length) { box.textContent = '暂无数据'; return; }
+    var minDir = pts[0].dir === 'min';
+
+    var W = Math.max(420, Math.min(960, box.clientWidth || 960)), H = W < 600 ? 340 : 400, L = 72, R = 24, T = 24, B = 52;
+    var xs = pts.map(function (p) { return Math.log10(p.x); }), ys = pts.map(function (p) { return p.y; });
+    var x0 = Math.floor(Math.min.apply(null, xs) * 10) / 10 - 0.05, x1 = Math.ceil(Math.max.apply(null, xs) * 10) / 10 + 0.05;
+    var yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys), pad = (yMax - yMin) * 0.12 || 0.01;
+    var y0 = yMin >= 0 ? Math.max(0, yMin - pad) : yMin - pad, y1 = yMax + pad;
+    function sx(v) { return L + (Math.log10(v) - x0) / (x1 - x0) * (W - L - R); }
+    function sy(v) { return T + (1 - (v - y0) / (y1 - y0)) * (H - T - B); }
+
+    var s = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': '参数量与 ' + mlabel(metric) + ' 散点图' });
+    for (var i = 0; i <= 4; i++) {
+      var yv = y0 + (y1 - y0) * i / 4, yy = sy(yv);
+      s.appendChild(svg('line', { x1: L, x2: W - R, y1: yy, y2: yy, 'class': 'ax' }));
+      s.appendChild(svg('text', { x: L - 10, y: yy + 4, 'text-anchor': 'end', 'class': 'tk' }, Math.abs(yv) >= 100 ? yv.toFixed(0) : yv.toFixed(3)));
+    }
+    [1e5, 2e5, 3e5, 5e5, 1e6].forEach(function (t) {
+      var lx = Math.log10(t); if (lx < x0 || lx > x1) return;
+      s.appendChild(svg('text', { x: sx(t), y: H - B + 20, 'text-anchor': 'middle', 'class': 'tk' }, (t / 1000) + 'k'));
+    });
+    s.appendChild(svg('text', { x: (L + W - R) / 2, y: H - 10, 'text-anchor': 'middle', 'class': 'lbl' }, '参数量（对数）'));
+    s.appendChild(svg('text', { x: 16, y: T + (H - T - B) / 2, 'text-anchor': 'middle', 'class': 'lbl', transform: 'rotate(-90 16 ' + (T + (H - T - B) / 2) + ')' }, mlabel(metric) + (minDir ? ' ↓' : ' ↑')));
+
+    // Pareto frontier: no other point with fewer-or-equal params and a better score.
+    var sorted = pts.slice().sort(function (a, b) { return a.x - b.x || (minDir ? a.y - b.y : b.y - a.y); });
+    var front = [], best = null;
+    sorted.forEach(function (p) {
+      if (best === null || (minDir ? p.y < best : p.y > best)) { front.push(p); best = p.y; p.front = true; }
+    });
+    if (front.length > 1) {
+      s.appendChild(svg('polyline', { points: front.map(function (p) { return sx(p.x) + ',' + sy(p.y); }).join(' '), 'class': 'pf' }));
+    }
+    var tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true;
+    pts.forEach(function (p) {
+      var c = svg('circle', { cx: sx(p.x), cy: sy(p.y), r: 6, 'class': 'pt' + (p.front ? ' front' : ''), tabindex: 0 });
+      var show = function () {
+        tip.innerHTML = '<b>' + esc(p.r.label) + '</b><br>' + p.x.toLocaleString() + ' 参数 · ' + esc(p.r.steps) + ' 步 · seed ' + esc(p.r.seed) +
+          '<br>' + esc(mlabel(metric)) + ' ' + fmt(p.y);
+        var bb = box.getBoundingClientRect(), cb = c.getBoundingClientRect();
+        tip.style.left = (cb.left - bb.left + cb.width / 2) + 'px'; tip.style.top = (cb.top - bb.top) + 'px'; tip.hidden = false;
+      };
+      c.addEventListener('mouseenter', show); c.addEventListener('focus', show);
+      c.addEventListener('mouseleave', function () { tip.hidden = true; }); c.addEventListener('blur', function () { tip.hidden = true; });
+      s.appendChild(c);
+      // Several candidates share a parameter count; label only the frontier, the rest via tooltip.
+      if (p.front) s.appendChild(svg('text', { x: sx(p.x) + 10, y: sy(p.y) - 9, 'class': 'pl' }, p.r.label));
+    });
+    box.appendChild(s); box.appendChild(tip);
+  }
+
+  /* ---------- hero: two batches drifting into shared cell-type clusters ---------- */
+  function hero() {
+    var el = $('#cells'); if (!el) return;
+    var colors = ['#3fa9cf', '#4fc9a8', '#7088ee', '#a77bf3', '#8fb8f0'];
+    var centers = [[110, 110], [300, 95], [210, 190], [105, 270], [315, 265]];
+    var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    function gauss() { return (rnd() + rnd() + rnd() - 1.5) * 1.4; }
+    var dots = [];
+    for (var i = 0; i < 230; i++) {
+      var k = i % 5, batch = i % 2, c = centers[k];
+      var jx = gauss() * 26, jy = gauss() * 26;
+      var off = batch ? [26, -18] : [-26, 18];
+      var d = svg('circle', { cx: c[0] + jx, cy: c[1] + jy, r: batch ? 4.2 : 3.4, fill: colors[k], 'fill-opacity': batch ? 0.85 : 0.5 });
+      d.style.transform = 'translate(' + off[0] + 'px,' + off[1] + 'px)';
+      dots.push({ el: d, off: off });
+      el.appendChild(d);
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var merged = false;
+    setInterval(function () {
+      merged = !merged;
+      dots.forEach(function (d) { d.el.style.transform = merged ? 'translate(0,0)' : 'translate(' + d.off[0] + 'px,' + d.off[1] + 'px)'; });
+    }, 3200);
+  }
+
+  function stats() {
+    var methods = {};
+    state.rows.forEach(function (r) { if (!isOurs(r)) methods[r.method] = true; });
+    var m = $('[data-stat="methods"]'), n = $('[data-stat="rows"]');
+    if (m) m.textContent = Object.keys(methods).length;
+    if (n) n.textContent = state.rows.length.toLocaleString();
+  }
+
+  function copy() {
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('.copy'); if (!b) return;
+      var t = document.getElementById(b.getAttribute('data-copy'));
+      if (!t || !navigator.clipboard) return;
+      navigator.clipboard.writeText(t.innerText).then(function () { b.textContent = '已复制'; setTimeout(function () { b.textContent = '复制'; }, 1400); });
+    });
+  }
+
+  function getJSON(url) {
+    return fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); });
+  }
+
+  hero();
+  copy();
+  getJSON('data/leaderboard.json').then(function (d) {
+    state.rows = d.rows || [];
+    stats(); renderBoard();
+    if (d.generated_at) $('#gen-at').textContent = '数据更新 ' + String(d.generated_at).replace('T', ' ').replace('Z', ' UTC');
+  }).catch(function (err) {
+    $('#board-table tbody').innerHTML = '<tr><td colspan="6" class="foot">排行榜数据加载失败：' + esc(err.message) + '</td></tr>';
   });
-  svg.appendChild(svgEl('line',{x1:knownStart-1,x2:knownStart-1,y1:pad.t,y2:H-pad.b,stroke:'#d9dee7','stroke-dasharray':'4 5'}));
-  svg.appendChild(svgEl('text',{x:knownStart+8,y:pad.t+16,fill:'#557fe6','font-size':'10'},'frontier · '+front.length+' points'));
-  svg.appendChild(svgEl('text',{x:pad.l+10,y:pad.t+25,fill:'#8d96a3','font-size':'10'},unknown.length+' results without verified parameter count'));
-  svg.appendChild(svgEl('text',{x:pad.l,y:H-5,fill:'#8d96a3','font-size':'10'},data.length+' total results · every benchmark method shown'));
-}
-function setLeaderboardTask(task){
-  leaderboardTask=task;renderLeaderboard();
-  const target=document.querySelector('#leaderboard');if(target)target.scrollIntoView({block:'start',behavior:'smooth'});
-}
-document.querySelectorAll('.segmented button').forEach(b=>{b.addEventListener('click',()=>setLeaderboardTask(b.dataset.task));});
-const search=document.querySelector('#search');if(search)search.addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();renderLeaderboard();});
-const selector=document.querySelector('#frontier-task');if(selector)selector.addEventListener('change',e=>{frontierTask=e.target.value;renderFrontier();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){const p=document.querySelector('#point-popover');p.hidden=true;p.classList.remove('is-pinned');}});
-document.querySelector('#run-count').textContent=catalog.length;
-renderLeaderboard();renderFrontier();
+  getJSON('data/frontier-evidence.json').then(function (d) { state.evidence = d; renderFrontier(); }).catch(function () { $('#frontier').textContent = '演化数据加载失败'; });
+})();
