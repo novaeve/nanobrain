@@ -9,6 +9,7 @@
     "README_zh-CN.md"
   ],
   "packaging_additions": [
+    ".gitattributes",
     "scripts/download_data.py",
     "tests/test_data_release.py",
     "reference/data-release.json",

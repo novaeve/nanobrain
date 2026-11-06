@@ -85,7 +85,7 @@ python -m brainwm_unified.cli show configs/experiments/cajal_v1.toml
 python scripts/cajal_react.py
 ```
 
-最后一条命令打印演化计划。正式启动需要显式 `--execute`、API 环境配置，以及原协议要求的参考 checkpoint、教师权重、整合评估缓存和可用组件依赖。服务器快照中的数据与参考路径有指纹约束，迁移前请按 [变体部署说明](variants/cajal-react/README.md) 准备这些输入。
+最后一条命令打印演化计划。正式启动需要显式 `--execute`、独立 Git 根目录、API 环境配置，以及原协议要求的参考 checkpoint、教师权重、整合评估缓存和可用组件依赖。服务器快照中的数据与参考路径有指纹约束，迁移前请按 [变体部署说明](variants/cajal-react/README.md) 准备这些输入。
 
 原 nanoBrain 四任务教程、组件 API、自定义编码器和冻结排行榜位于 `docs/`、`src/`、`examples/` 和 `benchmarks/`。它们使用各自的数据与评估协议。
 

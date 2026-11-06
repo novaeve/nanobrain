@@ -42,6 +42,17 @@ python scripts/download_data.py --verify-only
 
 ## 训练与完整演化的部署边界
 
+本目录以独立变体随 nanoBrain 发布。完整演化的沙箱和 Git 来源检查沿用原项目的独立仓库结构，部署时先从本分支导出一个独立 Git 根目录。
+
+```bash
+# 在 nanoBrain 仓库根目录执行，目标目录须为空。
+mkdir -p /work/cajal-react
+git archive HEAD:variants/cajal-react | tar -x -C /work/cajal-react
+git -C /work/cajal-react init
+git -C /work/cajal-react add .
+git -C /work/cajal-react commit -m "Import frozen Cajal ReAct source"
+```
+
 普通 Cajal 训练入口允许显式设置数据路径。例如，在安装 GPU 训练环境后，可将原配方的数据路径指向本地数据目录，并将停止步数设为 10,000。
 
 ```bash
