@@ -1,0 +1,3785 @@
+[
+  {
+    "available": true,
+    "id": "cajal.attention",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.n_heads",
+    "slots": [
+      "block_attention"
+    ],
+    "source": "brainwm_unified.model.Attention",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.moe",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.n_experts/top_k/router_score",
+    "slots": [
+      "block_mixer"
+    ],
+    "source": "brainwm_unified.model.MoE",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.swiglu",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {
+      "expansion": [
+        "number",
+        1.0,
+        8.0
+      ]
+    },
+    "role": "component",
+    "search_field": null,
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "brainwm_unified.model.SwiGLU",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.recurrent_encoder",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.n_prelude/n_core/n_coda/loops",
+    "slots": [],
+    "source": "brainwm_unified.model.Encoder",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.value_mlp",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": null,
+    "slots": [
+      "value_embedding"
+    ],
+    "source": "brainwm_unified.model.Encoder",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "value_embedding": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.nbeats_block",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.nbeats",
+    "slots": [],
+    "source": "brainwm_unified.model.Block",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.linear_latent",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.z_dim/latent_reg",
+    "slots": [
+      "latent"
+    ],
+    "source": "brainwm_unified.model.UnifiedModel",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "latent": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.hierarchical_head",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": null,
+    "slots": [
+      "classifier"
+    ],
+    "source": "brainwm_unified.model.HierarchicalHead",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.nb_decoder",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.decoder",
+    "slots": [
+      "decoder"
+    ],
+    "source": "brainwm_unified.model.ExpressionDecoder",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "decoder": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.unified_decoder",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.decoder",
+    "slots": [
+      "decoder"
+    ],
+    "source": "brainwm_unified.model.UnifiedExpressionDecoder",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "decoder": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.neighborhood_transformer",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.spatial_d/spatial_layers",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "brainwm_unified.model.NeighborhoodModel",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.batch_discriminator",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.batch_adversary",
+    "slots": [],
+    "source": "brainwm_unified.model.BatchDiscriminator",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.mog_prior",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "model.latent_reg/mog_components",
+    "slots": [],
+    "source": "brainwm_unified.model.MoGPrior",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/model.py",
+    "source_sha256": "e9d0dc905c7309cccb8d610b4c6960de41836063c785b429d1162a25138a5ab8",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.nb_likelihood",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": null,
+    "slots": [],
+    "source": "brainwm_unified.objectives.expression_nll",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/objectives.py",
+    "source_sha256": "d5fef2e938637386543a9d706d9429a601f840c9ab54a7ec97aaa08ace4b9762",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.initial_loss",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.balancer",
+    "slots": [],
+    "source": "brainwm_unified.balance.InitialLoss",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/balance.py",
+    "source_sha256": "17cb998e4383a2c6ccd752f887eda5070cf51b61a900f4441c497b3c9ed15f7b",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.grad_equal",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.balancer/balancer_params",
+    "slots": [],
+    "source": "brainwm_unified.balance.GradEqual",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/balance.py",
+    "source_sha256": "17cb998e4383a2c6ccd752f887eda5070cf51b61a900f4441c497b3c9ed15f7b",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.famo",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.balancer/balancer_params",
+    "slots": [],
+    "source": "brainwm_unified.balance.FAMO",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/balance.py",
+    "source_sha256": "17cb998e4383a2c6ccd752f887eda5070cf51b61a900f4441c497b3c9ed15f7b",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.cond_hsic",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.objectives",
+    "slots": [],
+    "source": "brainwm_unified.regularizers.CondHSIC",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/regularizers.py",
+    "source_sha256": "7b4564456d991f2d7388ec8b00a063e853c54a793adf377e405f7eb7e21f7447",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.sigreg",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.objectives",
+    "slots": [],
+    "source": "brainwm_unified.regularizers.SIGReg",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/regularizers.py",
+    "source_sha256": "7b4564456d991f2d7388ec8b00a063e853c54a793adf377e405f7eb7e21f7447",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.batch_swap",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.objectives",
+    "slots": [],
+    "source": "brainwm_unified.regularizers.BatchSwap",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/regularizers.py",
+    "source_sha256": "7b4564456d991f2d7388ec8b00a063e853c54a793adf377e405f7eb7e21f7447",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.teacher_gram",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.objectives + named frozen teacher",
+    "slots": [],
+    "source": "brainwm_unified.regularizers.TeacherGram",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/regularizers.py",
+    "source_sha256": "7b4564456d991f2d7388ec8b00a063e853c54a793adf377e405f7eb7e21f7447",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.batch_adversary",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.objectives",
+    "slots": [],
+    "source": "brainwm_unified.regularizers.BatchAdversary",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/regularizers.py",
+    "source_sha256": "7b4564456d991f2d7388ec8b00a063e853c54a793adf377e405f7eb7e21f7447",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.grouped_muon",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.optimizer/optimizer_params",
+    "slots": [],
+    "source": "brainwm_unified.optim.GroupedMuon",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/optim.py",
+    "source_sha256": "5bcc9878244bd17c01e1583d2a02ac1c484683579e35366f4f51888a7fe124d6",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.kl_capacity",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.kl_target/kl_dual_lr",
+    "slots": [],
+    "source": "brainwm_unified.balance.CapacityWeight",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/balance.py",
+    "source_sha256": "17cb998e4383a2c6ccd752f887eda5070cf51b61a900f4441c497b3c9ed15f7b",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "cajal.budgeted_weight",
+    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "parameter_ranges": {},
+    "role": "component",
+    "search_field": "train.objectives.budget/dual_lr",
+    "slots": [],
+    "source": "brainwm_unified.balance.DualWeight",
+    "source_family": "Cajal",
+    "source_file": "brainwm_unified/balance.py",
+    "source_sha256": "17cb998e4383a2c6ccd752f887eda5070cf51b61a900f4441c497b3c9ed15f7b",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "scvi.vae_encoder",
+    "note": "Official installed module, adapted to Cajal tensors/objectives; not a complete baseline model.",
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "latent"
+    ],
+    "source": "scvi.nn.Encoder",
+    "source_family": "scVI/scANVI",
+    "source_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/cajal-react-joint-20261106/.venv/lib64/python3.11/site-packages/scvi/nn/_base_components.py",
+    "source_sha256": "0db0d21dd16f8b905030ca3e55eab5967b75208bea484ef501a52434ea1a0ba6",
+    "verification": {
+      "by_slot": {
+        "latent": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "scvi.nb_decoder",
+    "note": "Official installed module, adapted to Cajal tensors/objectives; not a complete baseline model.",
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "decoder"
+    ],
+    "source": "scvi.nn.DecoderSCVI",
+    "source_family": "scVI/scANVI",
+    "source_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/cajal-react-joint-20261106/.venv/lib64/python3.11/site-packages/scvi/nn/_base_components.py",
+    "source_sha256": "0db0d21dd16f8b905030ca3e55eab5967b75208bea484ef501a52434ea1a0ba6",
+    "verification": {
+      "by_slot": {
+        "decoder": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "id": "scanvi.classifier",
+    "note": "Official installed module, adapted to Cajal tensors/objectives; not a complete baseline model.",
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "scvi.module._classifier.Classifier",
+    "source_family": "scVI/scANVI",
+    "source_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/cajal-react-joint-20261106/.venv/lib64/python3.11/site-packages/scvi/module/_classifier.py",
+    "source_sha256": "971c87f42ade25b0da9b6a9f1d6b5e33503c5845c66f711886ccf38b619c2a52",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.encoder.identity",
+    "legacy_kind": "encoder",
+    "legacy_name": "identity",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [
+        "linear"
+      ],
+      "complexity": "O(BD)",
+      "input_rank": null,
+      "kind": "encoder",
+      "name": "identity",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.mlp",
+    "legacy_kind": "encoder",
+    "legacy_name": "mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD^2)",
+      "input_rank": null,
+      "kind": "encoder",
+      "name": "mlp",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.encoder.panel_patches",
+    "legacy_kind": "encoder",
+    "legacy_name": "panel_patches",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BGH)",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "panel_patches",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 3,
+      "source": "torch.nn.Linear",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.nn.Linear",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.residual_mlp",
+    "legacy_kind": "encoder",
+    "legacy_name": "residual_mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBD^2)",
+      "input_rank": null,
+      "kind": "encoder",
+      "name": "residual_mlp",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.scbrain_swiglu",
+    "legacy_kind": "encoder",
+    "legacy_name": "scbrain_swiglu",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBH\u00b2)",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scbrain_swiglu",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scBrain FFN",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scBrain FFN",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.encoder.scfoundation_autobin",
+    "legacy_kind": "encoder",
+    "legacy_name": "scfoundation_autobin",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scfoundation_autobin",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 3,
+      "source": "scFoundation AutoDiscretizationEmbedding2; new gene identity",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "bins": [
+        "integer",
+        4,
+        64
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "value_embedding"
+    ],
+    "source": "scFoundation AutoDiscretizationEmbedding2; new gene identity",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "value_embedding": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.scnode_mlp",
+    "legacy_kind": "encoder",
+    "legacy_name": "scnode_mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBH\u00b2)",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scnode_mlp",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scNODE LinearNet",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scNODE LinearNet",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.scnym_mlp",
+    "legacy_kind": "encoder",
+    "legacy_name": "scnym_mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scnym_mlp",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scNym CellTypeCLF.embed",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scNym CellTypeCLF.embed",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.encoder.scpoli_conditional",
+    "legacy_kind": "encoder",
+    "legacy_name": "scpoli_conditional",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scpoli_conditional",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scPoli Encoder + technical condition embedding; deterministic mean",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "scPoli Encoder + technical condition embedding; deterministic mean",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.encoder.scprint_value",
+    "legacy_kind": "encoder",
+    "legacy_name": "scprint_value",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scprint_value",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 3,
+      "source": "scPRINT ContinuousValueEncoder; nonnegative expression only",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "value_embedding"
+    ],
+    "source": "scPRINT ContinuousValueEncoder; nonnegative expression only",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "value_embedding": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.sctab_tabnet",
+    "legacy_kind": "encoder",
+    "legacy_name": "sctab_tabnet",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "sctab_tabnet",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scTab TabNetEncoder",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "steps": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scTab TabNetEncoder",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.scvi_fc",
+    "legacy_kind": "encoder",
+    "legacy_name": "scvi_fc",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBH\u00b2)",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "scvi_fc",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scvi.nn.FCLayers",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scvi.nn.FCLayers",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.encoder.sedr_mlp",
+    "legacy_kind": "encoder",
+    "legacy_name": "sedr_mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "encoder",
+      "name": "sedr_mlp",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "SEDR full_block",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "SEDR full_block",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.attention.bert",
+    "legacy_kind": "attention",
+    "legacy_name": "bert",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BT\u00b2H)",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "bert",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": null,
+      "source": "transformers.BertLayer (random weights)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_attention"
+    ],
+    "source": "transformers.BertLayer (random weights)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.attention.differential_linear",
+    "legacy_kind": "attention",
+    "legacy_name": "differential_linear",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BND^2)",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "differential_linear",
+      "notes": "positive-minus-correction kernel attention",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "correction_init": [
+        "number",
+        0.0,
+        1.0
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_attention"
+    ],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.attention.identity",
+    "legacy_kind": "attention",
+    "legacy_name": "identity",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD)",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "identity",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.attention.scbert_performer",
+    "legacy_kind": "attention",
+    "legacy_name": "scbert_performer",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "scbert_performer",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": null,
+      "source": "scBERT SelfAttention / FastAttention",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_attention"
+    ],
+    "source": "scBERT SelfAttention / FastAttention",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.attention.scfit_block",
+    "legacy_kind": "attention",
+    "legacy_name": "scfit_block",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BT\u00b2H)",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "scfit_block",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": null,
+      "source": "scFiT AdaLNTransformerBlock (unconditional)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_attention"
+    ],
+    "source": "scFiT AdaLNTransformerBlock (unconditional)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.attention.sdpa",
+    "legacy_kind": "attention",
+    "legacy_name": "sdpa",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BN^2D)",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "sdpa",
+      "notes": "PyTorch MultiheadAttention",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_attention"
+    ],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.attention.torch_transformer",
+    "legacy_kind": "attention",
+    "legacy_name": "torch_transformer",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BT\u00b2H)",
+      "input_rank": null,
+      "kind": "attention",
+      "name": "torch_transformer",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": null,
+      "source": "torch.nn.TransformerEncoderLayer",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_attention"
+    ],
+    "source": "torch.nn.TransformerEncoderLayer",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.spatial.graphst_sparse",
+    "legacy_kind": "spatial",
+    "legacy_name": "graphst_sparse",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BKH+BH\u00b2)",
+      "input_rank": 2,
+      "kind": "spatial",
+      "name": "graphst_sparse",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "GraphST Encoder_sparse.weight1 + torch.sparse.mm",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "GraphST Encoder_sparse.weight1 + torch.sparse.mm",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.spatial.identity",
+    "legacy_kind": "spatial",
+    "legacy_name": "identity",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD)",
+      "input_rank": null,
+      "kind": "spatial",
+      "name": "identity",
+      "notes": "exact self-loop fallback",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.spatial.neighbor_mean",
+    "legacy_kind": "spatial",
+    "legacy_name": "neighbor_mean",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BKD)",
+      "input_rank": null,
+      "kind": "spatial",
+      "name": "neighbor_mean",
+      "notes": "bounded sparse neighbor residual",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.spatial.scbrain_gcn",
+    "legacy_kind": "spatial",
+    "legacy_name": "scbrain_gcn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BKH+BH\u00b2)",
+      "input_rank": 2,
+      "kind": "spatial",
+      "name": "scbrain_gcn",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scBrain GCNConv",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "scBrain GCNConv",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.spatial.sedr_gcn",
+    "legacy_kind": "spatial",
+    "legacy_name": "sedr_gcn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "spatial",
+      "name": "sedr_gcn",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "SEDR GraphConvolution; one-hop normalized sparse graph",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "SEDR GraphConvolution; one-hop normalized sparse graph",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.spatial.spagcn_gcn",
+    "legacy_kind": "spatial",
+    "legacy_name": "spagcn_gcn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "spatial",
+      "name": "spagcn_gcn",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "SpaGCN GraphConvolution; existing verified one-hop adjacency, no histology",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "SpaGCN GraphConvolution; existing verified one-hop adjacency, no histology",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.spatial.stagate_gat",
+    "legacy_kind": "spatial",
+    "legacy_name": "stagate_gat",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "spatial",
+      "name": "stagate_gat",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "STAGATE custom GATConv, one hop, heads=1",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "neighborhood"
+    ],
+    "source": "STAGATE custom GATConv, one hop, heads=1",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.residual.nbeats",
+    "legacy_kind": "residual",
+    "legacy_name": "nbeats",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD^2)",
+      "input_rank": null,
+      "kind": "residual",
+      "name": "nbeats",
+      "notes": "backcast/forecast residual correction",
+      "output_rank": null,
+      "source": "N-BEATS",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "expansion": [
+        "number",
+        1.0,
+        8.0
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "N-BEATS",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.residual.none",
+    "legacy_kind": "residual",
+    "legacy_name": "none",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD)",
+      "input_rank": null,
+      "kind": "residual",
+      "name": "none",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.residual.scnym_resblock",
+    "legacy_kind": "residual",
+    "legacy_name": "scnym_resblock",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "residual",
+      "name": "scnym_resblock",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scNym ResBlock",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scNym ResBlock",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.pairing.identity",
+    "legacy_kind": "pairing",
+    "legacy_name": "identity",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD)",
+      "input_rank": null,
+      "kind": "pairing",
+      "name": "identity",
+      "notes": "index-aligned ablation",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.pairing.sinkhorn",
+    "legacy_kind": "pairing",
+    "legacy_name": "sinkhorn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(B^2D)",
+      "input_rank": null,
+      "kind": "pairing",
+      "name": "sinkhorn",
+      "notes": "balanced entropic OT barycentric matching",
+      "output_rank": null,
+      "source": "BrainWM/scFiT",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "BrainWM/scFiT",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.fmt",
+    "legacy_kind": "flow",
+    "legacy_name": "fmt",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BND^2)",
+      "input_rank": null,
+      "kind": "flow",
+      "name": "fmt",
+      "notes": "AdaLN-Zero U-shaped population Flow Matching Transformer",
+      "output_rank": null,
+      "source": "BrainWM/scBrain/scFiT",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "BrainWM/scBrain/scFiT",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.mioflow_ode",
+    "legacy_kind": "flow",
+    "legacy_name": "mioflow_ode",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "flow",
+      "name": "mioflow_ode",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "MIOFlow ODEFunc; stateless conditional adapter",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "MIOFlow ODEFunc; stateless conditional adapter",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.mlp",
+    "legacy_kind": "flow",
+    "legacy_name": "mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD^2)",
+      "input_rank": null,
+      "kind": "flow",
+      "name": "mlp",
+      "notes": "small conditional velocity field",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.none",
+    "legacy_kind": "flow",
+    "legacy_name": "none",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BD)",
+      "input_rank": null,
+      "kind": "flow",
+      "name": "none",
+      "notes": "zero-velocity developmental fallback",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.prescient_potential",
+    "legacy_kind": "flow",
+    "legacy_name": "prescient_potential",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "flow",
+      "name": "prescient_potential",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "PRESCIENT AutoGenerator._drift; original positive gradient",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "PRESCIENT AutoGenerator._drift; original positive gradient",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.scfit_adaln",
+    "legacy_kind": "flow",
+    "legacy_name": "scfit_adaln",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBH\u00b2)",
+      "input_rank": 2,
+      "kind": "flow",
+      "name": "scfit_adaln",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scFiT SequenceConditionEncoder + AdaLNTransformerBlock",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "scFiT SequenceConditionEncoder + AdaLNTransformerBlock",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.scnode_time_mlp",
+    "legacy_kind": "flow",
+    "legacy_name": "scnode_time_mlp",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBH\u00b2)",
+      "input_rank": 2,
+      "kind": "flow",
+      "name": "scnode_time_mlp",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scNODE LinearNet (conditional adapter)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "scNODE LinearNet (conditional adapter)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.scuniflow_field",
+    "legacy_kind": "flow",
+    "legacy_name": "scuniflow_field",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BH\u00b3)",
+      "input_rank": 2,
+      "kind": "flow",
+      "name": "scuniflow_field",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scUniFlow VectorFieldNet (direct latent velocity adaptation)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "scUniFlow VectorFieldNet (direct latent velocity adaptation)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.flow.trajectorynet",
+    "legacy_kind": "flow",
+    "legacy_name": "trajectorynet",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(LBH\u00b2)",
+      "input_rank": 2,
+      "kind": "flow",
+      "name": "trajectorynet",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "TrajectoryNet ODEnet (conditional CFM, no CNF density loss)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "TrajectoryNet ODEnet (conditional CFM, no CNF density loss)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.head.celltypist_linear",
+    "legacy_kind": "head",
+    "legacy_name": "celltypist_linear",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "head",
+      "name": "celltypist_linear",
+      "notes": "Classification logits only. No pretrained atlas or original fitting procedure.",
+      "output_rank": 2,
+      "source": "CellTypist linear logistic decision function; fresh coefficients/intercept",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "CellTypist linear logistic decision function; fresh coefficients/intercept",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/integration_components.py",
+    "source_sha256": "8672b5b62bcee616c6f3dffd208750aea526b48c8eeb50ffd7389b5a796f1e90",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.head.classification",
+    "legacy_kind": "head",
+    "legacy_name": "classification",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BDC)",
+      "input_rank": null,
+      "kind": "head",
+      "name": "classification",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.head.regression",
+    "legacy_kind": "head",
+    "legacy_name": "regression",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BDO)",
+      "input_rank": null,
+      "kind": "head",
+      "name": "regression",
+      "notes": "",
+      "output_rank": null,
+      "source": "nanobrain",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "nanobrain",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/modules.py",
+    "source_sha256": "a42209d7c1a7491aff698ede0311862a7d052431845b945b531a1c0a5f19ed63",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.head.scbrain",
+    "legacy_kind": "head",
+    "legacy_name": "scbrain",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BH\u00b2+BHC)",
+      "input_rank": 2,
+      "kind": "head",
+      "name": "scbrain",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scBrain Hierarchical_Decoder (one level)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "scBrain Hierarchical_Decoder (one level)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.head.scfit",
+    "legacy_kind": "head",
+    "legacy_name": "scfit",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "O(BH\u00b2+BHC)",
+      "input_rank": 2,
+      "kind": "head",
+      "name": "scfit",
+      "notes": "Trainable component hybrid, not a pretrained model or full baseline reproduction.",
+      "output_rank": 2,
+      "source": "scFiT TypeHead",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "scFiT TypeHead",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/baseline_components.py",
+    "source_sha256": "64d539f1fea8b93c73587c4611016a589ea19aaa95f7599dba51c8720c085b60",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.head.scpoli_prototype",
+    "legacy_kind": "head",
+    "legacy_name": "scpoli_prototype",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "head",
+      "name": "scpoli_prototype",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scPoli classify; train-only EMA prototypes, checkpointed buffers",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "momentum": [
+        "number",
+        0.0,
+        0.99
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "scPoli classify; train-only EMA prototypes, checkpointed buffers",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.head.scprint_classifier",
+    "legacy_kind": "head",
+    "legacy_name": "scprint_classifier",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "head",
+      "name": "scprint_classifier",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scPRINT ClsDecoder",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ],
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "classifier"
+    ],
+    "source": "scPRINT ClsDecoder",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.add",
+    "legacy_kind": "operation",
+    "legacy_name": "add",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "add",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.stack/sum",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.stack/sum",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.bbknn",
+    "legacy_kind": "operation",
+    "legacy_name": "bbknn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "operation",
+      "name": "bbknn",
+      "notes": "Backbone input-only node: inputs=['features'], repeat=1. Frozen split-level expression+batch operation, no biological labels; strength in [0,1]. Can feed any encoder or merge parallel input branches. Not a spatial geometry hop.",
+      "output_rank": 2,
+      "source": "bbknn.matrix.bbknn connectivities + one-hop feature diffusion",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "bbknn.matrix.bbknn connectivities + one-hop feature diffusion",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/integration_components.py",
+    "source_sha256": "8672b5b62bcee616c6f3dffd208750aea526b48c8eeb50ffd7389b5a796f1e90",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.concat",
+    "legacy_kind": "operation",
+    "legacy_name": "concat",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "concat",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.cat, feature axis",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.cat, feature axis",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.dropout",
+    "legacy_kind": "operation",
+    "legacy_name": "dropout",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "dropout",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.Dropout",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "torch.nn.Dropout",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.film",
+    "legacy_kind": "operation",
+    "legacy_name": "film",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "film",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.Linear affine conditioning",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.nn.Linear affine conditioning",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.first_pool",
+    "legacy_kind": "operation",
+    "legacy_name": "first_pool",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "first_pool",
+      "notes": "",
+      "output_rank": null,
+      "source": "token indexing",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "token indexing",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.gelu",
+    "legacy_kind": "operation",
+    "legacy_name": "gelu",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "gelu",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.GELU",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "torch.nn.GELU",
+    "source_family": "nanoBrain existing component library",
+    "source_file": ".venv/lib64/python3.11/site-packages/torch/nn/modules/activation.py",
+    "source_sha256": "ecb5e2cef1419d4bf7222fc7b35a3dffc0e5b1bc979031c95c3f1151d94fc961",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.harmony",
+    "legacy_kind": "operation",
+    "legacy_name": "harmony",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "operation",
+      "name": "harmony",
+      "notes": "Backbone input-only node: inputs=['features'], repeat=1. Frozen split-level expression+batch operation, no biological labels; strength in [0,1]. Can feed any encoder or merge parallel input branches. Not a spatial geometry hop.",
+      "output_rank": 2,
+      "source": "harmonypy.run_harmony.Z_corr",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "harmonypy.run_harmony.Z_corr",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/integration_components.py",
+    "source_sha256": "8672b5b62bcee616c6f3dffd208750aea526b48c8eeb50ffd7389b5a796f1e90",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.layer_norm",
+    "legacy_kind": "operation",
+    "legacy_name": "layer_norm",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "layer_norm",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.LayerNorm",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "eps": [
+        "number",
+        1e-08,
+        0.001
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "torch.nn.LayerNorm",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.linear",
+    "legacy_kind": "operation",
+    "legacy_name": "linear",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "linear",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.Linear",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "torch.nn.Linear",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.mean_pool",
+    "legacy_kind": "operation",
+    "legacy_name": "mean_pool",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "mean_pool",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.mean, token axis only",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.mean, token axis only",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.rms_norm",
+    "legacy_kind": "operation",
+    "legacy_name": "rms_norm",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "rms_norm",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.RMSNorm",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "eps": [
+        "number",
+        1e-08,
+        0.001
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "torch.nn.RMSNorm",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.scanorama",
+    "legacy_kind": "operation",
+    "legacy_name": "scanorama",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "operation",
+      "name": "scanorama",
+      "notes": "Backbone input-only node: inputs=['features'], repeat=1. Frozen split-level expression+batch operation, no biological labels; strength in [0,1]. Can feed any encoder or merge parallel input branches. Not a spatial geometry hop.",
+      "output_rank": 2,
+      "source": "scanorama.assemble MNN correction on fixed panel features",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "scanorama.assemble MNN correction on fixed panel features",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/integration_components.py",
+    "source_sha256": "8672b5b62bcee616c6f3dffd208750aea526b48c8eeb50ffd7389b5a796f1e90",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.scbrain_ffn",
+    "legacy_kind": "operation",
+    "legacy_name": "scbrain_ffn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "scbrain_ffn",
+      "notes": "",
+      "output_rank": null,
+      "source": "scBrain SwiGLU (FFN residual and norm are separate nodes)",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "expansion": [
+        "number",
+        1.0,
+        8.0
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "scBrain SwiGLU (FFN residual and norm are separate nodes)",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.scfit_attention",
+    "legacy_kind": "operation",
+    "legacy_name": "scfit_attention",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "scfit_attention",
+      "notes": "",
+      "output_rank": null,
+      "source": "scFiT AdaLNTransformerBlock.self_attn",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "heads": [
+        "integer",
+        1,
+        8
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scFiT AdaLNTransformerBlock.self_attn",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.scfit_ffn",
+    "legacy_kind": "operation",
+    "legacy_name": "scfit_ffn",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "scfit_ffn",
+      "notes": "",
+      "output_rank": null,
+      "source": "scFiT AdaLNTransformerBlock.ffn",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ],
+      "expansion": [
+        "number",
+        1.0,
+        8.0
+      ]
+    },
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "scFiT AdaLNTransformerBlock.ffn",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.scfit_time",
+    "legacy_kind": "operation",
+    "legacy_name": "scfit_time",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "scfit_time",
+      "notes": "",
+      "output_rank": null,
+      "source": "scFiT SequenceConditionEncoder",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "dropout": [
+        "number",
+        0.0,
+        0.5
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "scFiT SequenceConditionEncoder",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "flat_input": true,
+    "id": "legacy.operation.sctab_glu",
+    "legacy_kind": "operation",
+    "legacy_name": "sctab_glu",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "sctab_glu",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "scTab GLU_Layer",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "token"
+    ],
+    "source": "scTab GLU_Layer",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": true,
+    "flat_input": false,
+    "id": "legacy.operation.silu",
+    "legacy_kind": "operation",
+    "legacy_name": "silu",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "silu",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.nn.SiLU",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "role": "component",
+    "slots": [
+      "token",
+      "block_mixer"
+    ],
+    "source": "torch.nn.SiLU",
+    "source_family": "nanoBrain existing component library",
+    "source_file": ".venv/lib64/python3.11/site-packages/torch/nn/modules/activation.py",
+    "source_sha256": "ecb5e2cef1419d4bf7222fc7b35a3dffc0e5b1bc979031c95c3f1151d94fc961",
+    "verification": {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.stack",
+    "legacy_kind": "operation",
+    "legacy_name": "stack",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "stack",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.stack, token axis",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.stack, token axis",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.operation.subtract",
+    "legacy_kind": "operation",
+    "legacy_name": "subtract",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": null,
+      "kind": "operation",
+      "name": "subtract",
+      "notes": "",
+      "output_rank": null,
+      "source": "torch.sub",
+      "supports_missing": true
+    },
+    "parameter_ranges": {},
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "torch.sub",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/graph_ops.py",
+    "source_sha256": "f3192655477c9e53813983ec47c34d5863caa25d2d60d29e733b9c9a55d5ef2f",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": false,
+    "flat_input": false,
+    "id": "legacy.endpoint.cellot_icnn_transport",
+    "legacy_kind": "endpoint",
+    "legacy_name": "cellot_icnn_transport",
+    "note": "Frozen original adapter; Cajal token adapters act on one cell's learned gene-token features, not a 256-gene expression dataset.",
+    "original_contract": {
+      "aliases": [],
+      "complexity": "unknown",
+      "input_rank": 2,
+      "kind": "endpoint",
+      "name": "cellot_icnn_transport",
+      "notes": "Pinned upstream structure adapter; no pretrained weights or original training recipe.",
+      "output_rank": 2,
+      "source": "CellOT ICNN.transport; convex softplus weight parameterization",
+      "supports_missing": true
+    },
+    "parameter_ranges": {
+      "depth": [
+        "integer",
+        1,
+        6
+      ]
+    },
+    "reason": "Preserved in merged source catalogue; requires a different task/input contract (e.g. development, nonnegative expression or a dataset-wide transform).",
+    "role": "component",
+    "slots": [],
+    "source": "CellOT ICNN.transport; convex softplus weight parameterization",
+    "source_family": "nanoBrain existing component library",
+    "source_file": "component_library/legacy/src/nanobrain/component_extensions.py",
+    "source_sha256": "e21175cc80e5b941a6ca92121d08398e0d287f0e167e6f0f78569705e43d51e2",
+    "verification": {
+      "by_slot": {}
+    }
+  },
+  {
+    "available": true,
+    "id": "baseline.LogReg",
+    "metrics": {
+      "Cell type fine macro-F1": 0.7399146731097425,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": null,
+      "Integration bio": null,
+      "Region fine macro-F1": 0.6342131861640574,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.PCA (unintegrated)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.26660138230207253,
+      "Integration bio": 0.5812249183654785,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.Pearson + Harmony (transductive)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.5083530917245018,
+      "Integration bio": 0.5104243755340576,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": false,
+    "regime": "transductive",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.Pearson PCA",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.35478840457407573,
+      "Integration bio": 0.5100030422210693,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": false,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.XGBoost",
+    "metrics": {
+      "Cell type fine macro-F1": 0.743368058515899,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": null,
+      "Integration bio": null,
+      "Region fine macro-F1": 0.6815090643435028,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.log PCA + Harmony (transductive)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.44112264885914876,
+      "Integration bio": 0.5568747520446777,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": false,
+    "regime": "transductive",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.scANVI",
+    "metrics": {
+      "Cell type fine macro-F1": 0.7030989352797276,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.4535480119005794,
+      "Integration bio": 0.6248489856719971,
+      "Region fine macro-F1": 0.49666303067253137,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.scVI",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.44932378967369563,
+      "Integration bio": 0.6092833518981934,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.scVI (transductive)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": 0.5039240242907089,
+      "Integration bio": 0.6225543975830078,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": false,
+    "regime": "transductive",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.gene mean",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": 0.5306792223296861,
+      "Integration batch": null,
+      "Integration bio": null,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.kNN (k=15, same panel)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": 0.7002158820633035,
+      "Integration batch": null,
+      "Integration bio": null,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": null
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.neighbour mean (CP10K space)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": null,
+      "Integration bio": null,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": 0.2760043619219778
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  },
+  {
+    "available": true,
+    "id": "baseline.neighbour mean (log space)",
+    "metrics": {
+      "Cell type fine macro-F1": null,
+      "Gene imputation Pearson (cell median)": null,
+      "Integration batch": null,
+      "Integration bio": null,
+      "Region fine macro-F1": null,
+      "Spatial imputation Pearson (cell median)": 0.3678609452563165
+    },
+    "note": "Existing complete-method performance; a fitted tree/kNN is not a differentiable Cajal layer.",
+    "promotion_frontier": true,
+    "regime": "existing_Cajal_recipe",
+    "role": "whole_method_baseline",
+    "slots": [],
+    "source": "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv",
+    "source_family": "Cajal existing whole-method benchmark"
+  }
+]

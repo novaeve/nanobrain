@@ -1,0 +1,17 @@
+{
+  "name": "seaad_scbrain_feature_residual",
+  "dataset": "SEA_AD_MTP_ST",
+  "data_path": "data/global_data.npz",
+  "entrypoint": "experiments/scbrain/main.py",
+  "command": "python experiments/scbrain/main.py --model_name scBrain --npz_path data/global_data.npz --device cuda:0 --bs 512 --max_epochs 500 --patience 30 --e_layers 3 --d_layers 1 --enc_hidden_dim 256 --dec_hidden_dim 256 --latent_dim 20 --residual_mode feature --seed 3028",
+  "model": {
+    "input_dim": 140,
+    "levels": [3, 24, 137],
+    "encoder_hidden_dim": 256,
+    "decoder_hidden_dim": 256,
+    "latent_dim": 20,
+    "encoder_layers": 3,
+    "decoder_layers": 1,
+    "residual_mode": "feature"
+  }
+}

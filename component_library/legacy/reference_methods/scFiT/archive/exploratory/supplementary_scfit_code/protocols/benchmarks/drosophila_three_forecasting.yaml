@@ -1,0 +1,34 @@
+protocol_name: drosophila_three_forecasting_v1
+data_bundle_path: <PREPROCESSED_BUNDLE_DIR>
+eligible_time_bins:
+- hrs_00_02
+- hrs_01_03
+- hrs_02_04
+- hrs_03_07
+- hrs_04_08
+- hrs_06_10
+- hrs_08_12
+- hrs_10_14
+- hrs_12_16
+- hrs_14_18
+- hrs_16_20
+observed_time_bins:
+- hrs_00_02
+- hrs_01_03
+- hrs_02_04
+- hrs_03_07
+- hrs_04_08
+- hrs_06_10
+- hrs_08_12
+- hrs_10_14
+heldout_time_bins: &id001
+- hrs_12_16
+- hrs_14_18
+- hrs_16_20
+task_type: three_forecasting
+source_policy: previous_observed
+direction_mode: forward_only
+eval_time_bins: *id001
+display_time_mode: index_0based
+normalization: librarysize_10000_log1p_clip_0_10_from_count_hvg
+hvg_dim: 2000

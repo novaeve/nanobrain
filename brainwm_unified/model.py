@@ -196,6 +196,10 @@ class Block(nn.Module):
         if self.nbeats:
             self.backcast = nn.Linear(d, d, bias=False)
             self.forecast = nn.Linear(d, d, bias=False)
+        if cfg.research_components:
+            from cajal_research.components import install_block
+
+            install_block(self, cfg)
 
     def forward(self, x, total, attn_mask, gene, slot: int = 0):
         a = self.attn(self.norm1(x), attn_mask)
@@ -236,6 +240,11 @@ class Encoder(nn.Module):
         from cajal_research.plugins import build_transforms
 
         self.research_transforms = build_transforms(cfg.research_plugins, d)
+        if cfg.research_components:
+            from cajal_research.components import build_token_modules, install_value_embedding
+
+            self.research_transforms.extend(build_token_modules(cfg))
+            install_value_embedding(self, cfg)
 
     def pearson_residuals(self, b) -> torch.Tensor:
         """tok_in (log1p CP10K of the cell's library) as analytic Pearson residuals under gene_rate."""
@@ -290,7 +299,7 @@ class Encoder(nn.Module):
         return h
 
     def moe_layers(self):
-        return [blk.moe for blk in (*self.prelude, *self.core, *self.coda)]
+        return [blk.moe for blk in (*self.prelude, *self.core, *self.coda) if isinstance(blk.moe, MoE)]
 
 
 class HierarchicalHead(nn.Module):
@@ -461,6 +470,10 @@ class UnifiedModel(nn.Module):
         self.neighborhood = NeighborhoodModel(cfg)
         if cfg.batch_adversary:
             self.batch_adversary = BatchDiscriminator(cfg.z_dim, cfg.batch_adversary, cfg.n_batches)
+        if cfg.research_components:
+            from cajal_research.components import install_model
+
+            install_model(self, cfg)
         if cfg.compile_blocks:
             # Regional compilation (as in torchtitan): each encoder block is compiled on its own,
             # with dynamic shapes since token counts and cell lengths change every step.

@@ -1,0 +1,45 @@
+# GeneMamba Conditional Flow Matching System Configuration
+# =======================================================
+model:
+  n_genes: 32738
+  grid_size: 181         # HxW dimensions of physical Mamba block mapping (181² = 32761 ≥ 32738)
+  d_model: 512           # Channel depth for both SSMS and embeddings
+  d_state_row: 64        # Bidirectional Row level inner state width
+  d_state_col: 16        # Column level state capacity 
+  n_layers: 8            # Iterative Hierarchical blocks (1 FWD/BWD per each)
+
+training:
+  experiment_dir: results/pretrain   # 所有过程文件的根目录（checkpoint、日志、划分信息）
+  n_gpus: 2                     # torchrun --nproc_per_node 的值
+  gpu_ids: "4"                # 使用哪几张卡（设置 CUDA_VISIBLE_DEVICES）
+  master_port: 29501            # torchrun 通信端口（29500 被占用时换一个）
+  batch_size_per_gpu: 25        # 单卡 batch size（总 batch = 此值 × n_gpus）
+  spectral_coords: "data/gene_coords/seaad_augmented_gene_coords.npy"  # 固定硬路由谱坐标
+  nonzero_mask_ratio: 0.2        # 训练时仅从非零基因中抽样 20% 做 mask
+  zero_mask_ratio: 0.0           # 训练时不 mask 零值基因
+  val_ratio: 0.1                # 验证集目标占比（按 donor 粒度划分）
+  seed: 42
+  epochs: 80                    # 一个 epoch = 完整跑完一轮训练集
+  lr: 0.0005                    # 单阶段训练初始学习率
+  min_lr: 0.000001              # cosine 衰减最小学习率
+  val_every_epochs: 1           # 每隔多少个 epoch 做一次验证
+  save_every_epochs: 10         # 每隔多少个 epoch 保存一次 checkpoint
+
+  loss_weights:
+    weighted_x1: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+
+inference:
+  n_steps: 10
+  temperature: 0.1          # 保留接口兼容；硬路由下该值不再影响排列
+
+validation:
+  n_steps: 10                # rollout Euler 步数（与 inference 保持一致）
+  temperature: 0.1           # 保留接口兼容；硬路由下该值不再影响排列
+  nonzero_mask_ratio: 0.2    # 验证时非零基因 mask 比例
+  zero_mask_ratio: 0.0       # 验证时零基因 mask 比例
+  mask_seed: 1234            # 固定 mask 随机种子，保证验证可复现
+  noise_seed: 5678           # 固定 masked 初始噪声种子，保证 rollout 验证可复现
+  max_batches: 10            # 验证时最多跑多少个 batch（控制验证耗时）
+  batch_size: 25             # 验证 batch size（no_grad 下可设更大）

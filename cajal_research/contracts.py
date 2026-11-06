@@ -50,12 +50,33 @@ MODEL_SPACE = {
 }
 MODEL_RANGES = {"router_bias_rate": (0.0, 0.01), "spatial_latent": (0.0, 5.0)}
 TRAIN_RANGES = {
-    "lr": (1e-6, 0.01),
-    "weight_decay": (0.0, 0.2),
-    "grad_clip": (0.1, 10.0),
-    "kl_weight": (0.01, 10.0),
-    "kl_target": (0.0, 200.0),
+    "lr": (1e-6, 0.02),
+    "weight_decay": (0.0, 0.3),
+    "grad_clip": (0.1, 20.0),
+    "kl_weight": (0.001, 20.0),
+    "kl_target": (0.0, 300.0),
     "kl_dual_lr": (0.0001, 0.1),
+    "min_lr_ratio": (0.01, 0.5),
+}
+TRAIN_INTS = {"warmup_steps": (0, 4000), "kl_warmup_steps": (100, 10000), "norm_steps": (20, 1000)}
+DATA_RANGES = {
+    "dissociated_cells": (16, 512),
+    "spatial_groups": (2, 64),
+    "max_nonzero_tokens": (512, 8192),
+    "zero_tokens": (8, 256),
+}
+OPTIMIZER_RANGES = {
+    "adam_beta1": (0.8, 0.99),
+    "adam_beta2": (0.9, 0.9999),
+    "adam_eps": (1e-9, 1e-6),
+    "muon_momentum": (0.8, 0.99),
+    "muon_ns_steps": (3, 8),
+    "sgd_momentum": (0.0, 0.99),
+}
+BALANCER_RANGES = {
+    "grad_equal": {"every": (1, 200), "beta": (0.5, 0.99)},
+    "famo": {"w_lr": (0.001, 0.1), "gamma": (0.0, 0.1), "eps": (1e-10, 1e-5)},
+    "initial": {},
 }
 KINDS = ("token_transform", "gene_loss", "cell_type_loss", "anatomy_loss", "optimizer")
 
@@ -67,7 +88,11 @@ def digest(value):
 
 
 def sha(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    digestor = hashlib.sha256()
+    with Path(path).open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digestor.update(chunk)
+    return digestor.hexdigest()
 
 
 def save(path, value):
@@ -84,8 +109,8 @@ def load_config(path=None):
         raise ValueError("reference must be the frozen existing Cajal v1 recipe")
     if cfg["schedule_steps"] != 30000 or cfg["stop_at"] != 10000:
         raise ValueError("this protocol uses the Cajal 30k schedule stopped at 10k")
-    if len(set(cfg["seeds"])) != 3 or any(type(s) is not int for s in cfg["seeds"]):
-        raise ValueError("three distinct paired seeds are required")
+    if cfg["seeds"] != [0]:
+        raise ValueError("this revision uses the existing Cajal seed 0 only")
     if cfg["checkpoint_selection"] != "fixed_stop" or cfg["scaling_enabled"]:
         raise ValueError("fixed-stop Cajal evaluation; no automatic scaling in this protocol")
     if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(5) for g in cfg["gpu_ids"]):
@@ -112,12 +137,14 @@ def reference_document(cfg=None):
 
 def reference_bundle():
     return {
-        "schema_version": "cajal.research.candidate.v1",
+        "schema_version": "cajal.research.candidate.v2",
         "parent_ids": ["0" * 64],
         "target_metrics": list(METRICS),
         "hypothesis": "Existing Cajal v1 architecture and grad_equal joint recipe, unchanged.",
         "model": {},
         "train": {},
+        "data": {},
+        "components": [],
         "plugins": [],
         "files": {},
     }
@@ -156,14 +183,27 @@ def candidate_schema():
         key: {"type": "number", "minimum": low, "maximum": high} for key, (low, high) in TRAIN_RANGES.items()
     }
     train_properties.update(
+        {key: {"type": "integer", "minimum": low, "maximum": high} for key, (low, high) in TRAIN_INTS.items()}
+    )
+    train_properties.update(
         {
             "balancer": {"enum": ["initial", "grad_equal", "famo"]},
             "optimizer": {"enum": ["grouped_muon", "adamw", "adam", "sgd", "custom"]},
+            "lr_schedule": {"enum": ["cosine", "linear", "constant"]},
+            "optimizer_params": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    k: {"type": "integer" if k == "muon_ns_steps" else "number", "minimum": v[0], "maximum": v[1]}
+                    for k, v in OPTIMIZER_RANGES.items()
+                },
+            },
+            "balancer_params": {"type": "object"},
             "task_weights": {
                 "type": "object",
                 "additionalProperties": False,
                 "required": list(TASKS),
-                "properties": {k: {"type": "number", "minimum": 0.05, "maximum": 10.0} for k in TASKS},
+                "properties": {k: {"type": "number", "minimum": 0.01, "maximum": 20.0} for k in TASKS},
             },
             "objectives": {
                 "type": "array",
@@ -172,9 +212,22 @@ def candidate_schema():
                     "additionalProperties": False,
                     "required": ["name", "weight"],
                     "properties": {
-                        "name": {"enum": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary"]},
-                        "weight": {"type": "number", "minimum": 0.0, "maximum": 5.0},
+                        "name": {"enum": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary", "teacher_gram"]},
+                        "weight": {"type": "number", "minimum": 0.0, "maximum": 20.0},
                         "coeff": {"type": "number"},
+                        "label": {"enum": ["cell_type", "anatomy"]},
+                        "n_cells": {"type": "integer", "minimum": 4, "maximum": 128},
+                        "n_proj": {"type": "integer", "minimum": 16, "maximum": 512},
+                        "t_max": {"type": "number", "minimum": 1.0, "maximum": 10.0},
+                        "n_t": {"type": "integer", "minimum": 5, "maximum": 65},
+                        "teacher": {"enum": ["cell_type_30k"]},
+                        "start": {"type": "integer", "minimum": 0, "maximum": 5000},
+                        "dual_lr": {"type": "number", "minimum": 0.0001, "maximum": 0.1},
+                        "budget": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {k: {"type": "number", "minimum": 1e-6, "maximum": 1e6} for k in TASKS},
+                        },
                     },
                 },
             },
@@ -190,11 +243,13 @@ def candidate_schema():
             "hypothesis",
             "model",
             "train",
+            "data",
+            "components",
             "plugins",
             "files",
         ],
         "properties": {
-            "schema_version": {"const": "cajal.research.candidate.v1"},
+            "schema_version": {"const": "cajal.research.candidate.v2"},
             "parent_ids": {
                 "type": "array",
                 "minItems": 1,
@@ -206,6 +261,37 @@ def candidate_schema():
             "hypothesis": {"type": "string", "minLength": 8, "maxLength": 1600},
             "model": {"type": "object", "properties": model_properties, "additionalProperties": False},
             "train": {"type": "object", "properties": train_properties, "additionalProperties": False},
+            "data": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    k: {"type": "integer", "minimum": low, "maximum": high} for k, (low, high) in DATA_RANGES.items()
+                },
+            },
+            "components": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["slot", "name", "params"],
+                    "properties": {
+                        "slot": {
+                            "enum": [
+                                "value_embedding",
+                                "token",
+                                "block_attention",
+                                "block_mixer",
+                                "latent",
+                                "classifier",
+                                "decoder",
+                                "neighborhood",
+                            ]
+                        },
+                        "name": {"type": "string"},
+                        "params": {"type": "object"},
+                    },
+                },
+            },
             "plugins": {"type": "array", "items": plugin},
             "files": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1, "maxLength": 32768}},
         },
@@ -222,6 +308,9 @@ def validate_bundle(bundle, parent_ids=None):
     from .schema import validate
 
     validate(bundle, candidate_schema())
+    from .components import validate_specs
+
+    validate_specs(bundle["components"])
     if parent_ids is not None and not set(bundle["parent_ids"]) <= set(parent_ids):
         raise ValueError("unknown or unevaluated parent")
     base = reference_document()
@@ -244,6 +333,12 @@ def validate_bundle(bundle, parent_ids=None):
     for key, value in bundle["train"].items():
         if key in TRAIN_RANGES:
             _number(value, *TRAIN_RANGES[key])
+        elif key in TRAIN_INTS:
+            if type(value) is not int:
+                raise ValueError("training step controls require integers")
+            _number(value, *TRAIN_INTS[key])
+        elif key in ("lr_schedule", "optimizer_params", "balancer_params"):
+            pass  # precise cross-field checks below
         elif key == "balancer":
             if value not in ("initial", "grad_equal", "famo"):
                 raise ValueError("unknown Cajal balancer")
@@ -254,7 +349,7 @@ def validate_bundle(bundle, parent_ids=None):
             if set(value) != set(TASKS):
                 raise ValueError("all five joint objectives must remain active")
             for w in value.values():
-                _number(w, 0.05, 10.0)
+                _number(w, 0.01, 20.0)
         elif key == "objectives":
             from brainwm_unified.regularizers import OBJECTIVES
 
@@ -262,17 +357,70 @@ def validate_bundle(bundle, parent_ids=None):
                 raise ValueError("objectives must be a list")
             seen = set()
             for entry in value:
-                if not isinstance(entry, dict) or set(entry) - {"name", "weight", "coeff"}:
+                if not isinstance(entry, dict) or set(entry) - {
+                    "name",
+                    "weight",
+                    "coeff",
+                    "label",
+                    "n_cells",
+                    "n_proj",
+                    "t_max",
+                    "n_t",
+                    "teacher",
+                    "start",
+                    "budget",
+                    "dual_lr",
+                }:
                     raise ValueError("only existing tensor-only regularizers are searchable")
-                if entry.get("name") not in ("cond_hsic", "sigreg", "batch_swap", "batch_adversary"):
+                if entry.get("name") not in ("cond_hsic", "sigreg", "batch_swap", "batch_adversary", "teacher_gram"):
                     raise ValueError("external teacher/data paths are outside the candidate contract")
                 if entry["name"] in seen:
                     raise ValueError("duplicate objective")
                 seen.add(entry["name"])
-                _number(entry.get("weight", 1.0), 0.0, 5.0)
-                OBJECTIVES.build(entry["name"], **{k: v for k, v in entry.items() if k not in ("name", "weight")})
+                _number(entry.get("weight", 1.0), 0.0, 20.0)
+                if "budget" in entry and (not entry["budget"] or entry["weight"] <= 0):
+                    raise ValueError(
+                        "budgeted objective requires nonempty positive budgets and an initial positive weight"
+                    )
+                params = {k: v for k, v in entry.items() if k not in ("name", "weight", "start", "budget", "dual_lr")}
+                if entry["name"] == "teacher_gram":
+                    teacher = load_config()["trusted_teachers"].get(params.pop("teacher", ""))
+                    if not teacher:
+                        raise ValueError("teacher must be a named, frozen Cajal artifact")
+                    params["checkpoint"] = teacher["path"]
+                OBJECTIVES.build(entry["name"], **params)
         else:
             raise ValueError(f"train.{key} is immutable or unsupported")
+    train = {**base["TrainConfig"], **bundle["train"]}
+    allowed_opt = {
+        "grouped_muon": {"adam_beta1", "adam_beta2", "adam_eps", "muon_momentum", "muon_ns_steps"},
+        "adamw": {"adam_beta1", "adam_beta2", "adam_eps"},
+        "adam": {"adam_beta1", "adam_beta2", "adam_eps"},
+        "sgd": {"sgd_momentum"},
+        "custom": set(),
+    }
+    if set(train.get("optimizer_params", {})) - allowed_opt[train["optimizer"]]:
+        raise ValueError("optimizer parameters do not apply to the selected optimizer")
+    opt = train.get("optimizer_params", {})
+    if opt.get("adam_beta1", 0.9) >= opt.get("adam_beta2", 0.999):
+        raise ValueError("Adam beta1 must be below beta2")
+    balancer = train["balancer"]
+    if balancer == "famo" and any(e.get("start", 0) for e in train.get("objectives", [])):
+        raise ValueError("FAMO requires the same active objective set throughout the run")
+    params = bundle["train"].get("balancer_params", {})
+    if set(params) - set(BALANCER_RANGES[balancer]):
+        raise ValueError("unknown balancer parameter")
+    for k, value in params.items():
+        _number(value, *BALANCER_RANGES[balancer][k])
+        if k == "every" and type(value) is not int:
+            raise ValueError("grad_equal.every must be integral")
+    for spec in bundle["components"]:
+        if spec["name"] == "legacy.encoder.scprint_value" and model["input_norm"] != "log1p":
+            raise ValueError("scPRINT value embedding requires Cajal's nonnegative log1p input")
+        if spec["slot"] == "decoder":
+            decoder = "unified" if spec["name"] == "cajal.unified_decoder" else "separate"
+            if "decoder" in bundle["model"] and bundle["model"]["decoder"] != decoder:
+                raise ValueError("decoder component conflicts with model.decoder")
     if (
         any(e["name"] == "batch_adversary" for e in bundle["train"].get("objectives", []))
         and not model["batch_adversary"]
@@ -337,10 +485,10 @@ def semantic_id(bundle):
     """Ignore ancestry, comments and explicit defaults; not arbitrary program equivalence."""
     b = copy.deepcopy(bundle)
     base = reference_document()
-    for section, cls in (("model", "ModelConfig"), ("train", "TrainConfig")):
+    for section, cls in (("model", "ModelConfig"), ("train", "TrainConfig"), ("data", "DataConfig")):
         b[section] = {k: v for k, v in b[section].items() if v != base[cls].get(k)}
     b["files"] = {k: ast.dump(ast.parse(v), include_attributes=False) for k, v in b["files"].items()}
-    return digest({k: b[k] for k in ("model", "train", "plugins", "files")})
+    return digest({k: b[k] for k in ("model", "train", "data", "components", "plugins", "files")})
 
 
 def resolved_document(bundle, cfg, seed):
@@ -348,6 +496,10 @@ def resolved_document(bundle, cfg, seed):
     base = reference_document(cfg)
     payload = {"plugins": bundle["plugins"], "files": bundle["files"]} if bundle["plugins"] else {}
     model = {**base["ModelConfig"], **bundle["model"], "research_plugins": payload}
+    model["research_components"] = bundle["components"]
+    for spec in bundle["components"]:
+        if spec["slot"] == "decoder":
+            model["decoder"] = "unified" if spec["name"] == "cajal.unified_decoder" else "separate"
     train = {
         **base["TrainConfig"],
         **bundle["train"],
@@ -357,6 +509,11 @@ def resolved_document(bundle, cfg, seed):
         "keep_every": cfg["stop_at"],
     }
     if bundle["train"].get("balancer", base["TrainConfig"]["balancer"]) != base["TrainConfig"]["balancer"]:
-        train["balancer_params"] = {}
-    data = {**base["DataConfig"], "root": cfg["data"]["pretrain"], "seed": seed}
+        train["balancer_params"] = bundle["train"].get("balancer_params", {})
+    train["objectives"] = copy.deepcopy(train["objectives"])
+    for entry in train["objectives"]:
+        if entry["name"] == "teacher_gram":
+            teacher = entry.pop("teacher")
+            entry["checkpoint"] = cfg["trusted_teachers"][teacher]["path"]
+    data = {**base["DataConfig"], **bundle["data"], "root": cfg["data"]["pretrain"], "seed": seed}
     return {"model": model, "train": train, "data": data}

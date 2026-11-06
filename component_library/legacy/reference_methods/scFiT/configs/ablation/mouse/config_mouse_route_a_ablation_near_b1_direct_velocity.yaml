@@ -1,0 +1,70 @@
+data:
+  source: data/raw/neural_crest_pns_glia/Neural_crest_PNS_glia.h5ad
+  preprocessed_dir: data/processed/neural_crest_pns_glia_hvg4096
+  time_col: author_day
+  cell_type_col: author_cell_type
+
+protocol:
+  path: configs/protocols/mouse/near_extrapolation.yaml
+
+experiment:
+  output_dir: results/experiments/ablation
+  run_name: mouse_neural_crest_near_ablation_b1_direct_velocity_v1
+
+model:
+  top_k_genes: 4096
+  d_model: 512
+  nhead: 8
+  d_ff: 2048
+  nlayers: 8
+  dropout: 0.1
+  value_encoder:
+    max_value: 32.0
+  adaln:
+    share_projection: false
+  time_conditioning:
+    mode: adaln
+
+training:
+  batch_size: 24
+  lr: 0.0002
+  weight_decay: 0.0001
+  epochs: 10
+  iters_per_epoch: 500
+  seed: 42
+  log_every_steps: 20
+  val_every_steps: 500
+  save_every_epochs: 1
+  amp: true
+  grad_clip: 1.0
+  resume:
+  gpu_reservation:
+    enabled: false
+    reserve_gb:
+    fraction_of_free: 0.3
+  transport_pairing: ot
+  prediction_parameterization: direct_velocity
+  loss_weights:
+    cfm: 1.0
+    wasserstein_hvg: 0.5
+    wasserstein_pca50: 0.1
+    mean: 0.1
+    variance: 0.0
+  variance_loss_use_log: true
+  variance_loss_eps: 0.0001
+
+validation:
+  max_cells_per_time: 256
+
+inference:
+  n_steps: 10
+  micro_batch_size: 4
+
+ot:
+  epsilon: 0.05
+  max_iter: 100
+
+evaluation:
+  assets_dir: results/eval_assets/mouse/near_extrapolation
+  batch_size: 24
+  max_cells_per_time: 0

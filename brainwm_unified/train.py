@@ -32,6 +32,12 @@ def lr_lambda(cfg: TrainConfig):
         if step < cfg.warmup_steps:
             return (step + 1) / cfg.warmup_steps
         p = min(1.0, (step - cfg.warmup_steps) / max(1, cfg.steps - cfg.warmup_steps))
+        if cfg.lr_schedule == "constant":
+            return 1.0
+        if cfg.lr_schedule == "linear":
+            return 1.0 - (1.0 - cfg.min_lr_ratio) * p
+        if cfg.lr_schedule != "cosine":
+            raise ValueError("unknown learning-rate schedule")
         return cfg.min_lr_ratio + (1 - cfg.min_lr_ratio) * 0.5 * (1 + math.cos(math.pi * p))
 
     return f

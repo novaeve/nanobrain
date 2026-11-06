@@ -64,8 +64,10 @@ def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
     doc = json.loads(capsys.readouterr().out)
     assert doc["status"] == "prepared_not_started"
     assert not doc["llm_called"] and not doc["real_training_started"]
-    assert doc["joint_trainings_per_generation"] == 18
-    assert doc["maximum_joint_trainings"] == 903
+    assert doc["joint_trainings_per_generation"] == 6
+    assert doc["maximum_joint_trainings"] == 301
+    assert doc["seeds"] == [0] and doc["seed_count"] == 1
+    assert not doc["uncertainty_estimated"]
     assert not output.exists()
 
 
@@ -159,15 +161,17 @@ def test_semantic_dedup_defaults_and_ancestry():
     assert C.semantic_id(a) == C.semantic_id(b)
 
 
-def test_three_real_complete_seed_results_required():
+def test_single_seed_has_no_invented_standard_deviation():
     seeds = C.load_config()["seeds"]
     rows = [
         {"status": "complete", "seed": s, "metrics": dict.fromkeys(C.METRICS, 0.6 + i * 0.01)}
         for i, s in enumerate(seeds)
     ]
     result = selection.aggregate(rows, seeds)
-    assert result["metrics"][C.METRICS[0]] == pytest.approx(0.61)
-    for broken in [rows[:2], [rows[0], rows[0], rows[2]]]:
+    assert result["metrics"][C.METRICS[0]] == pytest.approx(0.6)
+    assert result["seed_count"] == 1 and not result["uncertainty_estimated"]
+    assert all(value is None for value in result["std"].values())
+    for broken in [[], [rows[0], rows[0]]]:
         with pytest.raises(ValueError):
             selection.aggregate(broken, seeds)
     rows[0]["metrics"].pop(C.METRICS[-1])
@@ -326,11 +330,48 @@ def test_mock_react_uses_tools_no_real_llm(tmp_path):
     assert result["candidate_id"] == identifier and (tmp_path / "submission.json").is_file()
 
 
-@pytest.mark.parametrize("variant", ["reference", "module", "module_loss_optimizer"])
+@pytest.mark.parametrize(
+    "variant",
+    ["reference", "module", "module_loss_optimizer", "component_hybrid", "legacy_prototype", "teacher_budget"],
+)
 def test_linux_sandbox_five_joint_gradients_update_and_reload(tmp_path, variant):
     from cajal_research.sandbox import clean_environment, command, launch
 
-    b = plugin_candidate() if variant != "reference" else C.reference_bundle()
+    b = plugin_candidate() if variant in ("module", "module_loss_optimizer") else C.reference_bundle()
+    if variant == "component_hybrid":
+        b["components"] = [
+            {"slot": slot, "name": name, "params": {}}
+            for slot, name in [
+                ("value_embedding", "legacy.encoder.scfoundation_autobin"),
+                ("block_attention", "legacy.attention.bert"),
+                ("block_mixer", "legacy.operation.scbrain_ffn"),
+                ("latent", "scvi.vae_encoder"),
+                ("classifier", "scanvi.classifier"),
+                ("decoder", "scvi.nb_decoder"),
+                ("neighborhood", "legacy.spatial.graphst_sparse"),
+            ]
+        ]
+    if variant == "legacy_prototype":
+        b["components"] = [
+            {"slot": slot, "name": name, "params": {}}
+            for slot, name in [
+                ("value_embedding", "legacy.encoder.scprint_value"),
+                ("token", "legacy.operation.sctab_glu"),
+                ("classifier", "legacy.head.scpoli_prototype"),
+                ("neighborhood", "legacy.spatial.stagate_gat"),
+            ]
+        ]
+    if variant == "teacher_budget":
+        b["train"]["objectives"] = [
+            {
+                "name": "teacher_gram",
+                "weight": 1.0,
+                "teacher": "cell_type_30k",
+                "start": 100,
+                "budget": {"cell_type": 1.0},
+                "dual_lr": 0.01,
+            }
+        ]
     if variant == "module_loss_optimizer":
         b["train"]["optimizer"] = "custom"
         b["files"]["losses/gene.py"] = """import torch.nn.functional as F
@@ -372,6 +413,8 @@ def build(parameters, lr, weight_decay):
     assert result["shared_encoder_gradients"] and result["optimizer_update"] and result["checkpoint_reload"]
     assert set(result["tasks"]) == set(C.TASKS)
     assert not result["benchmark_data_mounted"] and not result["gpu_used"]
+    assert {"cell_type:0", "anatomy:0", "reconstruction", "spatial"} <= set(result["checkpoint_prediction_fields"])
+    assert result["teacher_probe_uses_synthetic_weights"] == (variant == "teacher_budget")
 
 
 def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monkeypatch):
@@ -513,3 +556,139 @@ def test_resource_interruption_does_not_freeze_a_failed_candidate(tmp_path, monk
     with pytest.raises(InfrastructureError):
         workflow.evaluate(identifier, 0)
     assert not (workflow.store.candidates / identifier / "result.json").exists()
+
+
+def test_current_cajal_data_and_sampling_controls_are_distinct():
+    from brainwm_unified.config import DataConfig
+
+    b = candidate(warmup_steps=2000, min_lr_ratio=0.2, lr_schedule="linear", kl_warmup_steps=8000)
+    b["data"] = {"dissociated_cells": 256, "spatial_groups": 32, "max_nonzero_tokens": 2048, "zero_tokens": 128}
+    C.validate_bundle(b)
+    doc = C.resolved_document(b, C.load_config(), 0)
+    assert doc["data"]["root"] == "/data/brainwm/unified_1m"
+    assert doc["data"]["cell_fraction"] == 1.0
+    assert doc["data"]["dissociated_cells"] == 256 and doc["data"]["spatial_groups"] == 32
+    DataConfig(**doc["data"])
+    for field, value in [("root", "/tmp/100k"), ("seed", 7), ("cell_fraction", 0.1), ("neighbors", 8)]:
+        invalid = copy.deepcopy(b)
+        invalid["data"][field] = value
+        with pytest.raises(ValueError):
+            C.validate_bundle(invalid)
+
+
+def test_optimizer_and_balancer_parameters_reach_actual_implementations():
+    from brainwm_unified.balance import build_balancer
+    from brainwm_unified.config import TrainConfig
+    from brainwm_unified.train import lr_lambda
+    from cajal_research.plugins import make_optimizers
+
+    b = candidate(
+        optimizer="adamw",
+        optimizer_params={"adam_beta1": 0.85, "adam_beta2": 0.99, "adam_eps": 1e-7},
+        balancer_params={"every": 20, "beta": 0.8},
+        warmup_steps=0,
+        lr_schedule="linear",
+        min_lr_ratio=0.1,
+    )
+    doc = C.resolved_document(b, C.load_config(), 0)
+    cfg = TrainConfig(**doc["train"])
+    model = torch.nn.Linear(3, 2)
+    (optimizer,) = make_optimizers(model, cfg, {}, ([], []))
+    assert optimizer.param_groups[0]["betas"] == (0.85, 0.99)
+    assert optimizer.param_groups[0]["eps"] == 1e-7
+    balancer = build_balancer(cfg.balancer, cfg.norm_steps, cfg.balancer_params)
+    assert balancer.every == 20 and balancer.beta == 0.8
+    assert lr_lambda(cfg)(cfg.steps) == pytest.approx(0.1)
+    b["train"]["optimizer"] = "sgd"
+    with pytest.raises(ValueError):
+        C.validate_bundle(b)
+
+
+def test_named_teacher_only_and_bundle_stays_immutable():
+    b = candidate(objectives=[{"name": "teacher_gram", "weight": 1.0, "teacher": "cell_type_30k"}])
+    before = C.digest(b)
+    doc = C.resolved_document(b, C.load_config(), 0)
+    assert C.digest(b) == before
+    assert doc["train"]["objectives"][0]["checkpoint"] == C.load_config()["trusted_teachers"]["cell_type_30k"]["path"]
+    b["train"]["objectives"][0]["checkpoint"] = "/tmp/foreign.pt"
+    with pytest.raises(ValueError):
+        C.validate_bundle(b)
+
+
+def test_component_catalog_is_merged_and_does_not_import_legacy_data():
+    from cajal_research.components import catalog, legacy
+
+    rows = catalog()
+    ids = {r["id"] for r in rows}
+    assert {
+        "cajal.moe",
+        "cajal.teacher_gram",
+        "cajal.grouped_muon",
+        "scvi.vae_encoder",
+        "scvi.nb_decoder",
+        "scanvi.classifier",
+    } <= ids
+    assert "legacy.attention.differential_linear" in ids
+    assert any(r["id"] == "baseline.XGBoost" and r["role"] == "whole_method_baseline" for r in rows)
+    legacy()
+    assert "nanobrain.data" not in sys.modules and "nanobrain.training" not in sys.modules
+    for row in rows:
+        if row.get("verification", {}).get("status") == "unavailable":
+            b = candidate()
+            b["components"] = [{"slot": row["slots"][0], "name": row["id"], "params": {}}]
+            with pytest.raises(ValueError):
+                C.validate_bundle(b)
+
+
+def test_baseline_snapshot_matches_current_cajal_scores():
+    opponents = json.loads((C.ROOT / "reference/opponents.json").read_text())
+    assert opponents["source_csv_sha256"] == C.sha(C.ROOT / "reference/cajal_existing_five_tasks.csv")
+    assert len(opponents["all_existing_baselines"]) == 13
+    assert len(opponents["available_method_names"]) == 63
+    assert opponents["best_method"]["Integration batch"] == "scANVI"
+    assert opponents["best_opponents"]["Integration batch"] == pytest.approx(0.4535480119005794)
+    assert any(row["method"] == "cajal_v1@10000" for row in opponents["cajal_reference_performance"])
+
+
+def test_available_components_preserve_masked_spatial_causality():
+    from brainwm_unified import model as M
+    from brainwm_unified.config import ModelConfig
+    from cajal_research.components import catalog
+
+    rows = [r for r in catalog() if r["available"] and "neighborhood" in r["slots"]]
+    cfg = ModelConfig(
+        n_genes=24,
+        n_batches=2,
+        cell_type_levels=[3],
+        anatomy_levels=[2],
+        d_model=32,
+        n_heads=4,
+        n_prelude=1,
+        n_core=1,
+        n_coda=1,
+        n_experts=4,
+        top_k=2,
+        expert_hidden=32,
+        z_dim=8,
+        decoder_hidden=32,
+        spatial_d=16,
+        spatial_layers=1,
+        compile_blocks=False,
+        activation_checkpointing=False,
+        moe_backend="loop",
+        max_loops=2,
+    )
+    z = torch.randn(2, 5, 8)
+    rel = torch.randn(2, 5, 3)
+    masked = torch.zeros(2, 5, dtype=torch.bool)
+    masked[:, 0] = True
+    pad = torch.zeros_like(masked)
+    for row in rows:
+        cfg.research_components = [{"slot": "neighborhood", "name": row["id"], "params": {}}]
+        model = M.UnifiedModel(cfg).eval()
+        changed = z.clone()
+        changed[:, 0] += 10000
+        with torch.no_grad():
+            a = model.neighborhood(z, rel, masked, pad)
+            b = model.neighborhood(changed, rel, masked, pad)
+        assert torch.allclose(a[:, 0], b[:, 0]), row["id"]

@@ -93,14 +93,27 @@ def custom_optimizer(payload, parameters, lr, weight_decay):
 
 
 def make_optimizers(model, cfg, muon, groups):
+    options = cfg.optimizer_params
+    adam = {
+        "betas": (options.get("adam_beta1", 0.9), options.get("adam_beta2", 0.999)),
+        "eps": options.get("adam_eps", 1e-8),
+    }
     if cfg.optimizer in muon:
         a, b = groups
         return [
-            muon[cfg.optimizer](a, lr=cfg.lr, weight_decay=cfg.weight_decay, adjust_lr_fn="match_rms_adamw"),
-            torch.optim.AdamW(b, lr=cfg.lr, weight_decay=cfg.weight_decay, fused=True),
+            muon[cfg.optimizer](
+                a,
+                lr=cfg.lr,
+                weight_decay=cfg.weight_decay,
+                adjust_lr_fn="match_rms_adamw",
+                momentum=options.get("muon_momentum", 0.95),
+                ns_steps=options.get("muon_ns_steps", 5),
+            ),
+            torch.optim.AdamW(b, lr=cfg.lr, weight_decay=cfg.weight_decay, fused=True, **adam),
         ]
     parameters = [p for p in model.parameters() if p.requires_grad]
     if cfg.optimizer == "custom":
         return [custom_optimizer(cfg.research_plugins, parameters, cfg.lr, cfg.weight_decay)]
     cls = {"adamw": torch.optim.AdamW, "adam": torch.optim.Adam, "sgd": torch.optim.SGD}[cfg.optimizer]
-    return [cls(parameters, lr=cfg.lr, weight_decay=cfg.weight_decay)]
+    extra = {"momentum": options.get("sgd_momentum", 0.0)} if cfg.optimizer == "sgd" else adam
+    return [cls(parameters, lr=cfg.lr, weight_decay=cfg.weight_decay, **extra)]

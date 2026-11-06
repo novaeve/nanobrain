@@ -61,15 +61,14 @@ def probe(bundle):
     from brainwm_unified.config import ModelConfig, TrainConfig
     from brainwm_unified.objectives import compute_losses
 
-    from .contracts import reference_document
+    from .contracts import resolved_document
     from .plugins import make_optimizers
 
     validate_bundle(bundle)
     torch.set_num_threads(2)
     torch.manual_seed(11)
-    payload = {"plugins": bundle["plugins"], "files": bundle["files"]} if bundle["plugins"] else {}
-    base = reference_document()["ModelConfig"]
-    full = ModelConfig(**{**base, **bundle["model"], "compile_blocks": False, "research_plugins": payload})
+    document = resolved_document(bundle, load_config(), 0)
+    full = ModelConfig(**{**document["model"], "compile_blocks": False})
     # Count the actual full Cajal candidate before the small synthetic numerical probe.
     big = M.UnifiedModel(full)
     count = sum(p.numel() for p in big.parameters())
@@ -93,7 +92,7 @@ def probe(bundle):
         model.encoder.gene_rate.fill_(1.0 / 24)
         model.encoder.residual_clip.fill_(4.0)
     mask = M.dense_mask(b["tok_doc"])
-    train_cfg = TrainConfig(**bundle["train"], research_plugins=payload)
+    train_cfg = TrainConfig(**document["train"])
     if train_cfg.optimizer in ("grouped_muon", "muon"):
         # CPU tensor contract probe; production retains Cajal's actual grouped Muon path.
         optimizer = torch.optim.AdamW(model.parameters(), lr=train_cfg.lr)
@@ -101,8 +100,19 @@ def probe(bundle):
         (optimizer,) = make_optimizers(model, train_cfg, {}, ([], []))
     before = {k: v.detach().clone() for k, v in model.named_parameters()}
     out = model(b, mask, loops=1)
-    losses, _ = compute_losses(model, b, out, panels, maps, 1.0)
-    if set(losses) != set(TASKS) or not all(torch.isfinite(v) for v in losses.values()):
+    from brainwm_unified.regularizers import OBJECTIVES
+
+    extras = {}
+    for spec in train_cfg.objectives:
+        params = {k: v for k, v in spec.items() if k not in ("name", "weight", "start", "budget", "dual_lr")}
+        obj = OBJECTIVES.build(spec["name"], **params)
+        if spec["name"] == "teacher_gram":
+            # No real checkpoint/data is mounted in the CPU gate. Validate its tensor
+            # contract with a frozen synthetic teacher; formal jobs use the pinned asset.
+            obj._teacher = copy.deepcopy(model).eval().requires_grad_(False)
+        extras[spec["name"]] = obj
+    losses, _ = compute_losses(model, b, out, panels, maps, train_cfg.kl_weight, extras)
+    if not set(TASKS) <= set(losses) or not all(torch.isfinite(v) for v in losses.values()):
         raise ValueError("all five Cajal objectives must be finite")
     for task in TASKS:
         grads = torch.autograd.grad(
@@ -121,7 +131,20 @@ def probe(bundle):
             raise ValueError(f"disconnected plugin parameter {name}")
     model.eval()
     with torch.no_grad():
-        expected = model(b, mask, 1)
+
+        def predictions(net):
+            out = net(b, mask, 1)
+            values = dict(out)
+            for task in ("cell_type", "anatomy"):
+                for level, logits in enumerate(getattr(net, task + "_head")(out["mu"])):
+                    values[f"{task}:{level}"] = logits
+            values["reconstruction"] = net.decoder(net.recon_input(out), b["batch"])
+            members = b["grp_members"]
+            pad = members < 0
+            values["spatial"] = net.neighborhood(out["mu"][members.clamp_min(0)], b["grp_rel"], b["grp_masked"], pad)
+            return values
+
+        expected = predictions(model)
         saved = Path("/work/probe.pt")
         import dataclasses
 
@@ -129,8 +152,8 @@ def probe(bundle):
 
         torch.save({"model": model.state_dict(), "step": 1, "config": {"ModelConfig": dataclasses.asdict(cfg)}}, saved)
         restored, _ = infer.load_model(str(saved), device="cpu", attention_backend="flex")
-        actual = restored(b, mask, 1)
-        if not all(torch.allclose(expected[k], actual[k], atol=1e-6) for k in ("mu", "gene_pred")):
+        actual = predictions(restored)
+        if not all(torch.allclose(expected[k], actual[k], atol=1e-6) for k in expected):
             raise ValueError("checkpoint reload changed predictions")
     from brainwm_unified import record
 
@@ -141,9 +164,13 @@ def probe(bundle):
         "shared_encoder_gradients": True,
         "optimizer_update": True,
         "checkpoint_reload": True,
+        "checkpoint_prediction_fields": sorted(expected),
         "synthetic_only": True,
         "benchmark_data_mounted": False,
         "gpu_used": False,
+        "requested_data_parameters": document["data"],
+        "components": bundle["components"],
+        "teacher_probe_uses_synthetic_weights": "teacher_gram" in extras,
         "code_fingerprint": record.fingerprint(),
     }
 
@@ -165,7 +192,7 @@ def main():
     ap.add_argument("--config", default=str(ROOT / "configs/cajal_react.json"))
     args = ap.parse_args()
     if args.mode == "probe":
-        resource.setrlimit(resource.RLIMIT_AS, (12 * 1024**3, 12 * 1024**3))
+        resource.setrlimit(resource.RLIMIT_AS, (32 * 1024**3, 32 * 1024**3))
         resource.setrlimit(resource.RLIMIT_FSIZE, (1024**3, 1024**3))
         result = probe(json.loads(Path(args.bundle).read_text()))
     elif args.mode == "train":

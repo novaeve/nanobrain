@@ -1,0 +1,185 @@
+scFiT Route A 协议与运行命令
+
+1. interpolation
+配置文件:
+- configs/mouse/config_mouse_route_a_interpolation.yaml
+协议文件:
+- configs/protocols/mouse/interpolation.yaml
+
+定义:
+- 任务类型: interpolation
+- 可用时间点范围: E1000 ~ E1850
+- 留出时间点: E1125, E1325, E1525, E1675, E1825
+- observed 时间点: 上述范围内除留出时间点外的其余时间点
+- 源时间点策略: bidirectional_linear
+- 含义: 用目标时间点左右两侧最近的 observed 时间点共同做内插预测
+
+资产准备:
+cd .
+python scripts/prepare_route_a_assets.py \
+  --protocol configs/protocols/mouse/interpolation.yaml \
+  --output-dir results/eval_assets/mouse/interpolation
+
+训练:
+cd .
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 \
+python scripts/train.py --config configs/mouse/config_mouse_route_a_interpolation.yaml
+
+评估:
+cd .
+python scripts/evaluate.py \
+  --protocol configs/protocols/mouse/interpolation.yaml \
+  --artifact-dir /path/to/artifact_dir \
+  --assets-dir results/eval_assets/mouse/interpolation
+
+scNODE 对比运行:
+cd .
+python scripts/run_scnode_protocol.py \
+  --protocol configs/protocols/mouse/interpolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/scnode_interpolation \
+  --assets-dir results/eval_assets/mouse/interpolation
+
+PRESCIENT 对比运行:
+cd .
+python scripts/run_prescient_protocol.py \
+  --protocol configs/protocols/mouse/interpolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/prescient_interpolation \
+  --assets-dir results/eval_assets/mouse/interpolation \
+  --device cuda:0
+
+MIOFlow 对比运行:
+cd .
+python scripts/run_mioflow_protocol.py \
+  --protocol configs/protocols/mouse/interpolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/mioflow_interpolation \
+  --assets-dir results/eval_assets/mouse/interpolation \
+  --device cuda:0
+
+
+2. near_extrapolation
+配置文件:
+- configs/mouse/config_mouse_route_a_near.yaml
+协议文件:
+- configs/protocols/mouse/near_extrapolation.yaml
+
+定义:
+- 任务类型: near_extrapolation
+- 可用时间点范围: E1000 ~ E1700
+- 留出时间点: E1625, E1650, E1675, E1700
+- observed 时间点: 所有 <= E1600 的可用时间点
+- 源时间点策略: previous_observed
+- 含义: 只使用最近的过去 observed 时间点做近端外推
+
+资产准备:
+cd .
+python scripts/prepare_route_a_assets.py \
+  --protocol configs/protocols/mouse/near_extrapolation.yaml \
+  --output-dir results/eval_assets/mouse/near_extrapolation
+
+训练:
+cd .
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 \
+python scripts/train.py --config configs/mouse/config_mouse_route_a_near.yaml
+
+评估:
+cd .
+python scripts/evaluate.py \
+  --protocol configs/protocols/mouse/near_extrapolation.yaml \
+  --artifact-dir /path/to/artifact_dir \
+  --assets-dir results/eval_assets/mouse/near_extrapolation
+
+scNODE 对比运行:
+cd .
+python scripts/run_scnode_protocol.py \
+  --protocol configs/protocols/mouse/near_extrapolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/scnode_near \
+  --assets-dir results/eval_assets/mouse/near_extrapolation
+
+PRESCIENT 对比运行:
+cd .
+python scripts/run_prescient_protocol.py \
+  --protocol configs/protocols/mouse/near_extrapolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/prescient_near \
+  --assets-dir results/eval_assets/mouse/near_extrapolation \
+  --device cuda:0
+
+MIOFlow 对比运行:
+cd .
+python scripts/run_mioflow_protocol.py \
+  --protocol configs/protocols/mouse/near_extrapolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/mioflow_near \
+  --assets-dir results/eval_assets/mouse/near_extrapolation \
+  --device cuda:0
+
+
+3. far_extrapolation
+配置文件:
+- configs/mouse/config_mouse_route_a_far.yaml
+协议文件:
+- configs/protocols/mouse/far_extrapolation.yaml
+
+定义:
+- 任务类型: far_extrapolation
+- 可用时间点范围: E1000 ~ P0000
+- 留出时间点: 所有 > E1400 的可用时间点
+- observed 时间点: 所有 <= E1400 的可用时间点
+- 源时间点策略: previous_observed
+- 含义: 从最近的过去 observed 时间点向后预测所有远端未来时间点
+
+资产准备:
+cd .
+python scripts/prepare_route_a_assets.py \
+  --protocol configs/protocols/mouse/far_extrapolation.yaml \
+  --output-dir results/eval_assets/mouse/far_extrapolation
+
+训练:
+cd .
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 \
+python scripts/train.py --config configs/mouse/config_mouse_route_a_far.yaml
+
+评估:
+cd .
+python scripts/evaluate.py \
+  --protocol configs/protocols/mouse/far_extrapolation.yaml \
+  --artifact-dir /path/to/artifact_dir \
+  --assets-dir results/eval_assets/mouse/far_extrapolation
+
+scNODE 对比运行:
+cd .
+python scripts/run_scnode_protocol.py \
+  --protocol configs/protocols/mouse/far_extrapolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/scnode_far \
+  --assets-dir results/eval_assets/mouse/far_extrapolation
+
+PRESCIENT 对比运行:
+cd .
+python scripts/run_prescient_protocol.py \
+  --protocol configs/protocols/mouse/far_extrapolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/prescient_far \
+  --assets-dir results/eval_assets/mouse/far_extrapolation \
+  --device cuda:0
+
+MIOFlow 对比运行:
+cd .
+python scripts/run_mioflow_protocol.py \
+  --protocol configs/protocols/mouse/far_extrapolation.yaml \
+  --scnode-root third_party/scNODE-main \
+  --output-dir results/eval_results/mouse/mioflow_far \
+  --assets-dir results/eval_assets/mouse/far_extrapolation \
+  --device cuda:0
+
+
+说明:
+- Route A 不再把 pair_table 作为主训练定义。
+- 主指标是 wasserstein_hvg 和 wasserstein_pca50。
+- scNODE 运行前还需要环境里具备它自己的依赖 torchdiffeq。
+- PRESCIENT 运行前还需要 geomloss、umap-learn 等依赖。
+- MIOFlow 运行前还需要 torchdiffeq、torchsde 等依赖。

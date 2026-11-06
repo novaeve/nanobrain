@@ -1,10 +1,12 @@
 {
-  "protocol_id": "CAJAL-V1-JOINT-REACT-20261106",
+  "protocol_id": "CAJAL-V1-JOINT-REACT-SINGLE-SEED-MERGED-20261106",
   "status": "prepared_not_started",
   "reference_recipe": "configs/experiments/cajal_v1.toml",
   "generations": 50,
   "candidates_per_generation": 6,
-  "seeds": [202609180, 202609181, 202609182],
+  "seeds": [
+    0
+  ],
   "schedule_steps": 30000,
   "stop_at": 10000,
   "checkpoint_selection": "fixed_stop",
@@ -19,9 +21,22 @@
   "model": "gpt-6.1-sol",
   "reasoning_effort": "max",
   "api_env_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/.env",
-  "gpu_ids": [0, 1, 2, 3, 4],
+  "gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
   "max_workers": 1,
   "minimum_free_gpu_mb": 65536,
   "job_timeout_seconds": 86400,
-  "scaling_enabled": false
+  "scaling_enabled": false,
+  "trusted_teachers": {
+    "cell_type_30k": {
+      "path": "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt",
+      "sha256": "4655e53a9996757ef9bbbc061a43d72ff53205697050f962a8befe9b6189463d",
+      "role": "Cajal existing train-only cell-type teacher"
+    }
+  }
 }

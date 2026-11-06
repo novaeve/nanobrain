@@ -1,6 +1,64 @@
 {
   "additionalProperties": false,
   "properties": {
+    "components": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          },
+          "slot": {
+            "enum": [
+              "value_embedding",
+              "token",
+              "block_attention",
+              "block_mixer",
+              "latent",
+              "classifier",
+              "decoder",
+              "neighborhood"
+            ]
+          }
+        },
+        "required": [
+          "slot",
+          "name",
+          "params"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "data": {
+      "additionalProperties": false,
+      "properties": {
+        "dissociated_cells": {
+          "maximum": 512,
+          "minimum": 16,
+          "type": "integer"
+        },
+        "max_nonzero_tokens": {
+          "maximum": 8192,
+          "minimum": 512,
+          "type": "integer"
+        },
+        "spatial_groups": {
+          "maximum": 64,
+          "minimum": 2,
+          "type": "integer"
+        },
+        "zero_tokens": {
+          "maximum": 256,
+          "minimum": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "files": {
       "additionalProperties": {
         "maxLength": 32768,
@@ -315,7 +373,7 @@
       "type": "array"
     },
     "schema_version": {
-      "const": "cajal.research.candidate.v1"
+      "const": "cajal.research.candidate.v2"
     },
     "target_metrics": {
       "items": {
@@ -342,8 +400,11 @@
             "famo"
           ]
         },
+        "balancer_params": {
+          "type": "object"
+        },
         "grad_clip": {
-          "maximum": 10.0,
+          "maximum": 20.0,
           "minimum": 0.1,
           "type": "number"
         },
@@ -353,37 +414,132 @@
           "type": "number"
         },
         "kl_target": {
-          "maximum": 200.0,
+          "maximum": 300.0,
           "minimum": 0.0,
           "type": "number"
         },
+        "kl_warmup_steps": {
+          "maximum": 10000,
+          "minimum": 100,
+          "type": "integer"
+        },
         "kl_weight": {
-          "maximum": 10.0,
-          "minimum": 0.01,
+          "maximum": 20.0,
+          "minimum": 0.001,
           "type": "number"
         },
         "lr": {
-          "maximum": 0.01,
+          "maximum": 0.02,
           "minimum": 1e-06,
           "type": "number"
+        },
+        "lr_schedule": {
+          "enum": [
+            "cosine",
+            "linear",
+            "constant"
+          ]
+        },
+        "min_lr_ratio": {
+          "maximum": 0.5,
+          "minimum": 0.01,
+          "type": "number"
+        },
+        "norm_steps": {
+          "maximum": 1000,
+          "minimum": 20,
+          "type": "integer"
         },
         "objectives": {
           "items": {
             "additionalProperties": false,
             "properties": {
+              "budget": {
+                "additionalProperties": false,
+                "properties": {
+                  "anatomy": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "cell_type": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "gene": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "integration": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "spatial": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
               "coeff": {
                 "type": "number"
+              },
+              "dual_lr": {
+                "maximum": 0.1,
+                "minimum": 0.0001,
+                "type": "number"
+              },
+              "label": {
+                "enum": [
+                  "cell_type",
+                  "anatomy"
+                ]
+              },
+              "n_cells": {
+                "maximum": 128,
+                "minimum": 4,
+                "type": "integer"
+              },
+              "n_proj": {
+                "maximum": 512,
+                "minimum": 16,
+                "type": "integer"
+              },
+              "n_t": {
+                "maximum": 65,
+                "minimum": 5,
+                "type": "integer"
               },
               "name": {
                 "enum": [
                   "cond_hsic",
                   "sigreg",
                   "batch_swap",
-                  "batch_adversary"
+                  "batch_adversary",
+                  "teacher_gram"
+                ]
+              },
+              "start": {
+                "maximum": 5000,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "t_max": {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "number"
+              },
+              "teacher": {
+                "enum": [
+                  "cell_type_30k"
                 ]
               },
               "weight": {
-                "maximum": 5.0,
+                "maximum": 20.0,
                 "minimum": 0.0,
                 "type": "number"
               }
@@ -405,32 +561,68 @@
             "custom"
           ]
         },
+        "optimizer_params": {
+          "additionalProperties": false,
+          "properties": {
+            "adam_beta1": {
+              "maximum": 0.99,
+              "minimum": 0.8,
+              "type": "number"
+            },
+            "adam_beta2": {
+              "maximum": 0.9999,
+              "minimum": 0.9,
+              "type": "number"
+            },
+            "adam_eps": {
+              "maximum": 1e-06,
+              "minimum": 1e-09,
+              "type": "number"
+            },
+            "muon_momentum": {
+              "maximum": 0.99,
+              "minimum": 0.8,
+              "type": "number"
+            },
+            "muon_ns_steps": {
+              "maximum": 8,
+              "minimum": 3,
+              "type": "integer"
+            },
+            "sgd_momentum": {
+              "maximum": 0.99,
+              "minimum": 0.0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
         "task_weights": {
           "additionalProperties": false,
           "properties": {
             "anatomy": {
-              "maximum": 10.0,
-              "minimum": 0.05,
+              "maximum": 20.0,
+              "minimum": 0.01,
               "type": "number"
             },
             "cell_type": {
-              "maximum": 10.0,
-              "minimum": 0.05,
+              "maximum": 20.0,
+              "minimum": 0.01,
               "type": "number"
             },
             "gene": {
-              "maximum": 10.0,
-              "minimum": 0.05,
+              "maximum": 20.0,
+              "minimum": 0.01,
               "type": "number"
             },
             "integration": {
-              "maximum": 10.0,
-              "minimum": 0.05,
+              "maximum": 20.0,
+              "minimum": 0.01,
               "type": "number"
             },
             "spatial": {
-              "maximum": 10.0,
-              "minimum": 0.05,
+              "maximum": 20.0,
+              "minimum": 0.01,
               "type": "number"
             }
           },
@@ -443,8 +635,13 @@
           ],
           "type": "object"
         },
+        "warmup_steps": {
+          "maximum": 4000,
+          "minimum": 0,
+          "type": "integer"
+        },
         "weight_decay": {
-          "maximum": 0.2,
+          "maximum": 0.3,
           "minimum": 0.0,
           "type": "number"
         }
@@ -459,6 +656,8 @@
     "hypothesis",
     "model",
     "train",
+    "data",
+    "components",
     "plugins",
     "files"
   ],

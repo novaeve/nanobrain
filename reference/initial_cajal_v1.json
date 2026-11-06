@@ -1,6 +1,8 @@
 {
   "architecture_source_commit": "0ae20748c3b684b7aabecc07e29cbd1ed6767267",
   "bundle": {
+    "components": [],
+    "data": {},
     "files": {},
     "hypothesis": "Existing Cajal v1 architecture and grad_equal joint recipe, unchanged.",
     "model": {},
@@ -8,7 +10,7 @@
       "0000000000000000000000000000000000000000000000000000000000000000"
     ],
     "plugins": [],
-    "schema_version": "cajal.research.candidate.v1",
+    "schema_version": "cajal.research.candidate.v2",
     "target_metrics": [
       "Cell type fine macro-F1",
       "Region fine macro-F1",
@@ -31,7 +33,7 @@
       "neighbor_mask_ratio": 0.3,
       "neighbors": 16,
       "root": "/data/brainwm/unified_1m",
-      "seed": 202609180,
+      "seed": 0,
       "spatial_groups": 16,
       "zero_tokens": 64
     },
@@ -75,6 +77,7 @@
       "recompute_granularity": "moe",
       "recompute_scope": "core",
       "recon_detach_mu": false,
+      "research_components": [],
       "research_plugins": {},
       "residual_dim": 0,
       "router_bias_rate": 0.001,
@@ -104,11 +107,13 @@
       "kl_weight": 1.0,
       "log_every": 10,
       "lr": 0.001,
+      "lr_schedule": "cosine",
       "min_lr_ratio": 0.1,
       "norm_steps": 200,
       "num_workers": 8,
       "objectives": [],
       "optimizer": "grouped_muon",
+      "optimizer_params": {},
       "out_dir": "runs/debug",
       "research_plugins": {},
       "steps": 30000,
@@ -182,6 +187,7 @@
       "recompute_granularity": "moe",
       "recompute_scope": "core",
       "recon_detach_mu": false,
+      "research_components": [],
       "research_plugins": {},
       "residual_dim": 0,
       "router_bias_rate": 0.001,
@@ -211,11 +217,13 @@
       "kl_weight": 1.0,
       "log_every": 10,
       "lr": 0.001,
+      "lr_schedule": "cosine",
       "min_lr_ratio": 0.1,
       "norm_steps": 200,
       "num_workers": 8,
       "objectives": [],
       "optimizer": "grouped_muon",
+      "optimizer_params": {},
       "out_dir": "runs/debug",
       "research_plugins": {},
       "steps": 30000,
@@ -233,8 +241,6 @@
     }
   },
   "seeds": [
-    202609180,
-    202609181,
-    202609182
+    0
   ]
 }

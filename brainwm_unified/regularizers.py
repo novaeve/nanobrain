@@ -109,7 +109,11 @@ class BatchSwap:
                 "tok_doc": d,
             }
         )
-        layout = M.attention_layout(sub["tok_doc"], model.cfg.attention_backend)
+        layout = (
+            M.dense_mask(sub["tok_doc"])
+            if mu.device.type == "cpu"
+            else M.attention_layout(sub["tok_doc"], model.cfg.attention_backend)
+        )
         h = model.encoder(sub, layout, model.cfg.loops)
         mu2 = model.to_latent(h[sub["tok_cls"]]).float().chunk(2, -1)[0]
         return (1 - F.cosine_similarity(mu2, mu[keep].detach().float(), dim=-1)).mean()
@@ -131,7 +135,11 @@ class TeacherGram:
             self._teacher, _ = load_model(self.checkpoint, device=out["mu"].device)
             self._teacher.requires_grad_(False)
         with torch.no_grad():
-            layout = M.attention_layout(b["tok_doc"], self._teacher.cfg.attention_backend)
+            layout = (
+                M.dense_mask(b["tok_doc"])
+                if out["mu"].device.type == "cpu"
+                else M.attention_layout(b["tok_doc"], self._teacher.cfg.attention_backend)
+            )
             t_mu = self._teacher(b, layout, self._teacher.cfg.loops)["mu"].float()
         s, t = F.normalize(out["mu"].float(), dim=-1), F.normalize(t_mu, dim=-1)
         return ((s @ s.T - t @ t.T) ** 2).mean()

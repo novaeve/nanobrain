@@ -1,0 +1,47 @@
+# Minimal pretraining config for smoke tests on synthetic data.
+model:
+  n_genes: 16
+  grid_size: 4
+  d_model: 64
+  d_state_row: 16
+  d_state_col: 8
+  n_layers: 1
+  activation_checkpointing: false
+
+training:
+  experiment_dir: results/smoke
+  n_gpus: 1
+  gpu_ids: "0"
+  master_port: 29501
+  batch_size_per_gpu: 2
+  spectral_coords: data/gene_coords/smoke_coords.npy
+  nonzero_mask_ratio: 0.3
+  zero_mask_ratio: 0.0
+  val_ratio: 0.25
+  seed: 42
+  epochs: 1
+  lr: 0.0005
+  min_lr: 0.000001
+  log_every_steps: 1
+  val_every_epochs: 1
+  save_every_epochs: 1
+  expression_transform: log1p
+  prediction_target: x1
+  loss_weights:
+    weighted_x1: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+
+inference:
+  n_steps: 2
+  temperature: 0.1
+
+validation:
+  n_steps: 2
+  temperature: 0.1
+  nonzero_mask_ratio: 0.3
+  zero_mask_ratio: 0.0
+  mask_seed: 1234
+  noise_seed: 5678
+  max_batches: 1
+  batch_size: 2

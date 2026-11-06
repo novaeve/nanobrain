@@ -78,6 +78,10 @@ def compute_losses(
     dec = model.decoder
 
     losses, metrics = {}, {}
+    if cfg.research_components:
+        from cajal_research.components import observe_heads
+
+        observe_heads(model, b, out, level_maps)
     losses["gene"] = F.mse_loss(out["gene_pred"], b["tok_target"][b["tok_masked"]].float())
 
     recon = expression_nll(

@@ -84,6 +84,8 @@ class Store:
                     "metrics": n.get("metrics", {}),
                     "model": b["model"],
                     "train": b["train"],
+                    "data": b["data"],
+                    "components": b["components"],
                     "plugins": [p["kind"] + "/" + p["name"] for p in b["plugins"]],
                     "hypothesis": b["hypothesis"][:100],
                     "reason": n.get("reason"),

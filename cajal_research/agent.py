@@ -3,10 +3,14 @@
 import json
 
 from .contracts import (
+    BALANCER_RANGES,
+    DATA_RANGES,
     KINDS,
     METRICS,
     MODEL_RANGES,
     MODEL_SPACE,
+    OPTIMIZER_RANGES,
+    TRAIN_INTS,
     TRAIN_RANGES,
     candidate_schema,
     save,
@@ -18,10 +22,18 @@ SYSTEM = """Evolve the existing Cajal v1 shared encoder and its FIVE JOINT pretr
 Start from the actual frozen Cajal v1, not a nanoBrain graph or independent task models.
 Each candidate has ONE set of weights per seed. You may change allowed Cajal architecture/training
 fields and add tensor-only PyTorch token modules, gene/classification losses or an optimizer.
-Candidate model/train values are complete overrides relative to the frozen Cajal v1, not patches
+Candidate model/train/data/components values are complete overrides relative to the frozen Cajal v1, not patches
 relative to a parent: retain every desired ancestral change explicitly, including plugin sources.
-Data, gene vocabularies, measurement panels, masks, label hierarchies, five active objectives,
-paired seeds, 30k LR schedule stopped at 10k, and official evaluation code are immutable.
+The current Cajal unified_1m data, row identities, gene vocabularies, measurement panels, masks,
+label hierarchies, five active objectives, seed 0, 30k LR schedule stopped at 10k and official
+evaluation code are immutable. Allowed data fields tune training minibatch/sampling sizes only;
+they never select an old 100k subset. The current campaign uses ONE seed, not three. Its scores
+are single-seed exploratory evidence; do not invent a standard deviation or significance.
+Use the merged component catalogue to combine original nanoBrain parts and newly split Cajal,
+scVI and scANVI parts. Respect declared compatible slots and availability; never substitute a
+different implementation for an unavailable source. Whole-method baseline scores do not transfer
+automatically to a component hybrid. A named frozen Cajal teacher is available for teacher_gram;
+arbitrary checkpoint/file paths remain forbidden. Retain all desired ancestral changes explicitly.
 The complete DAG includes every failed/unselected branch and every parent edge. Read details
 with paginated tools. Parent recommendations are a mixture of quality, Pareto and novelty;
 any fully evaluated valid ancestor can be a parent. This is not UCT/MCTS. No arbitrary shell,
@@ -68,8 +80,18 @@ def tool(name, description, properties=None, required=None):
 
 TOOLS = [
     tool("inspect_contract", "Read candidate schema, tensor API and immutable Cajal protocol."),
-    tool("list_components", "Read allowed architecture switches and training fields."),
-    tool("baseline_detail", "Read frozen task opponents and their provenance."),
+    tool(
+        "list_components",
+        "Read one page of the merged component library and search parameter ranges.",
+        {"offset": {"type": "integer", "minimum": 0}, "available_only": {"type": "boolean"}},
+        [],
+    ),
+    tool(
+        "baseline_detail",
+        "Read current Cajal baseline scores or one existing method's full checkpoint trajectory.",
+        {"method": {"type": "string"}},
+        [],
+    ),
     tool(
         "read_artifact",
         "Read a bounded page of a candidate artifact.",
@@ -134,20 +156,47 @@ class ToolSession:
                     "optimizer": "build(parameters, lr, weight_decay, **declared) -> Optimizer covering each parameter once",
                 },
                 "source_budget": {"per_file_bytes": 32768, "total_bytes": 131072, "full_parameters": 200000000},
-                "protocol": "all five joint objectives; fixed 10k checkpoint on 30k schedule; three paired seeds",
+                "protocol": "all five joint objectives; fixed 10k checkpoint on 30k schedule; single Cajal seed 0; Cajal unified_1m data",
             }
         if name == "list_components":
+            from .components import catalog
+
+            entries = catalog()
+            if args.get("available_only", True):
+                entries = [e for e in entries if e["available"] and (e["slots"] or e.get("search_field"))]
+            offset = args.get("offset", 0)
             return {
+                "total": len(entries),
+                "entries": entries[offset : offset + 12],
+                "next_offset": offset + 12 if offset + 12 < len(entries) else None,
                 "model": MODEL_SPACE,
                 "model_ranges": MODEL_RANGES,
                 "train_ranges": TRAIN_RANGES,
+                "train_integer_ranges": TRAIN_INTS,
+                "data_training_sampler_ranges": DATA_RANGES,
+                "optimizer_parameter_ranges": OPTIMIZER_RANGES,
+                "balancer_parameter_ranges": BALANCER_RANGES,
                 "balancer": ["initial", "grad_equal", "famo"],
                 "optimizer": ["grouped_muon", "adamw", "adam", "sgd", "custom"],
-                "regularizers": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary"],
+                "regularizers": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary", "teacher_gram"],
                 "reference": "configs/experiments/cajal_v1.toml",
                 "five_objectives_mandatory": True,
             }
         if name == "baseline_detail":
+            if args.get("method"):
+                from .contracts import ROOT
+
+                methods = json.loads((ROOT / "reference/current_method_scores.json").read_text())
+                return {
+                    "method": args["method"],
+                    "rows": [
+                        r
+                        for r in methods["rows"]
+                        if r["method"] == args["method"] or r["method"].split("@")[0] == args["method"]
+                    ],
+                    "source": methods["source"],
+                    "data_regime": "existing Cajal unified_1m and its held-out evaluation sets",
+                }
             return self.baseline
         if name == "read_artifact":
             return self.store.read(args["candidate_id"], args["kind"], args["offset"])

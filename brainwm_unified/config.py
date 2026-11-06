@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 
 @dataclass
 class ModelConfig:
+    research_components: list = field(default_factory=list)
     research_plugins: dict = field(default_factory=dict)  # empty preserves the existing Cajal architecture
     n_genes: int = 65918
     n_batches: int = 57
@@ -88,6 +89,8 @@ class DataConfig:
 
 @dataclass
 class TrainConfig:
+    lr_schedule: str = "cosine"
+    optimizer_params: dict = field(default_factory=dict)
     research_plugins: dict = field(default_factory=dict)  # declared tensor losses/optimizer, saved in checkpoint
     out_dir: str = "runs/debug"
     steps: int = 100_000

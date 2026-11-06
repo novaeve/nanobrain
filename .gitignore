@@ -9,3 +9,4 @@ __pycache__/
 research-runs/
 preparation/
 .env
+.component_deps/

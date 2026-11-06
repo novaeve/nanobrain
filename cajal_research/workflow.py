@@ -31,6 +31,8 @@ def plan(cfg):
         "reference_config": reference_document(cfg),
         "training": "one shared Cajal model, all five objectives, per seed",
         "seeds": cfg["seeds"],
+        "seed_count": len(cfg["seeds"]),
+        "uncertainty_estimated": False,
         "schedule_steps": cfg["schedule_steps"],
         "fixed_stop": cfg["stop_at"],
         "generations": cfg["generations"],
@@ -50,6 +52,8 @@ def baseline():
 
 
 def code_fingerprint():
+    from .dependencies import verify
+
     env = {**os.environ, "GIT_OPTIONAL_LOCKS": "0"}
 
     def git(*args):
@@ -68,6 +72,7 @@ def code_fingerprint():
         "git_sha": git("rev-parse", "HEAD"),
         "files": {p: sha(ROOT / p) for p in files if (ROOT / p).is_file()},
         "environment": versions,
+        "component_environment": verify(),
     }
 
 
@@ -81,6 +86,11 @@ def input_fingerprint(cfg):
     for name, expected in json.loads((ROOT / "reference/input_fingerprints.json").read_text()).items():
         if name not in result or result[name] != expected:
             raise ValueError("Cajal data manifest or path changed since preparation")
+    for name, teacher in cfg.get("trusted_teachers", {}).items():
+        actual = sha(teacher["path"])
+        if actual != teacher["sha256"]:
+            raise ValueError("frozen Cajal teacher artifact changed")
+        result["teacher:" + name] = {"path": teacher["path"], "sha256": actual}
     return result
 
 
@@ -186,10 +196,16 @@ class Workflow:
             if receipt.get("status") != "complete" or receipt.get("seed") != seed:
                 raise ValueError("incompatible cached training receipt")
         else:
+            bundle = self.store.bundle(identifier)
+            teacher_paths = [
+                Path(self.cfg["trusted_teachers"][s["teacher"]]["path"])
+                for s in bundle["train"].get("objectives", [])
+                if s["name"] == "teacher_gram"
+            ]
             self.worker(
                 train_dir,
                 ["train", "--bundle", str(bundle_path), "--seed", str(seed)],
-                [bundle_path, Path(self.cfg["data"]["pretrain"])],
+                [bundle_path, Path(self.cfg["data"]["pretrain"]), *teacher_paths],
             )
         self.verify_stage(train_dir)
         checkpoint = train_dir / "train/latest.pt"
@@ -234,6 +250,7 @@ class Workflow:
             "candidate_id": identifier,
             "checkpoint_sha256": artifacts[str(checkpoint)],
             "joint_model_count": 1,
+            "training_parameters": json.loads(train_receipt.read_text()).get("record", {}).get("config", {}),
         }
         # The same checkpoint supplies ALL task predictions; no task-wise model selection.
         selection.check_metrics(metrics)
@@ -256,8 +273,17 @@ class Workflow:
                 generation=generation,
                 **selection.aggregate(results, self.cfg["seeds"]),
             )
-        except InfrastructureError:
-            raise
+        except InfrastructureError as exc:
+            if generation == 0:
+                raise
+            node = {
+                "candidate_id": identifier,
+                "status": "resource_limited",
+                "generation": generation,
+                "all_seeds_passed": False,
+                "reason": str(exc),
+                "scientific_failure_claimed": False,
+            }
         except Exception as exc:  # noqa: BLE001 - a failed model must not terminate other candidates
             node = {
                 "candidate_id": identifier,
@@ -297,7 +323,7 @@ class Workflow:
             raise ValueError("initial existing Cajal reference failed synthetic acceptance")
         reference = self.evaluate(root, 0)
         if reference["status"] != "complete":
-            raise ValueError("initial reference requires all three seeds and all five tasks")
+            raise ValueError("initial reference requires the configured seed and all five tasks")
         best = baseline()["best_opponents"]
         state_path = self.output / "campaign.json"
         state = (
@@ -396,15 +422,36 @@ class Workflow:
     def report(self, state, root):
         with (self.output / "standard_metrics.csv").open("w", newline="") as fh:
             writer = csv.writer(fh)
-            writer.writerow(["candidate_id", "generation", "seed", *METRICS])
+            writer.writerow(
+                [
+                    "candidate_id",
+                    "generation",
+                    "seed",
+                    "dissociated_cells",
+                    "spatial_groups",
+                    "max_nonzero_tokens",
+                    "zero_tokens",
+                    *METRICS,
+                ]
+            )
             for node in self.store.nodes():
                 if node.get("status") == "complete":
                     for result in node["seed_results"]:
+                        data = result.get("training_parameters", {}).get("DataConfig", {})
                         writer.writerow(
                             [
                                 node["candidate_id"],
                                 node["generation"],
                                 result["seed"],
+                                *[
+                                    data.get(k)
+                                    for k in (
+                                        "dissociated_cells",
+                                        "spatial_groups",
+                                        "max_nonzero_tokens",
+                                        "zero_tokens",
+                                    )
+                                ],
                                 *[result["metrics"][k] for k in METRICS],
                             ]
                         )

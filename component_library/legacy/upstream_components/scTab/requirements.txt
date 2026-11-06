@@ -1,0 +1,13 @@
+setuptools>=62.1.0
+pyarrow>=10.0.0
+merlin-dataloader>=23.2
+merlin-core>=23.2
+numpy>=1.21.0
+pandas>=1.5
+torch>=1.12
+lightning>2.0.0
+torchmetrics>=0.11.1
+tensorboard>=2.11
+scipy>=1.10
+scikit-learn==1.2.2
+sparqlwrapper>=2.0.0

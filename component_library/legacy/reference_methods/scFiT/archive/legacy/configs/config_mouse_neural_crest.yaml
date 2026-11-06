@@ -1,0 +1,82 @@
+data:
+  source: data/raw/neural_crest_pns_glia/Neural_crest_PNS_glia.h5ad
+  max_cells:
+  cell_seed: 42
+  split:
+    strategy: time_threshold
+    time_col: author_day
+    train_max_time: 14.0
+    val_min_time: 14.0
+    val_max_time: 19.0
+
+experiment:
+  output_dir: experiments_mouse_dev
+  run_name: neural_crest_author_day_top2048
+
+model:
+  top_k_genes: 2048
+  d_model: 512
+  nhead: 8
+  d_ff: 2048
+  nlayers: 12
+  dropout: 0.1
+  value_encoder:
+    max_value: 32.0
+  adaln:
+    share_projection: false
+  aux_bin_ce:
+    enabled: false
+    n_bins: 51
+
+training:
+  batch_size: 16
+  lr: 0.0003
+  weight_decay: 0.0001
+  epochs: 6
+  seed: 42
+  mask_ratio: 0.2
+  log_every_steps: 100
+  val_every_steps: 1000
+  save_every_epochs: 1
+  val_ratio: 0.1
+  amp: true
+  monitor_cls_attention: false
+  cls_attention_monitor_max_gb: 1.0
+  gpu_reservation:
+    enabled: false
+    reserve_gb:
+    fraction_of_free: 0.3
+  resume:
+  loss_weights:
+    weighted_huber: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+    cross_entropy: 0.0
+
+validation:
+  batch_size: 16
+  mask_ratio: 0.2
+  mask_seed: 1234
+  max_batches: 50
+
+inference:
+  n_steps: 10
+
+evaluation:
+  checkpoint:
+  split: val
+  batch_size: 16
+  num_workers: 4
+  mask_ratio: 0.2
+  mask_seed: 1234
+  n_steps: 10
+  max_batches: 0
+  max_cells_per_donor:
+  donor_sample_seed:
+  seed: 42
+  split_seed:
+  val_ratio:
+  device: cuda
+  amp: true
+  result_dir: eval_results_mouse_dev
+  save_json:

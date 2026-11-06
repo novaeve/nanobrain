@@ -1,0 +1,129 @@
+data:
+  source: data/raw/neural_crest_pns_glia/Neural_crest_PNS_glia.h5ad
+  preprocessed_dir: data/processed/neural_crest_pns_glia_hvg4096
+  uce_npz: data/external/jax_uce_flow_data.npz
+  time_col: author_day
+  time_numeric_col:
+  cell_type_col: author_cell_type
+  max_cells:
+  cell_seed: 42
+  loader:
+    num_workers: 6
+    prefetch_factor: 2
+    persistent_workers: true
+
+pairing:
+  strategy: latent_knn
+  input_mode: fixed_hvg
+  pair_table_path: results/cache/pair_cache/neural_crest_pns_glia_hvg4096_pooled_future_k5.npz
+  k: 5
+  future_only: true
+  similarity_chunk_size: 512
+  force_rebuild_pairs: false
+  group_by_tgt_time: true
+  drop_last: true
+  train:
+    src_min_time: 10.0
+    src_max_time: 14.0
+    tgt_min_time: 10.0
+    tgt_max_time: 14.0
+  val:
+    src_min_time: 12.0
+    src_max_time: 14.0
+    tgt_min_time: 14.0
+    tgt_max_time: 19.0
+
+experiment:
+  output_dir: results/experiments/legacy_mouse_temporal_h100
+  run_name: neural_crest_temporal_h100_4096_bs32_pooled_future_v1
+
+model:
+  top_k_genes: 4096
+  d_model: 512
+  nhead: 8
+  d_ff: 2048
+  nlayers: 8
+  dropout: 0.1
+  n_cell_types: 6
+  value_encoder:
+    max_value: 32.0
+  adaln:
+    share_projection: false
+  pseudotime_head:
+    enabled: true
+  aux_bin_ce:
+    enabled: false
+    n_bins: 51
+
+training:
+  batch_size: 32
+  lr: 0.0002
+  weight_decay: 0.0001
+  epochs: 10
+  seed: 42
+  log_every_steps: 20
+  val_every_steps: 500
+  save_every_epochs: 1
+  amp: true
+  monitor_cls_attention: false
+  cls_attention_monitor_max_gb: 1.0
+  mmd_min_group_size: 8
+  gpu_reservation:
+    enabled: false
+    reserve_gb:
+    fraction_of_free: 0.3
+  resume:
+  loss_weights:
+    recon: 1.0
+    recon_pearson: 0.1
+    velocity: 0.5
+    distribution: 0.1
+    type: 0.1
+    pseudotime: 0.05
+  pseudotime_loss:
+    enabled: true
+    rank_weight: 0.5
+    beta: 0.1
+    margin: 0.0
+
+validation:
+  batch_size: 16
+  max_batches: 0
+  use_temporal_eval_metrics: true
+  subset:
+    enabled: true
+    samples_per_group: 4
+    seed: 42
+
+inference:
+  n_steps: 10
+
+evaluation:
+  checkpoint:
+  split: val
+  device: cuda
+  seed: 42
+  batch_size: 8
+  n_steps: 10
+  max_batches: 0
+  result_dir: results/eval_results/legacy_mouse_temporal
+  baselines:
+    enabled: false
+    observed_seed: 42
+  assets:
+    pca:
+      path: results/eval_assets/legacy/neural_crest_temporal_fixed/pca_model.pkl
+      real_embedding_path: results/eval_assets/legacy/neural_crest_temporal_fixed/pca_embeddings_all_cells.npz
+      transform_batch_size: 4096
+    marker_gene_path: results/eval_assets/legacy/neural_crest_temporal_fixed/marker_genes_by_cell_type.json
+    cell_type_knn_path: results/eval_assets/legacy/neural_crest_temporal_fixed/cell_type_knn.pkl
+    pseudotime_path: results/eval_assets/legacy/neural_crest_temporal_fixed/pseudotime_train_dpt.npz
+  metrics:
+    marker_mmd:
+      min_real_cells: 32
+      max_cells_per_set: 256
+      max_cells_for_sigma: 256
+    cell_type_accuracy:
+      knn_k: 10
+    pseudotime:
+      knn_k: 10

@@ -1,0 +1,49 @@
+# Generated from the local `scUniFlow` environment.
+# Python: 3.10.20
+# CUDA/PyTorch in validated environment: torch 2.10.0+cu128
+#
+# Install PyTorch and Mamba-family packages with wheels matching your CUDA
+# driver/toolkit. For the validated environment this usually means using a
+# CUDA 12.8 PyTorch index before installing the rest of this file, for example:
+#   pip install torch==2.10.0+cu128 --extra-index-url https://download.pytorch.org/whl/cu128
+#
+# `causal-conv1d` and `mamba-ssm` are CUDA-extension packages; if matching
+# wheels are unavailable, install them from source in the target environment.
+
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.10.0+cu128
+mamba-ssm==2.3.1
+causal-conv1d==1.6.1
+triton==3.6.0
+
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+scikit-learn==1.7.2
+networkx==3.4.2
+umap-learn==0.5.11
+
+scanpy==1.11.5
+anndata==0.11.4
+h5py==3.16.0
+pyarrow==23.0.1
+
+matplotlib==3.10.8
+seaborn==0.13.2
+
+PyYAML==6.0.3
+tqdm==4.67.3
+datasets==4.8.4
+transformers==5.7.0
+safetensors==0.7.0
+magic-impute==3.0.0
+igraph==1.0.0
+leidenalg==0.11.0
+pytorch-lightning==2.6.1
+requests==2.32.5
+
+# Optional baseline ecosystems used by selected scripts but not present in the
+# validated `scUniFlow` environment: scvi-tools, tangram-sc, SpaGE, scgpt,
+# Geneformer, UCE, Nicheformer, CellFM, MindSpore, scOpen, and related R
+# packages for Seurat/LIGER/SAVER/scBFA/cisTopic baselines.

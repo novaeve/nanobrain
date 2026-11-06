@@ -1,0 +1,51 @@
+# Minimal scATAC config for synthetic smoke tests.
+model:
+  n_genes: 16
+  grid_size: 4
+  d_model: 64
+  d_state_row: 16
+  d_state_col: 8
+  n_layers: 1
+  activation_checkpointing: false
+
+training:
+  experiment_dir: results/smoke_task3_atac
+  n_gpus: 1
+  gpu_ids: "0"
+  master_port: 29512
+  batch_size_per_gpu: 2
+  spectral_coords: data/gene_coords/smoke_coords.npy
+  expression_transform: log1p
+  nonzero_mask_ratio: 0.3
+  zero_mask_ratio: 0.1
+  val_ratio: 0.25
+  seed: 42
+  epochs: 1
+  lr: 0.0005
+  min_lr: 0.000001
+  log_every_steps: 1
+  val_every_epochs: 1
+  save_every_epochs: 1
+  loss_weights:
+    weighted_x1: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+    pearson_nonzero: 0.0
+    binary: 1.0
+    binary_rank: 0.0
+
+inference:
+  n_steps: 2
+  temperature: 0.1
+  hard_gate: true
+  open_threshold: 0.5
+
+validation:
+  n_steps: 2
+  temperature: 0.1
+  nonzero_mask_ratio: 0.3
+  zero_mask_ratio: 0.1
+  mask_seed: 1234
+  noise_seed: 5678
+  max_batches: 1
+  batch_size: 2

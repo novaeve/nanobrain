@@ -1,0 +1,2 @@
+"""scFiT research code package."""
+

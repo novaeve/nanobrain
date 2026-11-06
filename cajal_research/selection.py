@@ -1,4 +1,4 @@
-"""Complete paired seeds; relaxed archive and a separate conservative champion gate."""
+"""Single-seed exploratory scores, archive, and a separate champion gate."""
 
 import math
 import statistics
@@ -17,14 +17,16 @@ def check_metrics(metrics):
 
 def aggregate(results, seeds):
     if len(results) != len(seeds) or {r["seed"] for r in results} != set(seeds):
-        raise ValueError("all three distinct paired seed results are required")
+        raise ValueError("every configured seed must have exactly one complete result")
     for row in results:
         if row.get("status") != "complete" or set(row["metrics"]) != set(METRICS):
             raise ValueError("missing task or failed seed")
         check_metrics(row["metrics"])
     return {
         "metrics": {k: statistics.mean(r["metrics"][k] for r in results) for k in METRICS},
-        "std": {k: statistics.stdev(r["metrics"][k] for r in results) for k in METRICS},
+        "std": {k: statistics.stdev(r["metrics"][k] for r in results) if len(results) > 1 else None for k in METRICS},
+        "seed_count": len(results),
+        "uncertainty_estimated": len(results) > 1,
         "all_seeds_passed": True,
         "seeds": list(seeds),
         "seed_results": results,
@@ -41,7 +43,7 @@ def quality(node, baselines):
 
 
 def promote(candidate, parent, reference, baselines, targets, floor=0.005):
-    tolerance = {k: max(floor, reference["std"][k], parent["std"][k], candidate["std"][k]) for k in METRICS}
+    tolerance = {k: floor for k in METRICS}
     regressions = [k for k in METRICS if candidate["metrics"][k] < parent["metrics"][k] - tolerance[k]]
     # Always require improvement on the incumbent's weakest frontier dimension.
     weakest = METRICS[min(range(len(METRICS)), key=lambda i: margins(parent, baselines)[i])]
@@ -52,10 +54,18 @@ def promote(candidate, parent, reference, baselines, targets, floor=0.005):
     ]
     passed = (
         not regressions
-        and min(gains) > tolerance[target]
+        and min(gains) > tolerance[target] + 1e-12
         and quality(candidate, baselines) > quality(parent, baselines)
     )
-    return {"passed": passed, "target": target, "gains": gains, "tolerance": tolerance, "regressions": regressions}
+    return {
+        "passed": passed,
+        "target": target,
+        "gains": gains,
+        "tolerance": tolerance,
+        "regressions": regressions,
+        "evidence": "single_seed_exploratory",
+        "statistical_significance_claimed": False,
+    }
 
 
 def parents(nodes, store, baseline, limit=12):
@@ -71,7 +81,9 @@ def parents(nodes, store, baseline, limit=12):
         )
     ]
     picked = ordered[: max(1, limit // 3)]
-    signature = lambda n: digest({k: store.bundle(n["candidate_id"])[k] for k in ("model", "plugins", "files")})
+    signature = lambda n: digest(
+        {k: store.bundle(n["candidate_id"])[k] for k in ("model", "components", "plugins", "files")}
+    )
     seen = {signature(n) for n in picked}
     for pool in (pareto, ordered[::-1], ordered):
         for n in pool:

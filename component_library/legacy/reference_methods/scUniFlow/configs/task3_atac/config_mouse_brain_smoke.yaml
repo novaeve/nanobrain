@@ -1,0 +1,53 @@
+# Mouse E18 brain scATAC smoke-test configuration
+# Uses the prepared top-5k TF-IDF peaks and mm10 genomic routing coordinates.
+
+model:
+  n_genes: 5000
+  grid_size: 72
+  d_model: 512
+  dual_head: true
+  d_state_row: 64
+  d_state_col: 16
+  n_layers: 8
+
+training:
+  experiment_dir: results/task3_atac
+  n_gpus: 1
+  gpu_ids: "7"
+  master_port: 29512
+  batch_size_per_gpu: 24
+  spectral_coords: "data/task3_atac/pbmc_5k_mouse_brain/e18_mouse_brain_fresh_5k_atac_grid72_coords.npy"
+  expression_transform: tfidf_log1p_1e4
+  nonzero_mask_ratio: 0.2
+  zero_mask_ratio: 0.1
+  val_ratio: 0.1
+  seed: 42
+  epochs: 5
+  lr: 0.0005
+  min_lr: 0.000001
+  val_every_epochs: 1
+  save_every_epochs: 5
+
+  loss_weights:
+    weighted_x1: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+    pearson_nonzero: 0.0
+    binary: 1.0
+    binary_rank: 0.0
+
+inference:
+  n_steps: 10
+  temperature: 0.1
+  hard_gate: true
+  open_threshold: 0.5
+
+validation:
+  n_steps: 10
+  temperature: 0.1
+  nonzero_mask_ratio: 0.2
+  zero_mask_ratio: 0.1
+  mask_seed: 1234
+  noise_seed: 5678
+  max_batches: 10
+  batch_size: 4
