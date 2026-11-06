@@ -1,0 +1,9 @@
+description = "grad_equal + teacher_gram with the integration loss at 4x: int x4 alone reached batch 0.444 but cost annotation (cell type 0.697); does the teacher's bio anchor keep annotation while batch rises?"
+status = "main"
+outcome = "Running"
+extends = ["balance_grad_equal.toml"]
+run = { name = "grad_equal_teacher_gram_int4", out = "runs/integ/grad_equal_teacher_gram_int4" }
+
+[train]
+task_weights = { gene = 1.0, integration = 4.0, cell_type = 1.0, anatomy = 1.0, spatial = 1.0 }
+objectives = [{ name = "teacher_gram", weight = 1.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

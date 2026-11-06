@@ -1,0 +1,7 @@
+description = "L2. Constrained counterfactual: grad_equal plus batch swap (32 cells) whose weight is a dual variable under the same budgets as budget_hsic"
+status = "parked"
+outcome = "As budget_hsic: weight at its floor, a grad_equal replicate (batch 0.362); the constraint is untested"
+extends = ["balance_grad_equal.toml"]
+run = { name = "budget_batch_swap", out = "runs/integ/budget_batch_swap" }
+[train]
+objectives = [{ name = "batch_swap", weight = 0.1, n_cells = 32, budget = { cell_type = 0.28, anatomy = 0.40 } }]

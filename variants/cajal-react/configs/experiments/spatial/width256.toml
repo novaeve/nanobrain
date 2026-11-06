@@ -1,0 +1,8 @@
+description = "Spatial capacity in width: grad_equal with a 256-wide neighbourhood transformer (was 128), stopped at 10k; companion to deeper (4 layers)"
+status = "main"
+outcome = "Running; compare with balance_grad_equal, spatial imputation first"
+extends = ["../integration/balance_grad_equal.toml"]
+run = { name = "spatial_width256", out = "runs/spatial/width256" }
+
+[model]
+spatial_d = 256

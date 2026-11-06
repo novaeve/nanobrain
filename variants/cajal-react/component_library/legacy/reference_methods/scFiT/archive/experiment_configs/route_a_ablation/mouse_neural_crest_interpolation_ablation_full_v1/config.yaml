@@ -1,0 +1,62 @@
+data:
+  cell_type_col: author_cell_type
+  preprocessed_dir: data/processed/neural_crest_pns_glia_hvg4096
+  source: data/raw/neural_crest_pns_glia/Neural_crest_PNS_glia.h5ad
+  time_col: author_day
+evaluation:
+  assets_dir: results/eval_assets/mouse/interpolation
+  batch_size: 24
+  max_cells_per_time: 0
+experiment:
+  output_dir: results/experiments/ablation
+  run_name: mouse_neural_crest_interpolation_ablation_full_v1
+inference:
+  micro_batch_size: 12
+  n_steps: 10
+model:
+  adaln:
+    share_projection: false
+  d_ff: 2048
+  d_model: 512
+  dropout: 0.1
+  nhead: 8
+  nlayers: 8
+  time_conditioning:
+    mode: adaln
+  top_k_genes: 4096
+  value_encoder:
+    max_value: 32.0
+ot:
+  epsilon: 0.05
+  max_iter: 100
+protocol:
+  path: configs/protocols/mouse/interpolation.yaml
+training:
+  amp: true
+  batch_size: 24
+  epochs: 10
+  gpu_reservation:
+    enabled: false
+    fraction_of_free: 0.3
+    reserve_gb: null
+  grad_clip: 1.0
+  iters_per_epoch: 500
+  log_every_steps: 20
+  loss_weights:
+    cfm: 1.0
+    mean: 0.1
+    variance: 0.0
+    wasserstein_hvg: 0.5
+    wasserstein_pca50: 0.1
+  lr: 0.0002
+  prediction_parameterization: target_reparam
+  resume: null
+  save_every_epochs: 1
+  seed: 42
+  transport_pairing: ot
+  val_every_steps: 500
+  variance_loss_eps: 0.0001
+  variance_loss_use_log: true
+  weight_decay: 0.0001
+validation:
+  max_cells_per_time: 256

@@ -1,0 +1,665 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "components": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          },
+          "slot": {
+            "enum": [
+              "value_embedding",
+              "token",
+              "block_attention",
+              "block_mixer",
+              "latent",
+              "classifier",
+              "decoder",
+              "neighborhood"
+            ]
+          }
+        },
+        "required": [
+          "slot",
+          "name",
+          "params"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "data": {
+      "additionalProperties": false,
+      "properties": {
+        "dissociated_cells": {
+          "maximum": 512,
+          "minimum": 16,
+          "type": "integer"
+        },
+        "max_nonzero_tokens": {
+          "maximum": 8192,
+          "minimum": 512,
+          "type": "integer"
+        },
+        "spatial_groups": {
+          "maximum": 64,
+          "minimum": 2,
+          "type": "integer"
+        },
+        "zero_tokens": {
+          "maximum": 256,
+          "minimum": 8,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "files": {
+      "additionalProperties": {
+        "maxLength": 32768,
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "hypothesis": {
+      "maxLength": 1600,
+      "minLength": 8,
+      "type": "string"
+    },
+    "model": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_adversary": {
+          "enum": [
+            0,
+            64,
+            128,
+            256
+          ]
+        },
+        "d_model": {
+          "enum": [
+            128,
+            256,
+            384,
+            512
+          ]
+        },
+        "decoder": {
+          "enum": [
+            "separate",
+            "unified"
+          ]
+        },
+        "decoder_hidden": {
+          "enum": [
+            256,
+            512,
+            768,
+            1024
+          ]
+        },
+        "expert_hidden": {
+          "enum": [
+            128,
+            256,
+            384,
+            512
+          ]
+        },
+        "input_norm": {
+          "enum": [
+            "log1p",
+            "pearson"
+          ]
+        },
+        "latent_reg": {
+          "enum": [
+            "kl",
+            "mog",
+            "none"
+          ]
+        },
+        "loop_injection": {
+          "enum": [
+            false,
+            true
+          ]
+        },
+        "loops": {
+          "enum": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "max_loops": {
+          "enum": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            8
+          ]
+        },
+        "min_loops": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "mog_components": {
+          "enum": [
+            8,
+            16,
+            32,
+            64
+          ]
+        },
+        "n_coda": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "n_core": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "n_experts": {
+          "enum": [
+            8,
+            16,
+            32,
+            64
+          ]
+        },
+        "n_hash_layers": {
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        "n_heads": {
+          "enum": [
+            2,
+            4,
+            6,
+            8
+          ]
+        },
+        "n_prelude": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "n_shared_experts": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "nbeats": {
+          "enum": [
+            false,
+            true
+          ]
+        },
+        "recon_detach_mu": {
+          "enum": [
+            false,
+            true
+          ]
+        },
+        "residual_dim": {
+          "enum": [
+            0,
+            16,
+            32,
+            64
+          ]
+        },
+        "router_bias_rate": {
+          "maximum": 0.01,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "router_score": {
+          "enum": [
+            "sqrtsoftplus",
+            "sigmoid"
+          ]
+        },
+        "spatial_d": {
+          "enum": [
+            64,
+            128,
+            256
+          ]
+        },
+        "spatial_latent": {
+          "maximum": 5.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "spatial_layers": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "spatial_residual_mean": {
+          "enum": [
+            false,
+            true
+          ]
+        },
+        "top_k": {
+          "enum": [
+            1,
+            2,
+            4,
+            8
+          ]
+        },
+        "z_dim": {
+          "enum": [
+            32,
+            64,
+            128
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "parent_ids": {
+      "items": {
+        "pattern": "^[a-f0-9]{64}$",
+        "type": "string"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "plugins": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "pattern": "^(modules|losses|optimizers)/[a-z][a-z0-9_]{0,63}\\.py$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "token_transform",
+              "gene_loss",
+              "cell_type_loss",
+              "anatomy_loss",
+              "optimizer"
+            ]
+          },
+          "name": {
+            "pattern": "^custom_[a-z][a-z0-9_]{1,47}$",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "default": {},
+                "enum": {
+                  "type": "array"
+                },
+                "maximum": {
+                  "type": "number"
+                },
+                "minimum": {
+                  "type": "number"
+                },
+                "type": {
+                  "enum": [
+                    "integer",
+                    "number",
+                    "boolean",
+                    "string"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "default"
+              ],
+              "type": "object"
+            },
+            "type": "object"
+          },
+          "settings": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "file",
+          "parameters",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "cajal.research.candidate.v2"
+    },
+    "target_metrics": {
+      "items": {
+        "enum": [
+          "Cell type fine macro-F1",
+          "Region fine macro-F1",
+          "Integration bio",
+          "Integration batch",
+          "Gene imputation Pearson (cell median)",
+          "Spatial imputation Pearson (cell median)"
+        ]
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "train": {
+      "additionalProperties": false,
+      "properties": {
+        "balancer": {
+          "enum": [
+            "initial",
+            "grad_equal",
+            "famo"
+          ]
+        },
+        "balancer_params": {
+          "type": "object"
+        },
+        "grad_clip": {
+          "maximum": 20.0,
+          "minimum": 0.1,
+          "type": "number"
+        },
+        "kl_dual_lr": {
+          "maximum": 0.1,
+          "minimum": 0.0001,
+          "type": "number"
+        },
+        "kl_target": {
+          "maximum": 300.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "kl_warmup_steps": {
+          "maximum": 10000,
+          "minimum": 100,
+          "type": "integer"
+        },
+        "kl_weight": {
+          "maximum": 20.0,
+          "minimum": 0.001,
+          "type": "number"
+        },
+        "lr": {
+          "maximum": 0.02,
+          "minimum": 1e-06,
+          "type": "number"
+        },
+        "lr_schedule": {
+          "enum": [
+            "cosine",
+            "linear",
+            "constant"
+          ]
+        },
+        "min_lr_ratio": {
+          "maximum": 0.5,
+          "minimum": 0.01,
+          "type": "number"
+        },
+        "norm_steps": {
+          "maximum": 1000,
+          "minimum": 20,
+          "type": "integer"
+        },
+        "objectives": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "budget": {
+                "additionalProperties": false,
+                "properties": {
+                  "anatomy": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "cell_type": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "gene": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "integration": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  },
+                  "spatial": {
+                    "maximum": 1000000.0,
+                    "minimum": 1e-06,
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "coeff": {
+                "type": "number"
+              },
+              "dual_lr": {
+                "maximum": 0.1,
+                "minimum": 0.0001,
+                "type": "number"
+              },
+              "label": {
+                "enum": [
+                  "cell_type",
+                  "anatomy"
+                ]
+              },
+              "n_cells": {
+                "maximum": 128,
+                "minimum": 4,
+                "type": "integer"
+              },
+              "n_proj": {
+                "maximum": 512,
+                "minimum": 16,
+                "type": "integer"
+              },
+              "n_t": {
+                "maximum": 65,
+                "minimum": 5,
+                "type": "integer"
+              },
+              "name": {
+                "enum": [
+                  "cond_hsic",
+                  "sigreg",
+                  "batch_swap",
+                  "batch_adversary",
+                  "teacher_gram"
+                ]
+              },
+              "start": {
+                "maximum": 5000,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "t_max": {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "number"
+              },
+              "teacher": {
+                "enum": [
+                  "cell_type_30k"
+                ]
+              },
+              "weight": {
+                "maximum": 20.0,
+                "minimum": 0.0,
+                "type": "number"
+              }
+            },
+            "required": [
+              "name",
+              "weight"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "optimizer": {
+          "enum": [
+            "grouped_muon",
+            "adamw",
+            "adam",
+            "sgd",
+            "custom"
+          ]
+        },
+        "optimizer_params": {
+          "additionalProperties": false,
+          "properties": {
+            "adam_beta1": {
+              "maximum": 0.99,
+              "minimum": 0.8,
+              "type": "number"
+            },
+            "adam_beta2": {
+              "maximum": 0.9999,
+              "minimum": 0.9,
+              "type": "number"
+            },
+            "adam_eps": {
+              "maximum": 1e-06,
+              "minimum": 1e-09,
+              "type": "number"
+            },
+            "muon_momentum": {
+              "maximum": 0.99,
+              "minimum": 0.8,
+              "type": "number"
+            },
+            "muon_ns_steps": {
+              "maximum": 8,
+              "minimum": 3,
+              "type": "integer"
+            },
+            "sgd_momentum": {
+              "maximum": 0.99,
+              "minimum": 0.0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "task_weights": {
+          "additionalProperties": false,
+          "properties": {
+            "anatomy": {
+              "maximum": 20.0,
+              "minimum": 0.01,
+              "type": "number"
+            },
+            "cell_type": {
+              "maximum": 20.0,
+              "minimum": 0.01,
+              "type": "number"
+            },
+            "gene": {
+              "maximum": 20.0,
+              "minimum": 0.01,
+              "type": "number"
+            },
+            "integration": {
+              "maximum": 20.0,
+              "minimum": 0.01,
+              "type": "number"
+            },
+            "spatial": {
+              "maximum": 20.0,
+              "minimum": 0.01,
+              "type": "number"
+            }
+          },
+          "required": [
+            "gene",
+            "integration",
+            "cell_type",
+            "anatomy",
+            "spatial"
+          ],
+          "type": "object"
+        },
+        "warmup_steps": {
+          "maximum": 4000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "weight_decay": {
+          "maximum": 0.3,
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "parent_ids",
+    "target_metrics",
+    "hypothesis",
+    "model",
+    "train",
+    "data",
+    "components",
+    "plugins",
+    "files"
+  ],
+  "type": "object"
+}

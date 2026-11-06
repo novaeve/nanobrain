@@ -1,0 +1,8 @@
+description = "Spatial residual on the neighbours' mean latent: the neighbourhood model predicts a correction to the mean of the visible neighbours' latents (zero-initialised), on grad_equal, stopped at 10k. Diagnostic at grad_equal@10k (expected-log readout): the learned prediction 0.304 < plain neighbour-latent mean 0.344 < own latent 0.383 > neighbour mean 0.368"
+status = "main"
+outcome = "Queued; compare with balance_grad_equal, spatial imputation first"
+extends = ["../integration/balance_grad_equal.toml"]
+run = { name = "spatial_residual_mean", out = "runs/spatial/residual_mean" }
+
+[model]
+spatial_residual_mean = true

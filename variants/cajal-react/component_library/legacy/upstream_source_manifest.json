@@ -1,0 +1,3517 @@
+[
+  {
+    "name": "scNym",
+    "repository": "https://github.com/calico/scnym",
+    "commit": "e19f4f74d726be8831ce4b381ac297fb90228054",
+    "commit_date": "2026-04-04T14:56:24-07:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".github/workflows/python-package.yml",
+      ".gitignore",
+      ".pre-commit-config.yaml",
+      "LICENSE",
+      "MANIFEST.in",
+      "README.md",
+      "VERSION",
+      "assets/processed_data.md",
+      "assets/scnym_icon.png",
+      "assets/scnym_mixmatch_diagram.png",
+      "assets/scnym_mmdan_diagram.png",
+      "baseline/README.md",
+      "baseline/baseline.R",
+      "baseline/baseline.py",
+      "configs/default_config.txt",
+      "demo_script.sh",
+      "notebooks/scnym_classif_tutorial.ipynb",
+      "pyproject.toml",
+      "requirements.txt",
+      "scnym/__init__.py",
+      "scnym/__main__.py",
+      "scnym/api.py",
+      "scnym/attributionpriors.py",
+      "scnym/dataprep.py",
+      "scnym/distributions.py",
+      "scnym/interpret.py",
+      "scnym/losses.py",
+      "scnym/main.py",
+      "scnym/model.py",
+      "scnym/predict.py",
+      "scnym/scnym_ad.py",
+      "scnym/trainer.py",
+      "scnym/utils.py",
+      "setup.py",
+      "tests/test_api.py",
+      "tests/test_da.py",
+      "tests/test_dataprep.py",
+      "tests/test_guide.py",
+      "tests/test_interpret.py",
+      "tests/test_main.py",
+      "tests/test_mixmatch.py",
+      "tests/test_model.py",
+      "tests/test_multitask.py",
+      "tests/test_reconstruction.py",
+      "tests/test_trainer.py",
+      "tests/test_utils.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/scNym/LICENSE",
+        "url": "https://raw.githubusercontent.com/calico/scnym/e19f4f74d726be8831ce4b381ac297fb90228054/LICENSE",
+        "sha256": "a2968a143062a80866df0f107f5c66ba83b0b5d32e15a714df1bc7a272783eaf",
+        "bytes": 9137
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/scNym/README.md",
+        "url": "https://raw.githubusercontent.com/calico/scnym/e19f4f74d726be8831ce4b381ac297fb90228054/README.md",
+        "sha256": "cfaa6e2cde651e773f216fb897a41e6a63d600617be22a7ec1af127dd3dbab84",
+        "bytes": 15960
+      },
+      {
+        "path": "pyproject.toml",
+        "local_path": "sources/scNym/pyproject.toml",
+        "url": "https://raw.githubusercontent.com/calico/scnym/e19f4f74d726be8831ce4b381ac297fb90228054/pyproject.toml",
+        "sha256": "0fa86d54ac3a35ef5098ff8aa0f1e90758ad1309b718ddf6054351640f697f85",
+        "bytes": 650
+      },
+      {
+        "path": "requirements.txt",
+        "local_path": "sources/scNym/requirements.txt",
+        "url": "https://raw.githubusercontent.com/calico/scnym/e19f4f74d726be8831ce4b381ac297fb90228054/requirements.txt",
+        "sha256": "c789f5d933439b9b4bcdca4b17362e1d4d99879f0a9d3350c9961c79feacadb0",
+        "bytes": 264
+      },
+      {
+        "path": "scnym/model.py",
+        "local_path": "sources/scNym/scnym/model.py",
+        "url": "https://raw.githubusercontent.com/calico/scnym/e19f4f74d726be8831ce4b381ac297fb90228054/scnym/model.py",
+        "sha256": "c2e1e073b53689508588342e86eef66bbaa5f8ad8d74dfa0a2ec6aeb1af0b0e9",
+        "bytes": 18383,
+        "definitions": [
+          {
+            "name": "ResBlock",
+            "line": 9,
+            "type": "class"
+          },
+          {
+            "name": "CellTypeCLF",
+            "line": 85,
+            "type": "class"
+          },
+          {
+            "name": "GradReverse",
+            "line": 286,
+            "type": "class"
+          },
+          {
+            "name": "DANN",
+            "line": 341,
+            "type": "class"
+          },
+          {
+            "name": "AE",
+            "line": 427,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/scNym/setup.py",
+        "url": "https://raw.githubusercontent.com/calico/scnym/e19f4f74d726be8831ce4b381ac297fb90228054/setup.py",
+        "sha256": "0511f278824e68f2dc903a01303c39eebaa63cc455dfc6c6dd4f7490d27e0782",
+        "bytes": 1370,
+        "definitions": []
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "scPoli",
+    "repository": "https://github.com/theislab/scarches",
+    "commit": "d35cde61fff4dec6b86660817f4750fa35ff836d",
+    "commit_date": "2026-06-26T11:03:19+02:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".gitignore",
+      ".readthedocs.yml",
+      ".travis.yml",
+      "LICENSE",
+      "README.rst",
+      "docs/Makefile",
+      "docs/_static/custom.css",
+      "docs/about.rst",
+      "docs/api/dataset.rst",
+      "docs/api/index.rst",
+      "docs/api/models.rst",
+      "docs/api/plotting.rst",
+      "docs/api/utils.rst",
+      "docs/api/zenodo.rst",
+      "docs/conf.py",
+      "docs/index.rst",
+      "docs/installation.rst",
+      "docs/make.bat",
+      "docs/model_sharing.rst",
+      "docs/requirements.txt",
+      "docs/training_tips.rst",
+      "envs/scarches_linux.yaml",
+      "notebooks/HLCA_query.h5ad",
+      "notebooks/SageNet_mouse_embryo.ipynb",
+      "notebooks/expimap_surgery_pipeline_advanced.ipynb",
+      "notebooks/expimap_surgery_pipeline_basic.ipynb",
+      "notebooks/hlca_map_classify.ipynb",
+      "notebooks/multigrate.ipynb",
+      "notebooks/mvTCR_borcherding.ipynb",
+      "notebooks/reference_building_from_scratch.ipynb",
+      "notebooks/scanvi_surgery_pipeline.ipynb",
+      "notebooks/scgen_map_query.ipynb",
+      "notebooks/scpoli_ATAC.ipynb",
+      "notebooks/scpoli_surgery_pipeline.ipynb",
+      "notebooks/scvi_surgery_pipeline.ipynb",
+      "notebooks/sysvi_surgery_pipeline.ipynb",
+      "notebooks/totalvi_surgery_pipeline.ipynb",
+      "notebooks/trVAE_zenodo_pipeline.ipynb",
+      "notebooks/treeArches_identifying_new_ct.ipynb",
+      "notebooks/treeArches_pbmc.ipynb",
+      "notebooks/trvae_surgery_pipeline.ipynb",
+      "scarches/__init__.py",
+      "scarches/classifiers/__init__.py",
+      "scarches/dataset/DHH_data/_DHH_data.py",
+      "scarches/dataset/DHH_data/__init__.py",
+      "scarches/dataset/MGA_data/_MGA_data.py",
+      "scarches/dataset/MGA_data/__init__.py",
+      "scarches/dataset/__init__.py",
+      "scarches/dataset/scpoli/__init__.py",
+      "scarches/dataset/scpoli/_utils.py",
+      "scarches/dataset/scpoli/anndata.py",
+      "scarches/dataset/trvae/__init__.py",
+      "scarches/dataset/trvae/_utils.py",
+      "scarches/dataset/trvae/anndata.py",
+      "scarches/dataset/trvae/data_handling.py",
+      "scarches/metrics/__init__.py",
+      "scarches/metrics/clustering.py",
+      "scarches/metrics/metrics.py",
+      "scarches/models/__init__.py",
+      "scarches/models/base/__init__.py",
+      "scarches/models/base/_base.py",
+      "scarches/models/base/_utils.py",
+      "scarches/models/expimap/__init__.py",
+      "scarches/models/expimap/expimap.py",
+      "scarches/models/expimap/expimap_model.py",
+      "scarches/models/expimap/losses.py",
+      "scarches/models/expimap/modules.py",
+      "scarches/models/sagenet/__init__.py",
+      "scarches/models/sagenet/classifier.py",
+      "scarches/models/sagenet/model.py",
+      "scarches/models/sagenet/sagenet.py",
+      "scarches/models/sagenet/utils.py",
+      "scarches/models/scgen/__init__.py",
+      "scarches/models/scgen/_utils.py",
+      "scarches/models/scgen/modules.py",
+      "scarches/models/scgen/vaearith.py",
+      "scarches/models/scgen/vaearith_model.py",
+      "scarches/models/scpoli/__init__.py",
+      "scarches/models/scpoli/_utils.py",
+      "scarches/models/scpoli/scpoli.py",
+      "scarches/models/scpoli/scpoli_model.py",
+      "scarches/models/trvae/__init__.py",
+      "scarches/models/trvae/_utils.py",
+      "scarches/models/trvae/adaptors.py",
+      "scarches/models/trvae/losses.py",
+      "scarches/models/trvae/modules.py",
+      "scarches/models/trvae/trvae.py",
+      "scarches/models/trvae/trvae_model.py",
+      "scarches/plotting/__init__.py",
+      "scarches/plotting/_alluvial.py",
+      "scarches/plotting/sankey.py",
+      "scarches/plotting/scvi_eval.py",
+      "scarches/plotting/terms_scores.py",
+      "scarches/plotting/trvae_eval.py",
+      "scarches/surgery/__init__.py",
+      "scarches/surgery/trvae.py",
+      "scarches/trainers/__init__.py",
+      "scarches/trainers/expimap/__init__.py",
+      "scarches/trainers/expimap/regularized.py",
+      "scarches/trainers/scgen/__init__.py",
+      "scarches/trainers/scgen/_utils.py",
+      "scarches/trainers/scgen/trainer.py",
+      "scarches/trainers/scpoli/__init__.py",
+      "scarches/trainers/scpoli/_utils.py",
+      "scarches/trainers/scpoli/trainer.py",
+      "scarches/trainers/trvae/__init__.py",
+      "scarches/trainers/trvae/_utils.py",
+      "scarches/trainers/trvae/trainer.py",
+      "scarches/trainers/trvae/unsupervised.py",
+      "scarches/utils/__init__.py",
+      "scarches/utils/annotations.py",
+      "scarches/utils/knn.py",
+      "scarches/utils/monitor.py",
+      "scarches/zenodo/__init__.py",
+      "scarches/zenodo/deposition.py",
+      "scarches/zenodo/file.py",
+      "scarches/zenodo/zip.py",
+      "setup.py",
+      "tests/test_dataloader.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/scPoli/LICENSE",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/LICENSE",
+        "sha256": "11ff9e0de25f9d644d287ac1a0dc6fb2cae69c71cb2cbe70c5ea68fcb8a88545",
+        "bytes": 1537
+      },
+      {
+        "path": "README.rst",
+        "local_path": "sources/scPoli/README.rst",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/README.rst",
+        "sha256": "a970e83f02c216a5234cde1fa549cf011599dc4b24137b60c70d53b2701674d4",
+        "bytes": 2189
+      },
+      {
+        "path": "scarches/models/scpoli/__init__.py",
+        "local_path": "sources/scPoli/scarches/models/scpoli/__init__.py",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/scarches/models/scpoli/__init__.py",
+        "sha256": "c4ed3371f1cfa624141674e3d681d8ab447429d5e75627ee91dd2f18eff6dd58",
+        "bytes": 333,
+        "definitions": []
+      },
+      {
+        "path": "scarches/models/scpoli/_utils.py",
+        "local_path": "sources/scPoli/scarches/models/scpoli/_utils.py",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/scarches/models/scpoli/_utils.py",
+        "sha256": "4692041d17f8181cbb6714c5f557e88f0725191009982213d4e928f444df9e29",
+        "bytes": 1765,
+        "definitions": [
+          {
+            "name": "one_hot_encoder",
+            "line": 10,
+            "type": "function"
+          },
+          {
+            "name": "partition",
+            "line": 20,
+            "type": "function"
+          },
+          {
+            "name": "reads_to_fragments",
+            "line": 28,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "scarches/models/scpoli/scpoli.py",
+        "local_path": "sources/scPoli/scarches/models/scpoli/scpoli.py",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/scarches/models/scpoli/scpoli.py",
+        "sha256": "899215c444efcecfe8ef6d1d3b39942e21d8f9071d685ad4e42ce21d5cf87121",
+        "bytes": 24608,
+        "definitions": [
+          {
+            "name": "scpoli",
+            "line": 10,
+            "type": "class"
+          },
+          {
+            "name": "Encoder",
+            "line": 363,
+            "type": "class"
+          },
+          {
+            "name": "Decoder",
+            "line": 467,
+            "type": "class"
+          },
+          {
+            "name": "CondLayers",
+            "line": 646,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "scarches/models/scpoli/scpoli_model.py",
+        "local_path": "sources/scPoli/scarches/models/scpoli/scpoli_model.py",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/scarches/models/scpoli/scpoli_model.py",
+        "sha256": "f354b6a09c8c6c7329888b8325c63c8b2863558a155c2529aabc5e95fb383c33",
+        "bytes": 38256,
+        "definitions": [
+          {
+            "name": "scPoli",
+            "line": 21,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/scPoli/setup.py",
+        "url": "https://raw.githubusercontent.com/theislab/scarches/d35cde61fff4dec6b86660817f4750fa35ff836d/setup.py",
+        "sha256": "35eeae0afc07ca162dafc60adfece8c7640195d6169126b40cd61f66213c0fce",
+        "bytes": 2023,
+        "definitions": []
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "scTab",
+    "repository": "https://github.com/theislab/scTab",
+    "commit": "5ede7f2ba1f9618b86924f2ff587931de18f4ada",
+    "commit_date": "2024-09-13T12:55:09+02:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "cellnet/__init__.py",
+      "cellnet/datamodules.py",
+      "cellnet/estimators.py",
+      "cellnet/models.py",
+      "cellnet/tabnet/__init__.py",
+      "cellnet/tabnet/sparsemax.py",
+      "cellnet/tabnet/tab_network.py",
+      "cellnet/utils/__init__.py",
+      "cellnet/utils/cell_ontology.py",
+      "cellnet/utils/data_loading.py",
+      "cellnet/utils/tabnet_explain.py",
+      "docs/classification-evaluation-metrics.md",
+      "docs/data.md",
+      "docs/models.md",
+      "notebooks-tutorials/data_loading.ipynb",
+      "notebooks-tutorials/model_inference.ipynb",
+      "notebooks-tutorials/model_inference.md",
+      "notebooks/data_augmentation/data_augmentation.ipynb",
+      "notebooks/data_augmentation/evaluation.ipynb",
+      "notebooks/data_augmentation/shortend_cell_types.yaml",
+      "notebooks/data_augmentation/visualize_augmentations.ipynb",
+      "notebooks/loss_curve_plotting/tabnet-vs-linear.ipynb",
+      "notebooks/model_evaluation/__init__.py",
+      "notebooks/model_evaluation/classification-CIForm.ipynb",
+      "notebooks/model_evaluation/classification-celltypist.ipynb",
+      "notebooks/model_evaluation/classification-linear.ipynb",
+      "notebooks/model_evaluation/classification-sc-foundation-models.ipynb",
+      "notebooks/model_evaluation/classification-tabnet-ensembl.ipynb",
+      "notebooks/model_evaluation/classification-tabnet.ipynb",
+      "notebooks/model_evaluation/classification-xgboost.ipynb",
+      "notebooks/model_evaluation/integration.ipynb",
+      "notebooks/model_evaluation/model-comparision.ipynb",
+      "notebooks/model_evaluation/model-improvement.ipynb",
+      "notebooks/model_evaluation/model-scaling.ipynb",
+      "notebooks/model_evaluation/predictions.py",
+      "notebooks/model_evaluation/shortend_cell_types.yaml",
+      "notebooks/model_evaluation/tabnet-attention-masks.ipynb",
+      "notebooks/model_evaluation/tabnet-coarse-celltypes.ipynb",
+      "notebooks/model_evaluation/tabnet-detailed-eval.ipynb",
+      "notebooks/model_evaluation/tabnet_non_10X.ipynb",
+      "notebooks/model_evaluation/utils.py",
+      "notebooks/store_creation/01_download_data.ipynb",
+      "notebooks/store_creation/02_create_train_val_test_split.ipynb",
+      "notebooks/store_creation/03_write_store_merlin.ipynb",
+      "notebooks/store_creation/04_create_hierarchy_matrices.ipynb",
+      "notebooks/store_creation/05_compute_pca.ipynb",
+      "notebooks/store_creation/06_check_written_store.ipynb",
+      "notebooks/store_creation/07_data_summary.ipynb",
+      "notebooks/store_creation/features.parquet",
+      "notebooks/store_creation/subsetted_data/subset_to_lung_only.ipynb",
+      "notebooks/store_creation/subsetted_data/write_store_merlin_lung_only.ipynb",
+      "notebooks/store_creation/subsetted_data/write_store_merlin_subset.ipynb",
+      "notebooks/training/scGPT-finetuning.ipynb",
+      "notebooks/training/train_celltypist.ipynb",
+      "notebooks/training/train_linear.ipynb",
+      "notebooks/training/train_mlp.ipynb",
+      "notebooks/training/train_tabnet.ipynb",
+      "notebooks/training/train_xgboost.ipynb",
+      "notebooks/training/zheng68k.ipynb",
+      "requirements-gpu.txt",
+      "requirements.txt",
+      "scripts/create_venv.sh",
+      "scripts/py_scripts/CIForm.py",
+      "scripts/py_scripts/scGPT-inference.py",
+      "scripts/py_scripts/train_linear.py",
+      "scripts/py_scripts/train_mlp.py",
+      "scripts/py_scripts/train_tabnet.py",
+      "scripts/py_scripts/train_xgboost.py",
+      "scripts/py_scripts/utils.py",
+      "scripts/scGPT-inference.sh",
+      "scripts/train_CIForm.sh",
+      "scripts/train_linear_jsc.sh",
+      "scripts/train_linear_lrz.sh",
+      "scripts/train_mlp_lrz.sh",
+      "scripts/train_tabnet_jsc.sh",
+      "scripts/train_tabnet_lrz.sh",
+      "scripts/train_xgboost_lrz.sh",
+      "setup.py",
+      "tests/test_sample.py",
+      "tox.ini"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/scTab/LICENSE",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/LICENSE",
+        "sha256": "c10a30764345fa3311b341f72159417aa558bbf64b58db2046a6df8d282cf180",
+        "bytes": 1079
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/scTab/README.md",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/README.md",
+        "sha256": "b9208a3232ffbcf835c2b3854bda2d1cb8d68f202638c4421d38e45485cde2ba",
+        "bytes": 3719
+      },
+      {
+        "path": "cellnet/models.py",
+        "local_path": "sources/scTab/cellnet/models.py",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/cellnet/models.py",
+        "sha256": "60730c5f4017c2837973f37967621f11d8fec40603ccd6fe4c4ec69b658efeea",
+        "bytes": 15916,
+        "definitions": [
+          {
+            "name": "MLP",
+            "line": 16,
+            "type": "class"
+          },
+          {
+            "name": "augment_data",
+            "line": 50,
+            "type": "function"
+          },
+          {
+            "name": "BaseClassifier",
+            "line": 59,
+            "type": "class"
+          },
+          {
+            "name": "LinearClassifier",
+            "line": 199,
+            "type": "class"
+          },
+          {
+            "name": "TabnetClassifier",
+            "line": 260,
+            "type": "class"
+          },
+          {
+            "name": "MLPClassifier",
+            "line": 369,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "cellnet/tabnet/__init__.py",
+        "local_path": "sources/scTab/cellnet/tabnet/__init__.py",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/cellnet/tabnet/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "definitions": []
+      },
+      {
+        "path": "cellnet/tabnet/sparsemax.py",
+        "local_path": "sources/scTab/cellnet/tabnet/sparsemax.py",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/cellnet/tabnet/sparsemax.py",
+        "sha256": "588a742593697188d65a96b4675e43ae0b6ace614be902f7370379e157df5aae",
+        "bytes": 6201,
+        "definitions": [
+          {
+            "name": "_make_ix_like",
+            "line": 15,
+            "type": "function"
+          },
+          {
+            "name": "SparsemaxFunction",
+            "line": 23,
+            "type": "class"
+          },
+          {
+            "name": "Sparsemax",
+            "line": 101,
+            "type": "class"
+          },
+          {
+            "name": "Entmax15Function",
+            "line": 111,
+            "type": "class"
+          },
+          {
+            "name": "Entmoid15",
+            "line": 162,
+            "type": "class"
+          },
+          {
+            "name": "Entmax15",
+            "line": 196,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "cellnet/tabnet/tab_network.py",
+        "local_path": "sources/scTab/cellnet/tabnet/tab_network.py",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/cellnet/tabnet/tab_network.py",
+        "sha256": "94a951baeb0058129ea7aa8e3cd9d9b791c99f7aab70c23e021b13475a0ca020",
+        "bytes": 16061,
+        "definitions": [
+          {
+            "name": "initialize_non_glu",
+            "line": 9,
+            "type": "function"
+          },
+          {
+            "name": "initialize_glu",
+            "line": 14,
+            "type": "function"
+          },
+          {
+            "name": "GBN",
+            "line": 19,
+            "type": "class"
+          },
+          {
+            "name": "TabNetEncoder",
+            "line": 39,
+            "type": "class"
+          },
+          {
+            "name": "TabNet",
+            "line": 200,
+            "type": "class"
+          },
+          {
+            "name": "AttentiveTransformer",
+            "line": 309,
+            "type": "class"
+          },
+          {
+            "name": "FeatTransformer",
+            "line": 360,
+            "type": "class"
+          },
+          {
+            "name": "GLU_Block",
+            "line": 427,
+            "type": "class"
+          },
+          {
+            "name": "GLU_Layer",
+            "line": 470,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "docs/models.md",
+        "local_path": "sources/scTab/docs/models.md",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/docs/models.md",
+        "sha256": "4cbe0693b7b89ac6e3d78ab0ad2e65513a50b1bf177c237949de89a84d3bbe47",
+        "bytes": 1464
+      },
+      {
+        "path": "requirements-gpu.txt",
+        "local_path": "sources/scTab/requirements-gpu.txt",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/requirements-gpu.txt",
+        "sha256": "0ed46fe7fa5b63bd6675c3c2ddc06fe76103c77752c1730998f7e6a5070c9de5",
+        "bytes": 55
+      },
+      {
+        "path": "requirements.txt",
+        "local_path": "sources/scTab/requirements.txt",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/requirements.txt",
+        "sha256": "28116f0b3d2694756f802bd5b4e6aaa354d4cb1739b973abe68b1437edc7edd5",
+        "bytes": 223
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/scTab/setup.py",
+        "url": "https://raw.githubusercontent.com/theislab/scTab/5ede7f2ba1f9618b86924f2ff587931de18f4ada/setup.py",
+        "sha256": "b996077b0f09eac9246fd3c7ca3247c6faea694b3f4acd4fdb952d20ebf4bad8",
+        "bytes": 1051,
+        "definitions": [
+          {
+            "name": "read",
+            "line": 9,
+            "type": "function"
+          }
+        ]
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "SEDR",
+    "repository": "https://github.com/JinmiaoChenLab/SEDR",
+    "commit": "ef4836059a4ea49be3bf7c67008a44ffc16a2a0e",
+    "commit_date": "2024-11-06T15:20:31+08:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".gitignore",
+      ".readthedocs.yaml",
+      "LICENSE",
+      "README.md",
+      "SEDR/SEDR_model.py",
+      "SEDR/SEDR_module.py",
+      "SEDR/__init__.py",
+      "SEDR/clustering_func.py",
+      "SEDR/graph_func.py",
+      "SEDR/utils_func.py",
+      "docs/Installation.rst",
+      "docs/Makefile",
+      "docs/Tutorial1_Clustering.ipynb",
+      "docs/Tutorial2_Imputation.ipynb",
+      "docs/Tutorial3_Batch_integration.ipynb",
+      "docs/Tutorial4_Stereo-seq.ipynb",
+      "docs/batch_integration.png",
+      "docs/conf.py",
+      "docs/index.rst",
+      "docs/make.bat",
+      "docs/requirements.txt",
+      "environment.yaml",
+      "figure/Overview.png",
+      "requirements.txt",
+      "setup.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/SEDR/LICENSE",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/LICENSE",
+        "sha256": "2ba92fb6578567893e87490a2928ce8243cb69ca79448592f92bdf74fc90ed1f",
+        "bytes": 1073
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/SEDR/README.md",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/README.md",
+        "sha256": "98a86bdf2ad46f243ceef6f6764ac0abfbe23114791e32b555c9a011eb4e37e3",
+        "bytes": 1787
+      },
+      {
+        "path": "SEDR/SEDR_model.py",
+        "local_path": "sources/SEDR/SEDR/SEDR_model.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/SEDR_model.py",
+        "sha256": "a963e0bb2fceb4c3ff288bc837a7363e160a0dd8ec9819629d067b5fdcfb5ab4",
+        "bytes": 9341,
+        "definitions": [
+          {
+            "name": "target_distribution",
+            "line": 13,
+            "type": "function"
+          },
+          {
+            "name": "reconstruction_loss",
+            "line": 18,
+            "type": "function"
+          },
+          {
+            "name": "gcn_loss",
+            "line": 41,
+            "type": "function"
+          },
+          {
+            "name": "Sedr",
+            "line": 52,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "SEDR/SEDR_module.py",
+        "local_path": "sources/SEDR/SEDR/SEDR_module.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/SEDR_module.py",
+        "sha256": "4d7cf66f5566815775df97c52066d4430ed54c51c564bb7663504d2f3b971a39",
+        "bytes": 11006,
+        "definitions": [
+          {
+            "name": "sce_loss",
+            "line": 10,
+            "type": "function"
+          },
+          {
+            "name": "full_block",
+            "line": 23,
+            "type": "function"
+          },
+          {
+            "name": "GraphConvolution",
+            "line": 33,
+            "type": "class"
+          },
+          {
+            "name": "InnerProductDecoder",
+            "line": 86,
+            "type": "class"
+          },
+          {
+            "name": "SEDR_module",
+            "line": 103,
+            "type": "class"
+          },
+          {
+            "name": "SEDR_impute_module",
+            "line": 215,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "SEDR/__init__.py",
+        "local_path": "sources/SEDR/SEDR/__init__.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/__init__.py",
+        "sha256": "8302718bfe986b6213769004efc01e1468d411079913cc0ed0ee6fd6779cbe72",
+        "bytes": 376,
+        "definitions": []
+      },
+      {
+        "path": "SEDR/clustering_func.py",
+        "local_path": "sources/SEDR/SEDR/clustering_func.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/clustering_func.py",
+        "sha256": "1425dc0e1ec796163648631cee6f19e9cc5cc9951faff6c39a690778cd34f366",
+        "bytes": 2545,
+        "definitions": [
+          {
+            "name": "res_search_fixed_clus_leiden",
+            "line": 5,
+            "type": "function"
+          },
+          {
+            "name": "leiden",
+            "line": 14,
+            "type": "function"
+          },
+          {
+            "name": "res_search_fixed_clus_louvain",
+            "line": 26,
+            "type": "function"
+          },
+          {
+            "name": "louvain",
+            "line": 33,
+            "type": "function"
+          },
+          {
+            "name": "mclust_R",
+            "line": 46,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "SEDR/graph_func.py",
+        "local_path": "sources/SEDR/SEDR/graph_func.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/graph_func.py",
+        "sha256": "f5c3a2bff938c952077eea60f7f52631617465e43921e53d08c43ae10fddefec",
+        "bytes": 7243,
+        "definitions": [
+          {
+            "name": "generate_adj_mat",
+            "line": 11,
+            "type": "function"
+          },
+          {
+            "name": "generate_adj_mat_1",
+            "line": 43,
+            "type": "function"
+          },
+          {
+            "name": "sparse_mx_to_torch_sparse_tensor",
+            "line": 53,
+            "type": "function"
+          },
+          {
+            "name": "preprocess_graph",
+            "line": 61,
+            "type": "function"
+          },
+          {
+            "name": "mask_generator",
+            "line": 69,
+            "type": "function"
+          },
+          {
+            "name": "graph_computing",
+            "line": 97,
+            "type": "function"
+          },
+          {
+            "name": "graph_construction",
+            "line": 119,
+            "type": "function"
+          },
+          {
+            "name": "block_diag_sparse",
+            "line": 156,
+            "type": "function"
+          },
+          {
+            "name": "combine_graph_dict",
+            "line": 183,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "SEDR/utils_func.py",
+        "local_path": "sources/SEDR/SEDR/utils_func.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/utils_func.py",
+        "sha256": "c82c002ea07948113c9811d9efad81bab501a17fb731221201ac5426499981ad",
+        "bytes": 2209,
+        "definitions": [
+          {
+            "name": "adata_preprocess",
+            "line": 7,
+            "type": "function"
+          },
+          {
+            "name": "fix_seed",
+            "line": 41,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "requirements.txt",
+        "local_path": "sources/SEDR/requirements.txt",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/requirements.txt",
+        "sha256": "5d2703747990ef2dd3218244eb8b677dbeac7777b333d772bad80983a5c79ee6",
+        "bytes": 200
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/SEDR/setup.py",
+        "url": "https://raw.githubusercontent.com/JinmiaoChenLab/SEDR/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/setup.py",
+        "sha256": "d78919c121406d64b880d8e65998f3af690f5758adea487a9cc14ad6e6632f61",
+        "bytes": 729,
+        "definitions": []
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "STAGATE",
+    "repository": "https://github.com/RucDongLab/STAGATE_pyG",
+    "commit": "ae1158ca8cf1eb6bb8ee198298552d44c9ac21db",
+    "commit_date": "2023-11-10T10:49:42+08:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      "LICENSE",
+      "README.md",
+      "README.rst",
+      "STAGATE_Overview.png",
+      "STAGATE_pyG/STAGATE.py",
+      "STAGATE_pyG/Train_STAGATE.py",
+      "STAGATE_pyG/__init__.py",
+      "STAGATE_pyG/gat_conv.py",
+      "STAGATE_pyG/utils.py",
+      "requirement.txt",
+      "setup.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/STAGATE/LICENSE",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/LICENSE",
+        "sha256": "0a0fbef1b92f11f291f43e6b14ab4cc8aea26537a9c96972a9567f0b22f916ad",
+        "bytes": 1070
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/STAGATE/README.md",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/README.md",
+        "sha256": "9e85824e1b97cdbd40aacbbca4cccd16199e57c7a04eb8b06803e56a9cc2df03",
+        "bytes": 2369
+      },
+      {
+        "path": "README.rst",
+        "local_path": "sources/STAGATE/README.rst",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/README.rst",
+        "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
+        "bytes": 1
+      },
+      {
+        "path": "STAGATE_pyG/STAGATE.py",
+        "local_path": "sources/STAGATE/STAGATE_pyG/STAGATE.py",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/STAGATE_pyG/STAGATE.py",
+        "sha256": "2224eb23af303b1b8e175740f62d1d8fdee991b9ba32e74d4f805daf3f40fb92",
+        "bytes": 1624,
+        "definitions": [
+          {
+            "name": "STAGATE",
+            "line": 11,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "STAGATE_pyG/Train_STAGATE.py",
+        "local_path": "sources/STAGATE/STAGATE_pyG/Train_STAGATE.py",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/STAGATE_pyG/Train_STAGATE.py",
+        "sha256": "997fcaea97ec690e809f6513d48cf3ef8892784c15305b4eab75bd400995efa5",
+        "bytes": 3096,
+        "definitions": [
+          {
+            "name": "train_STAGATE",
+            "line": 16,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "STAGATE_pyG/__init__.py",
+        "local_path": "sources/STAGATE/STAGATE_pyG/__init__.py",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/STAGATE_pyG/__init__.py",
+        "sha256": "8f10eab6261e2e4ecabda13f6fc3171f433c27600d36d199d9ed60b0ec41edd4",
+        "bytes": 373,
+        "definitions": []
+      },
+      {
+        "path": "STAGATE_pyG/gat_conv.py",
+        "local_path": "sources/STAGATE/STAGATE_pyG/gat_conv.py",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/STAGATE_pyG/gat_conv.py",
+        "sha256": "598666cb5ac9e23b292f826c87664311340b9c204e8eee468ecda502e791175a",
+        "bytes": 9702,
+        "definitions": [
+          {
+            "name": "GATConv",
+            "line": 17,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "STAGATE_pyG/utils.py",
+        "local_path": "sources/STAGATE/STAGATE_pyG/utils.py",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/STAGATE_pyG/utils.py",
+        "sha256": "df8295dbe9b11b9492f1baa2d15e6183282289f6b3993d4bf088c27b24b09ecd",
+        "bytes": 9875,
+        "definitions": [
+          {
+            "name": "Transfer_pytorch_Data",
+            "line": 11,
+            "type": "function"
+          },
+          {
+            "name": "Batch_Data",
+            "line": 30,
+            "type": "function"
+          },
+          {
+            "name": "Cal_Spatial_Net",
+            "line": 54,
+            "type": "function"
+          },
+          {
+            "name": "Cal_Spatial_Net_3D",
+            "line": 110,
+            "type": "function"
+          },
+          {
+            "name": "Stats_Spatial_Net",
+            "line": 190,
+            "type": "function"
+          },
+          {
+            "name": "mclust_R",
+            "line": 202,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/STAGATE/setup.py",
+        "url": "https://raw.githubusercontent.com/RucDongLab/STAGATE_pyG/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/setup.py",
+        "sha256": "f0580eeccacbc8c0802c43e31971aa822e46ab2f56d453c70ce9c6101229ada9",
+        "bytes": 1007,
+        "definitions": []
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "SpaGCN",
+    "repository": "https://github.com/jianhuupenn/SpaGCN",
+    "commit": "dc7a1c26ea0fdf4dfe7064adc7699be141b4871f",
+    "commit_date": "2026-02-09T09:33:32-05:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      "LICENSE",
+      "README.md",
+      "SpaGCN_package/License",
+      "SpaGCN_package/README.md",
+      "SpaGCN_package/SpaGCN.egg-info/PKG-INFO",
+      "SpaGCN_package/SpaGCN.egg-info/SOURCES.txt",
+      "SpaGCN_package/SpaGCN.egg-info/dependency_links.txt",
+      "SpaGCN_package/SpaGCN.egg-info/requires.txt",
+      "SpaGCN_package/SpaGCN.egg-info/top_level.txt",
+      "SpaGCN_package/SpaGCN/SpaGCN.py",
+      "SpaGCN_package/SpaGCN/__init__.py",
+      "SpaGCN_package/SpaGCN/__pycache__/SpaGCN.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/__init__.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/calculate_adj.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/calculate_moran_I.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/ez_mode.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/layers.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/models.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/__pycache__/util.cpython-37.pyc",
+      "SpaGCN_package/SpaGCN/calculate_adj.py",
+      "SpaGCN_package/SpaGCN/calculate_moran_I.py",
+      "SpaGCN_package/SpaGCN/ez_mode.py",
+      "SpaGCN_package/SpaGCN/layers.py",
+      "SpaGCN_package/SpaGCN/models.py",
+      "SpaGCN_package/SpaGCN/util.py",
+      "SpaGCN_package/build/lib/SpaGCN/SpaGCN.py",
+      "SpaGCN_package/build/lib/SpaGCN/__init__.py",
+      "SpaGCN_package/build/lib/SpaGCN/calculate_adj.py",
+      "SpaGCN_package/build/lib/SpaGCN/calculate_moran_I.py",
+      "SpaGCN_package/build/lib/SpaGCN/ez_mode.py",
+      "SpaGCN_package/build/lib/SpaGCN/layers.py",
+      "SpaGCN_package/build/lib/SpaGCN/models.py",
+      "SpaGCN_package/build/lib/SpaGCN/util.py",
+      "SpaGCN_package/dist/SpaGCN-1.0.0-py3-none-any.whl",
+      "SpaGCN_package/dist/SpaGCN-1.0.0.tar.gz",
+      "SpaGCN_package/dist/SpaGCN-1.1.0-py3.7.egg",
+      "SpaGCN_package/dist/SpaGCN-1.2.0-py3-none-any.whl",
+      "SpaGCN_package/dist/SpaGCN-1.2.0-py3.7.egg",
+      "SpaGCN_package/dist/SpaGCN-1.2.0-py3.8.egg",
+      "SpaGCN_package/dist/SpaGCN-1.2.0.tar.gz",
+      "SpaGCN_package/dist/SpaGCN-1.2.4-py3-none-any.whl",
+      "SpaGCN_package/dist/SpaGCN-1.2.4.tar.gz",
+      "SpaGCN_package/dist/SpaGCN-1.2.5-py3-none-any.whl",
+      "SpaGCN_package/dist/SpaGCN-1.2.5.tar.gz",
+      "SpaGCN_package/dist/SpaGCN-1.2.7-py3-none-any.whl",
+      "SpaGCN_package/dist/SpaGCN-1.2.7.tar.gz",
+      "SpaGCN_package/setup.py",
+      "docs/asserts/images/workflow.jpg",
+      "docs/asserts/images/workflow.pdf",
+      "results/151673_SVG_3nbr.csv",
+      "results/ITYN_B1_SVG.csv",
+      "results/LIBD_151673_SVG.csv",
+      "results/MERFISH_mouse_hypothalamus_SVG.csv",
+      "results/Mouse_posterior_section1_10X_SVG.csv",
+      "results/STARmap_SVG_25.csv",
+      "results/SVG_summary.txt",
+      "results/Starmap_layer_label.csv",
+      "results/human_primary_pancreatic_cancer_tissue_SVG.csv",
+      "results/mouse_olfactory_bulb_SVG.csv",
+      "results/slideseq_v2_SVG_p=1.csv",
+      "tutorial/download_data.md",
+      "tutorial/sample_results/ARPP19.png",
+      "tutorial/sample_results/CAMK2N1.png",
+      "tutorial/sample_results/ENC1.png",
+      "tutorial/sample_results/GFAP.png",
+      "tutorial/sample_results/GPM6A.png",
+      "tutorial/sample_results/HPCAL1.png",
+      "tutorial/sample_results/MA1_lowres.png",
+      "tutorial/sample_results/MP1_lowres.png",
+      "tutorial/sample_results/meta_gene.png",
+      "tutorial/sample_results/mouse_barin_muti_sections_domains.png",
+      "tutorial/sample_results/pred.png",
+      "tutorial/sample_results/refined_pred.png",
+      "tutorial/tutorial.ipynb",
+      "tutorial/tutorial.md",
+      "tutorial/tutorial_ez_mode.ipynb",
+      "tutorial/tutorial_ez_mode.md"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/SpaGCN/LICENSE",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/LICENSE",
+        "sha256": "021b98a4692e24a062d005306d74a0443c11bc4df8331f3538bd1dad036eee07",
+        "bytes": 1063
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/SpaGCN/README.md",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/README.md",
+        "sha256": "69d130f8b484f42800494f18dc6dec31f73cab479aa3a93ca31276658dc45d99",
+        "bytes": 4635
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/SpaGCN.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/SpaGCN.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/SpaGCN.py",
+        "sha256": "3f19b42dbdb1db18a7ed83a08ab8380806bf37b4c6f7abe4fb2ca54549a49993",
+        "bytes": 4661,
+        "definitions": [
+          {
+            "name": "SpaGCN",
+            "line": 16,
+            "type": "class"
+          },
+          {
+            "name": "multiSpaGCN",
+            "line": 75,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/__init__.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/__init__.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/__init__.py",
+        "sha256": "0ff243456101f4ba47367b1923fcb6e4357e094de34c4bcae031942125d66e75",
+        "bytes": 154,
+        "definitions": []
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/calculate_adj.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/calculate_adj.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/calculate_adj.py",
+        "sha256": "adf14fdef249201c639dcc55c233dc8d643a610f88132af98ae19247f1d49488",
+        "bytes": 4293,
+        "definitions": [
+          {
+            "name": "euclid_dist",
+            "line": 9,
+            "type": "function"
+          },
+          {
+            "name": "pairwise_distance",
+            "line": 16,
+            "type": "function"
+          },
+          {
+            "name": "extract_color",
+            "line": 24,
+            "type": "function"
+          },
+          {
+            "name": "calculate_adj_matrix",
+            "line": 44,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/calculate_moran_I.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/calculate_moran_I.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/calculate_moran_I.py",
+        "sha256": "2f2516d5d44123c1f4bff6d248e0f1391b7f18b7f6b501d095c03c64413e3218",
+        "bytes": 2240,
+        "definitions": [
+          {
+            "name": "Moran_I",
+            "line": 11,
+            "type": "function"
+          },
+          {
+            "name": "Geary_C",
+            "line": 35,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/ez_mode.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/ez_mode.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/ez_mode.py",
+        "sha256": "615d7d2381b0a71d1e00b1209556796d1a3f6f0f607bdc3234410dfafe484d15",
+        "bytes": 4683,
+        "definitions": [
+          {
+            "name": "detect_spatial_domains_ez_mode",
+            "line": 6,
+            "type": "function"
+          },
+          {
+            "name": "spatial_domains_refinement_ez_mode",
+            "line": 23,
+            "type": "function"
+          },
+          {
+            "name": "plot_spatial_domains_ez_mode",
+            "line": 28,
+            "type": "function"
+          },
+          {
+            "name": "detect_SVGs_ez_mode",
+            "line": 38,
+            "type": "function"
+          },
+          {
+            "name": "plot_SVGs_ez_mode",
+            "line": 68,
+            "type": "function"
+          },
+          {
+            "name": "detect_meta_genes_ez_mode",
+            "line": 78,
+            "type": "function"
+          },
+          {
+            "name": "plot_meta_genes_ez_mode",
+            "line": 90,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/layers.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/layers.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/layers.py",
+        "sha256": "b3847f61a9e908d08a7ae232ab4be075628445934d7c5b3833bb0229a3e1d39d",
+        "bytes": 1295,
+        "definitions": [
+          {
+            "name": "GraphConvolution",
+            "line": 7,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/models.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/models.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/models.py",
+        "sha256": "3dfcc1df0954b125fa91d8e51052dfebaee014bec72290884debb40a2908181d",
+        "bytes": 11045,
+        "definitions": [
+          {
+            "name": "simple_GC_DEC",
+            "line": 15,
+            "type": "class"
+          },
+          {
+            "name": "GC_DEC",
+            "line": 144,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "SpaGCN_package/SpaGCN/util.py",
+        "local_path": "sources/SpaGCN/SpaGCN_package/SpaGCN/util.py",
+        "url": "https://raw.githubusercontent.com/jianhuupenn/SpaGCN/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/util.py",
+        "sha256": "6d98685fec1110838f6e7fe27c6bf012dcf87f0e2f702dda7f8da706c3335945",
+        "bytes": 17834,
+        "definitions": [
+          {
+            "name": "prefilter_cells",
+            "line": 12,
+            "type": "function"
+          },
+          {
+            "name": "prefilter_genes",
+            "line": 25,
+            "type": "function"
+          },
+          {
+            "name": "prefilter_specialgenes",
+            "line": 36,
+            "type": "function"
+          },
+          {
+            "name": "calculate_p",
+            "line": 43,
+            "type": "function"
+          },
+          {
+            "name": "test_l",
+            "line": 47,
+            "type": "function"
+          },
+          {
+            "name": "find_l",
+            "line": 51,
+            "type": "function"
+          },
+          {
+            "name": "search_l",
+            "line": 59,
+            "type": "function"
+          },
+          {
+            "name": "count_nbr",
+            "line": 93,
+            "type": "function"
+          },
+          {
+            "name": "search_radius",
+            "line": 109,
+            "type": "function"
+          },
+          {
+            "name": "find_neighbor_clusters",
+            "line": 143,
+            "type": "function"
+          },
+          {
+            "name": "rank_genes_groups",
+            "line": 180,
+            "type": "function"
+          },
+          {
+            "name": "relative_func",
+            "line": 212,
+            "type": "function"
+          },
+          {
+            "name": "plot_relative_exp",
+            "line": 219,
+            "type": "function"
+          },
+          {
+            "name": "plot_log_exp",
+            "line": 236,
+            "type": "function"
+          },
+          {
+            "name": "detect_subclusters",
+            "line": 252,
+            "type": "function"
+          },
+          {
+            "name": "find_meta_gene",
+            "line": 288,
+            "type": "function"
+          },
+          {
+            "name": "search_res",
+            "line": 345,
+            "type": "function"
+          },
+          {
+            "name": "refine",
+            "line": 390,
+            "type": "function"
+          }
+        ]
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "CellOT",
+    "repository": "https://github.com/bunnech/cellot",
+    "commit": "522d2b953da8ad244fcf36f64521487fdf763788",
+    "commit_date": "2024-11-01T00:34:58+01:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "assets/overview.png",
+      "cellot/__init__.py",
+      "cellot/data/__init__.py",
+      "cellot/data/cell.py",
+      "cellot/data/utils.py",
+      "cellot/losses/__init__.py",
+      "cellot/losses/mmd.py",
+      "cellot/models/__init__.py",
+      "cellot/models/ae.py",
+      "cellot/models/cellot.py",
+      "cellot/networks/__init__.py",
+      "cellot/networks/icnns.py",
+      "cellot/preprocess.py",
+      "cellot/train/__init__.py",
+      "cellot/train/experiment.py",
+      "cellot/train/summary.py",
+      "cellot/train/train.py",
+      "cellot/train/utils.py",
+      "cellot/transport.py",
+      "cellot/utils/__init__.py",
+      "cellot/utils/evaluate.py",
+      "cellot/utils/flags.py",
+      "cellot/utils/helpers.py",
+      "cellot/utils/loaders.py",
+      "cellot/utils/viz.py",
+      "configs/models/cae-4i.yaml",
+      "configs/models/cae.yaml",
+      "configs/models/cellot.yaml",
+      "configs/models/identity.yaml",
+      "configs/models/random.yaml",
+      "configs/models/scgen-4i.yaml",
+      "configs/models/scgen.yaml",
+      "configs/tasks/4i.yaml",
+      "configs/tasks/crossspecies-ood.yaml",
+      "configs/tasks/crossspecies.yaml",
+      "configs/tasks/gbm-ood.yaml",
+      "configs/tasks/gbm.yaml",
+      "configs/tasks/lupuspatients-ood.yaml",
+      "configs/tasks/lupuspatients.yaml",
+      "configs/tasks/sciplex3-ood.yaml",
+      "configs/tasks/sciplex3-top1k.yaml",
+      "configs/tasks/sciplex3.yaml",
+      "configs/tasks/statefate-in_vitro-ood.yaml",
+      "configs/tasks/statefate.yaml",
+      "datasets/.gitkeep",
+      "requirements.txt",
+      "results/.gitkeep",
+      "scripts/evaluate.py",
+      "scripts/plot.py",
+      "scripts/submit/iid.sh",
+      "scripts/submit/ood-statefate.sh",
+      "scripts/submit/oos-lupuspatients.sh",
+      "scripts/train.py",
+      "setup.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/CellOT/LICENSE",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/LICENSE",
+        "sha256": "ea0dff735cfa39c5f27aede63af23438f2eaf90b71edb439b089d4faca6f0a86",
+        "bytes": 1543
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/CellOT/README.md",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/README.md",
+        "sha256": "bf4f0c674cee33042d9a842d589e4639e54e2e347f42b74e20597569dd73944a",
+        "bytes": 4502
+      },
+      {
+        "path": "cellot/models/cellot.py",
+        "local_path": "sources/CellOT/cellot/models/cellot.py",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/cellot/models/cellot.py",
+        "sha256": "15235c303567291e775ad32eeb2e9c3260ef4adc9014b40d256e56b0355660f2",
+        "bytes": 3947,
+        "definitions": [
+          {
+            "name": "load_networks",
+            "line": 13,
+            "type": "function"
+          },
+          {
+            "name": "load_opts",
+            "line": 62,
+            "type": "function"
+          },
+          {
+            "name": "load_cellot_model",
+            "line": 85,
+            "type": "function"
+          },
+          {
+            "name": "compute_loss_g",
+            "line": 100,
+            "type": "function"
+          },
+          {
+            "name": "compute_g_constraint",
+            "line": 107,
+            "type": "function"
+          },
+          {
+            "name": "compute_loss_f",
+            "line": 124,
+            "type": "function"
+          },
+          {
+            "name": "compute_w2_distance",
+            "line": 131,
+            "type": "function"
+          },
+          {
+            "name": "numerical_gradient",
+            "line": 151,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "cellot/networks/__init__.py",
+        "local_path": "sources/CellOT/cellot/networks/__init__.py",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/cellot/networks/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "definitions": []
+      },
+      {
+        "path": "cellot/networks/icnns.py",
+        "local_path": "sources/CellOT/cellot/networks/icnns.py",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/cellot/networks/icnns.py",
+        "sha256": "380b0ae3d3a687e40e8c08e709e7a85b11bcfa7a9626cefbdc3eb8bae3ac3a35",
+        "bytes": 3367,
+        "definitions": [
+          {
+            "name": "NonNegativeLinear",
+            "line": 14,
+            "type": "class"
+          },
+          {
+            "name": "ICNN",
+            "line": 27,
+            "type": "class"
+          },
+          {
+            "name": "test_icnn_convexity",
+            "line": 120,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "requirements.txt",
+        "local_path": "sources/CellOT/requirements.txt",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/requirements.txt",
+        "sha256": "a6c44732098990a4c80d1ef9399d726cc100afb333aca5fcffb33d65bf045167",
+        "bytes": 272
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/CellOT/setup.py",
+        "url": "https://raw.githubusercontent.com/bunnech/cellot/522d2b953da8ad244fcf36f64521487fdf763788/setup.py",
+        "sha256": "cb9119d9df84b9f548f01e431f5ec7879ff31ebb36773e55eabb963d9cad07e2",
+        "bytes": 638,
+        "definitions": []
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "PRESCIENT",
+    "repository": "https://github.com/gifford-lab/prescient",
+    "commit": "50971c7d495e8763eaa60f83af91f51555ed7ece",
+    "commit_date": "2025-01-20T16:08:40-05:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".DS_Store",
+      ".gitattributes",
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "depr/scripts/.gitkeep",
+      "depr/scripts/veres-fate.sh",
+      "depr/scripts/weinreb-fate.sh",
+      "depr/scripts/weinreb-interpolate.sh",
+      "depr/veres.py",
+      "depr/weinreb.py",
+      "docs/.DS_Store",
+      "docs/.bundle/config",
+      "docs/.gitignore",
+      "docs/Gemfile",
+      "docs/Gemfile.lock",
+      "docs/_config.yml",
+      "docs/_data/examples.json",
+      "docs/_data/navigation.yml",
+      "docs/_data/tools.json",
+      "docs/_includes/head.html",
+      "docs/_includes/header.html",
+      "docs/_includes/navbar.html",
+      "docs/_layouts/cli.html",
+      "docs/_layouts/core.html",
+      "docs/_layouts/document.html",
+      "docs/_layouts/home.html",
+      "docs/_site/file_formats/index.html",
+      "docs/_site/index.md",
+      "docs/about.html",
+      "docs/assets/.DS_Store",
+      "docs/assets/css/styles.scss",
+      "docs/assets/gifs/trajectories.gif",
+      "docs/assets/img/.DS_Store",
+      "docs/assets/img/implementation.png",
+      "docs/assets/img/model.png",
+      "docs/documentation.html",
+      "docs/file_formats.md",
+      "docs/index.md",
+      "docs/notebooks.html",
+      "docs/quickstart.html",
+      "notebooks/.gitkeep",
+      "notebooks/estimate-growth-rates.ipynb",
+      "prescient/.gitkeep",
+      "prescient/__init__.py",
+      "prescient/__main__.py",
+      "prescient/__pycache__/train.cpython-37.pyc",
+      "prescient/__pycache__/veres.cpython-37.pyc",
+      "prescient/commands/__init__.py",
+      "prescient/commands/perturbation_analysis.py",
+      "prescient/commands/process_data.py",
+      "prescient/commands/simulate_trajectories.py",
+      "prescient/commands/train_model.py",
+      "prescient/perturb/__init__.py",
+      "prescient/perturb/pert.py",
+      "prescient/simulate/__init__.py",
+      "prescient/simulate/sim.py",
+      "prescient/train/__init__.py",
+      "prescient/train/model.py",
+      "prescient/train/run.py",
+      "prescient/train/util.py",
+      "prescient/utils.py",
+      "pyproject.toml",
+      "setup.cfg",
+      "setup.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/PRESCIENT/LICENSE",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/LICENSE",
+        "sha256": "966fcd512e4c537f73dec0db63a54a94f4fa7e9dce2a706889989ee264d18a3b",
+        "bytes": 1079
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/PRESCIENT/README.md",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/README.md",
+        "sha256": "fa22e0b6b3732a2774000665454657f2d2a6ef088fd4bce25cc330fb2e4eeaad",
+        "bytes": 1260
+      },
+      {
+        "path": "prescient/simulate/__init__.py",
+        "local_path": "sources/PRESCIENT/prescient/simulate/__init__.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/simulate/__init__.py",
+        "sha256": "77178fdbf0f75fe1e67cf0f9761b168ce04d43ef1f3e9c9d78ae34253cec9502",
+        "bytes": 19,
+        "definitions": []
+      },
+      {
+        "path": "prescient/simulate/sim.py",
+        "local_path": "sources/PRESCIENT/prescient/simulate/sim.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/simulate/sim.py",
+        "sha256": "fdb93d116241a59f2f84fcec45d7c8065dea20ac889eb278ad53f089b9bdc10c",
+        "bytes": 2579,
+        "definitions": [
+          {
+            "name": "simulate",
+            "line": 19,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "prescient/train/__init__.py",
+        "local_path": "sources/PRESCIENT/prescient/train/__init__.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/train/__init__.py",
+        "sha256": "5cd132b8ff130086f8d5ba214f1bc8952ff832e6d321f6bf3fcd02a763ddd7e9",
+        "bytes": 60,
+        "definitions": []
+      },
+      {
+        "path": "prescient/train/model.py",
+        "local_path": "sources/PRESCIENT/prescient/train/model.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/train/model.py",
+        "sha256": "ec37d1b3bacfce6c2deb58b07bf5d4f6fb80e2e3e101452f7e15301761e39b20",
+        "bytes": 3147,
+        "definitions": [
+          {
+            "name": "IntReLU",
+            "line": 27,
+            "type": "class"
+          },
+          {
+            "name": "AutoGenerator",
+            "line": 36,
+            "type": "class"
+          },
+          {
+            "name": "OTLoss",
+            "line": 95,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "prescient/train/run.py",
+        "local_path": "sources/PRESCIENT/prescient/train/run.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/train/run.py",
+        "sha256": "696ea480912a10d80a9120632181bb7b5435cccd7ee3161716a2619e4da25044",
+        "bytes": 6244,
+        "definitions": [
+          {
+            "name": "run",
+            "line": 17,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "prescient/train/util.py",
+        "local_path": "sources/PRESCIENT/prescient/train/util.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/train/util.py",
+        "sha256": "97b55ea1979cd71b6116ec04db9c178f4c62f02372d37acc43d3301933f9b141",
+        "bytes": 2009,
+        "definitions": [
+          {
+            "name": "p_samp",
+            "line": 24,
+            "type": "function"
+          },
+          {
+            "name": "fit_regularizer",
+            "line": 35,
+            "type": "function"
+          },
+          {
+            "name": "pca_transform",
+            "line": 50,
+            "type": "function"
+          },
+          {
+            "name": "get_weight",
+            "line": 66,
+            "type": "function"
+          },
+          {
+            "name": "init",
+            "line": 69,
+            "type": "function"
+          },
+          {
+            "name": "weighted_samp",
+            "line": 77,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "pyproject.toml",
+        "local_path": "sources/PRESCIENT/pyproject.toml",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/pyproject.toml",
+        "sha256": "634633fa3426b545f963606a0f31bc5f3ba789f9b0d0d080f7f93494a33bb6e4",
+        "bytes": 104
+      },
+      {
+        "path": "setup.cfg",
+        "local_path": "sources/PRESCIENT/setup.cfg",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/setup.cfg",
+        "sha256": "e11853bcbcef097ba08202b0009185d262dfe36811b3b065889cfbef6b5b5b74",
+        "bytes": 39
+      },
+      {
+        "path": "setup.py",
+        "local_path": "sources/PRESCIENT/setup.py",
+        "url": "https://raw.githubusercontent.com/gifford-lab/prescient/50971c7d495e8763eaa60f83af91f51555ed7ece/setup.py",
+        "sha256": "ea392134ac34c9956c00c430a4137db5af38ffac7dc17e9b1cadc4577821d71e",
+        "bytes": 1253,
+        "definitions": []
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "MIOFlow",
+    "repository": "https://github.com/KrishnaswamyLab/MIOFlow",
+    "commit": "4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8",
+    "commit_date": "2026-10-08T12:26:40-04:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".github/workflows/deploy.yaml",
+      ".github/workflows/test_installation.yaml",
+      ".gitignore",
+      ".python-version",
+      "CLAUDE.md",
+      "LICENSE.md",
+      "Makefile",
+      "README.md",
+      "data/processed/.gitkeep",
+      "data/raw/.gitkeep",
+      "docs/index.md",
+      "docs/installation.md",
+      "docs/tutorials.md",
+      "environment.yml",
+      "main.py",
+      "mioflow/__init__.py",
+      "mioflow/core/__init__.py",
+      "mioflow/core/datasets.py",
+      "mioflow/core/losses.py",
+      "mioflow/core/models/__init__.py",
+      "mioflow/core/models/ode_model.py",
+      "mioflow/core/models/sde_model.py",
+      "mioflow/gaga.py",
+      "mioflow/growth_rate.py",
+      "mioflow/mioflow.py",
+      "mioflow/spatial.py",
+      "mkdocs.yml",
+      "notebooks/0.01-preprocess_data.ipynb",
+      "notebooks/1.01.01-SERGIO-single-trajectory.ipynb",
+      "notebooks/1.01.02-SERGIO-separated-branches.ipynb",
+      "notebooks/1.02.01-SERGIO-SDE.ipynb",
+      "notebooks/1.02.02-SERGIO-SDE-multi.ipynb",
+      "notebooks/1.03.01-SERGIO-growth_rate.ipynb",
+      "notebooks/1.03.02-SERGIO-growth_rate-multi.ipynb",
+      "notebooks/2.01-EBD-vanilla.ipynb",
+      "notebooks/2.01.01-EmbryoidBody-preprocess.ipynb",
+      "notebooks/2.01.02-EmbryoidBody-tutorial.ipynb",
+      "notebooks/2.01.03-EmbryoidBody-single.ipynb",
+      "notebooks/2.01.04-EmbryoidBody-clusters.ipynb",
+      "notebooks/2.01.05-EmbryoidBody-hold_one_out.ipynb",
+      "notebooks/2.01.06-conditional-flow-matching.ipynb",
+      "notebooks/2.01.07-schrodinger-hold-one.ipynb",
+      "notebooks/axalotl-spatial/3.01.01-Axalotl-batch-correction.ipynb",
+      "notebooks/axalotl-spatial/3.01.02-Axalotl-spatial-feature-extraction.ipynb",
+      "notebooks/axalotl-spatial/3.01.03-Axalotl-subset.ipynb",
+      "notebooks/axalotl-spatial/3.01.04-single-trajectory.ipynb",
+      "pyproject.toml",
+      "requirements.txt",
+      "tutorials/01_mioflow_colab.ipynb",
+      "tutorials/01_mioflow_vanilla.ipynb",
+      "tutorials/02_EBD_preprocessing_and_vanilla_colab.ipynb",
+      "tutorials/03_spatial_axolotl.ipynb",
+      "uv.lock"
+    ],
+    "files": [
+      {
+        "path": "LICENSE.md",
+        "local_path": "sources/MIOFlow/LICENSE.md",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/LICENSE.md",
+        "sha256": "8f7d9760a4bc19a3ec18d0560778c3c3096c50fe24dcd1aa02a28323c25815d8",
+        "bytes": 1506
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/MIOFlow/README.md",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/README.md",
+        "sha256": "83e988d5971c27db1e90446dbcb030c333a1708ecbfbde2898be0a35bcb1d443",
+        "bytes": 3639
+      },
+      {
+        "path": "mioflow/__init__.py",
+        "local_path": "sources/MIOFlow/mioflow/__init__.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/__init__.py",
+        "sha256": "bf36688a8feaeb19f3e160e917fc91bbdee5ba0a244bb0de9a504453018e2dec",
+        "bytes": 445,
+        "definitions": []
+      },
+      {
+        "path": "mioflow/core/__init__.py",
+        "local_path": "sources/MIOFlow/mioflow/core/__init__.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "definitions": []
+      },
+      {
+        "path": "mioflow/core/datasets.py",
+        "local_path": "sources/MIOFlow/mioflow/core/datasets.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/datasets.py",
+        "sha256": "bb6fb7981a13c08c1c70f651a3b0ef93a728208f4ce2e9cb1008a56840941ec8",
+        "bytes": 1293,
+        "definitions": [
+          {
+            "name": "TimeSeriesDataset",
+            "line": 6,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/core/losses.py",
+        "local_path": "sources/MIOFlow/mioflow/core/losses.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/losses.py",
+        "sha256": "473171117865eee178e98d13e9799a65add99bf978c9e0987136e1d518bf3905",
+        "bytes": 4306,
+        "definitions": [
+          {
+            "name": "ot_loss",
+            "line": 6,
+            "type": "function"
+          },
+          {
+            "name": "energy_loss",
+            "line": 36,
+            "type": "function"
+          },
+          {
+            "name": "density_loss",
+            "line": 90,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/core/models/__init__.py",
+        "local_path": "sources/MIOFlow/mioflow/core/models/__init__.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/models/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "definitions": []
+      },
+      {
+        "path": "mioflow/core/models/ode_model.py",
+        "local_path": "sources/MIOFlow/mioflow/core/models/ode_model.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/models/ode_model.py",
+        "sha256": "98e21b08b370af043016a718ec7aa8ddbacbcc00e252092732517fda615a3208",
+        "bytes": 1705,
+        "definitions": [
+          {
+            "name": "ODEFunc",
+            "line": 5,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/core/models/sde_model.py",
+        "local_path": "sources/MIOFlow/mioflow/core/models/sde_model.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/models/sde_model.py",
+        "sha256": "b5d498c2fd368818ec43d3533a445b5863392344cba5738e56b1bc32968081ba",
+        "bytes": 3060,
+        "definitions": [
+          {
+            "name": "SDEFunc",
+            "line": 4,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/gaga.py",
+        "local_path": "sources/MIOFlow/mioflow/gaga.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/gaga.py",
+        "sha256": "06c906bda602343f81ec8e962cc54f53ced421dce06d453302a174818b0d038c",
+        "bytes": 16672,
+        "definitions": [
+          {
+            "name": "Autoencoder",
+            "line": 17,
+            "type": "class"
+          },
+          {
+            "name": "train_gaga_two_phase",
+            "line": 70,
+            "type": "function"
+          },
+          {
+            "name": "train_gaga",
+            "line": 135,
+            "type": "function"
+          },
+          {
+            "name": "PointCloudDataset",
+            "line": 286,
+            "type": "class"
+          },
+          {
+            "name": "dataloader_from_pc",
+            "line": 327,
+            "type": "function"
+          },
+          {
+            "name": "fit_gaga",
+            "line": 335,
+            "type": "function"
+          },
+          {
+            "name": "train_valid_loader_from_pc",
+            "line": 416,
+            "type": "function"
+          },
+          {
+            "name": "RowStochasticDataset",
+            "line": 441,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/growth_rate.py",
+        "local_path": "sources/MIOFlow/mioflow/growth_rate.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/growth_rate.py",
+        "sha256": "0bc595664f3ec88fe151345da6cea1ddd07a0b307f69792086186a1e5c53eff5",
+        "bytes": 9579,
+        "definitions": [
+          {
+            "name": "GrowthRateModel",
+            "line": 17,
+            "type": "class"
+          },
+          {
+            "name": "compute_uot_growth_rates",
+            "line": 151,
+            "type": "function"
+          },
+          {
+            "name": "pretrain_growth_model",
+            "line": 177,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/mioflow.py",
+        "local_path": "sources/MIOFlow/mioflow/mioflow.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/mioflow.py",
+        "sha256": "c4060b9d0235c1345cf47046f624f4d0168398ad6a5cf1240b185820596abeaa",
+        "bytes": 22169,
+        "definitions": [
+          {
+            "name": "MIOFlow",
+            "line": 21,
+            "type": "class"
+          },
+          {
+            "name": "_make_scheduler",
+            "line": 411,
+            "type": "function"
+          },
+          {
+            "name": "train_mioflow",
+            "line": 423,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "mioflow/spatial.py",
+        "local_path": "sources/MIOFlow/mioflow/spatial.py",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/spatial.py",
+        "sha256": "3b46d557913af2d735d7d0e2d97847df19b55463d76c4d4dc08a06c6a6213a76",
+        "bytes": 15659,
+        "definitions": [
+          {
+            "name": "compute_spatial_features",
+            "line": 15,
+            "type": "function"
+          },
+          {
+            "name": "fit_spatial_gaga",
+            "line": 152,
+            "type": "function"
+          },
+          {
+            "name": "fit_joint_gaga",
+            "line": 217,
+            "type": "function"
+          },
+          {
+            "name": "_lr_features",
+            "line": 332,
+            "type": "function"
+          },
+          {
+            "name": "_build_graph",
+            "line": 381,
+            "type": "function"
+          },
+          {
+            "name": "_mean_aggregate",
+            "line": 422,
+            "type": "function"
+          },
+          {
+            "name": "_sum_aggregate",
+            "line": 441,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "pyproject.toml",
+        "local_path": "sources/MIOFlow/pyproject.toml",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/pyproject.toml",
+        "sha256": "d38a1c373ba419f6f3a37209f1572078fedaadc8b1e1822f5915217fa7302c70",
+        "bytes": 1155
+      },
+      {
+        "path": "requirements.txt",
+        "local_path": "sources/MIOFlow/requirements.txt",
+        "url": "https://raw.githubusercontent.com/KrishnaswamyLab/MIOFlow/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/requirements.txt",
+        "sha256": "c74d099d76ceca43d6c9920165a50baf30ad8f0a5ca6e4f8b34570298cb1fb35",
+        "bytes": 576
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "scFoundation",
+    "repository": "https://github.com/biomap-research/scFoundation",
+    "commit": "397631c495eddf9ad6644fc00c6ea8139e651245",
+    "commit_date": "2025-11-23T08:31:05Z",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".gitignore",
+      "DeepCDR/README.md",
+      "DeepCDR/data/50M-0.1B-res_embedding.npy",
+      "DeepCDR/data/CCLE/Cell_lines_annotations_20181226.txt",
+      "DeepCDR/data/CCLE/GDSC_IC50.csv",
+      "DeepCDR/data/CCLE/IC50_thred.txt",
+      "DeepCDR/data/CCLE/genomic_copynumber_561celllines_710genes_demap_features.csv",
+      "DeepCDR/data/CCLE/genomic_expression_561celllines_697genes_demap_features.csv",
+      "DeepCDR/data/CCLE/genomic_methylation_561celllines_808genes_demap_features.csv",
+      "DeepCDR/data/CCLE/genomic_mutation_34673_demap_features.csv",
+      "DeepCDR/data/GDSC/1.Drug_listMon Jun 24 09_00_55 2019.csv",
+      "DeepCDR/data/GDSC/drug_graph_feat.zip",
+      "DeepCDR/data/GDSC/drug_graph_feat/10027278.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10074640.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10077147.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10096043.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10109823.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10113978.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10127622.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10172943.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10184653.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10196499.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10200390.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10302451.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10341154.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10384072.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10390396.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10451420.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10459196.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/10461815.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/104842.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11152667.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11178236.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11282283.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11316960.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11327430.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11338033.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11364421.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11373846.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11404337.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11433190.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11455910.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11485656.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11493598.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11609586.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11617559.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11624601.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11625818.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11626560.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11626927.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11634725.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11640390.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11647372.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11667893.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11676786.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11707110.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11713159.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11754511.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11844351.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11960529.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/11977753.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/123631.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/126565.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/126941.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/1401.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/148124.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/156422.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/159324.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/160355.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16038120.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16095342.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16663089.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16720766.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16722836.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16725726.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16747388.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/16760646.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/176158.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/176167.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/176870.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/17755052.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/20635522.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/208908.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/216239.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/216326.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/2314623.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/23725625.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/2375.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24180719.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24756910.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24772860.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24776445.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24785538.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24825971.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24826799.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24889392.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24894414.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24951314.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/24978538.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25022668.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25102847.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25124816.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25126798.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25167777.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25195352.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25222038.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25257557.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/25262965.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/2726824.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/2733526.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/300471.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/3005532.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/3062316.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/31703.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/3218.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/3385.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/3463933.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/36314.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/36462.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/3796.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/387447.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/4261.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/4263900.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/42640.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/42642645.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44137675.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44143370.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44182295.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44224160.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44450571.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44462760.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/444795.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44551660.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44632017.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/446378.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/447912.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/448013.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/44819241.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46191454.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46224516.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/462382.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46843772.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46844147.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46883536.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46885626.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46907787.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46930998.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46931012.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/46943432.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/49806720.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/49821040.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/49836027.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/4993.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5113032.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/51371303.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5208.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/521106.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5278396.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5280757.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5289247.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5291.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5311.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5311497.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5311510.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5327091.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5328940.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5329102.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/53302361.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5330286.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/53340664.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/53394750.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5384616.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5394.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5459322.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5460769.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/54676905.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/54685215.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5494449.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/560326.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/56962337.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/56965967.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5717801.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/57339144.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/5746.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/60750.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6253.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/637858.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/644215.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/644241.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6445533.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6445562.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6450551.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6450816.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6505803.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/65110.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/66577006.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6710780.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6753378.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6852167.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6914657.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6918289.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6918454.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6918638.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/6918848.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/704473.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/71271629.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/7251185.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/76044.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/78243717.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/82146.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/8249.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/84691.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/85668777.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9549184.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9810884.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9813758.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9826308.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9826528.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9858940.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9863776.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9868037.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9874913.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9884685.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9903786.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9907093.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9910224.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9911830.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9914412.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9931953.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9938202.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9943465.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9952773.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9956119.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9956222.hkl",
+      "DeepCDR/data/GDSC/drug_graph_feat/9967941.hkl",
+      "DeepCDR/plot.ipynb",
+      "DeepCDR/prog/layers/__init__.py",
+      "DeepCDR/prog/layers/graph.py",
+      "DeepCDR/prog/model.py",
+      "DeepCDR/prog/process_drug.py",
+      "DeepCDR/prog/run.sh",
+      "DeepCDR/prog/run_DeepCDR.py",
+      "DeepCDR/prog/run_DeepCDR_leave_drug.py",
+      "DeepCDR/prog/run_pytorch_embedding.py",
+      "DeepCDR/published/DeepCDR_without_mut_with_gexp_without_methy_256_256_256_bn_relu_GAP.npz",
+      "DeepCDR/published/DeepCDR_without_mut_with_gexp_without_methy_256_256_256_bn_relu_GAP_50M-0.1B-res.npz",
+      "GEARS/Plot.ipynb",
+      "GEARS/README.md",
+      "GEARS/data/demo.h5ad",
+      "GEARS/data/gene2go.pkl",
+      "GEARS/gears/__init__.py",
+      "GEARS/gears/data_utils.py",
+      "GEARS/gears/gears.py",
+      "GEARS/gears/genes_with_hi_mean.npy",
+      "GEARS/gears/inference.py",
+      "GEARS/gears/model.py",
+      "GEARS/gears/pertdata.py",
+      "GEARS/gears/utils.py",
+      "GEARS/gears/version.py",
+      "GEARS/modules/__init__.py",
+      "GEARS/modules/attention.py",
+      "GEARS/modules/encoders.py",
+      "GEARS/modules/mae_autobin.py",
+      "GEARS/modules/performer_module.py",
+      "GEARS/modules/reversible.py",
+      "GEARS/modules/transformer.py",
+      "GEARS/run_sh/run_singlecell-adamson.sh",
+      "GEARS/run_sh/run_singlecell-dixit.sh",
+      "GEARS/run_sh/run_singlecell_maeautobin-0.1B-res0-adamson.sh",
+      "GEARS/run_sh/run_singlecell_maeautobin-0.1B-res0-dixit.sh",
+      "GEARS/run_sh/run_singlecell_maeautobin-0.1B-res0-norman.sh",
+      "GEARS/run_sh/run_singlecell_maeautobin-demo-baseline.sh",
+      "GEARS/run_sh/run_singlecell_maeautobin-demo-emb-train.sh",
+      "GEARS/run_sh/run_singlecell_maeautobin-demo-emb.sh",
+      "GEARS/run_sh/run_singlecell_norman.sh",
+      "GEARS/train.py",
+      "LICENSE",
+      "MODEL_LICENSE",
+      "OS_scRNA_gene_index.19264.tsv",
+      "README.md",
+      "SCAD/README.md",
+      "SCAD/data/original/download_links.txt",
+      "SCAD/data/original_norm/download_links.txt",
+      "SCAD/data/processing/HGNC_symbol_all_genes.tsv",
+      "SCAD/data/processing/preprocessing_GDSC_all_drug_logIC50_binary_intersect.py",
+      "SCAD/data/response/download_links.txt",
+      "SCAD/data/split_norm/Source_exprs_resp_19264.Etoposide_50M-0.1B-res_embedding.npy",
+      "SCAD/data/split_norm/Source_exprs_resp_19264.NVP-TAE684_50M-0.1B-res_embedding.npy",
+      "SCAD/data/split_norm/Source_exprs_resp_19264.PLX4720_451Lu_50M-0.1B-res_embedding.npy",
+      "SCAD/data/split_norm/Source_exprs_resp_19264.Sorafenib_50M-0.1B-res_embedding.npy",
+      "SCAD/data/split_norm/Target_expr_resp_19264.Etoposide_50M-0.1B-res_tgthighres4_embedding.npy",
+      "SCAD/data/split_norm/Target_expr_resp_19264.NVP-TAE684_50M-0.1B-res_tgthighres4_embedding.npy",
+      "SCAD/data/split_norm/Target_expr_resp_19264.PLX4720_451Lu_50M-0.1B-res_tgthighres4_embedding.npy",
+      "SCAD/data/split_norm/Target_expr_resp_19264.Sorafenib_50M-0.1B-res_tgthighres4_embedding.npy",
+      "SCAD/data/split_norm/download_links.txt",
+      "SCAD/data/split_norm/split_data_SCAD_5fold_norm.py",
+      "SCAD/model/SCAD_train_binarized_5folds-pub.py",
+      "SCAD/model/SCADmodules.py",
+      "SCAD/plot-publish.ipynb",
+      "SCAD/results/Etoposide/hdim1024_zdim512_lr0.001_epoch40_lambda10.6_mbS16_mbT16_seed42.tsv",
+      "SCAD/results/Etoposide/hdim1024_zdim512_lr0.001_epoch40_lambda10.6_mbS16_mbT16_seed42_predicted_y.tsv",
+      "SCAD/results/Etoposide/hdim512_zdim128_lr0.001_epoch10_lambda12.0_mbS8_mbT8_seed42.tsv",
+      "SCAD/results/Etoposide/hdim512_zdim128_lr0.001_epoch10_lambda12.0_mbS8_mbT8_seed42_predicted_y.tsv",
+      "SCAD/results/NVP-TAE684/hdim1024_zdim128_lr0.001_epoch10_lambda12.0_mbS8_mbT8_seed42.tsv",
+      "SCAD/results/NVP-TAE684/hdim1024_zdim128_lr0.001_epoch10_lambda12.0_mbS8_mbT8_seed42_predicted_y.tsv",
+      "SCAD/results/NVP-TAE684/hdim512_zdim512_lr0.001_epoch40_lambda10.8_mbS16_mbT16_seed42.tsv",
+      "SCAD/results/NVP-TAE684/hdim512_zdim512_lr0.001_epoch40_lambda10.8_mbS16_mbT16_seed42_predicted_y.tsv",
+      "SCAD/results/PLX4720_451Lu/hdim1024_zdim256_lr0.001_epoch100_lambda10.0_mbS16_mbT16_seed42.tsv",
+      "SCAD/results/PLX4720_451Lu/hdim1024_zdim256_lr0.001_epoch100_lambda10.0_mbS16_mbT16_seed42_predicted_y.tsv",
+      "SCAD/results/PLX4720_451Lu/hdim512_zdim256_lr0.001_epoch100_lambda11.0_mbS8_mbT8_seed42.tsv",
+      "SCAD/results/PLX4720_451Lu/hdim512_zdim256_lr0.001_epoch100_lambda11.0_mbS8_mbT8_seed42_predicted_y.tsv",
+      "SCAD/results/Sorafenib/hdim512_zdim128_lr0.001_epoch20_lambda15.0_mbS8_mbT8_seed42.tsv",
+      "SCAD/results/Sorafenib/hdim512_zdim128_lr0.001_epoch20_lambda15.0_mbS8_mbT8_seed42_predicted_y.tsv",
+      "SCAD/results/Sorafenib/hdim512_zdim256_lr0.001_epoch20_lambda10.6_mbS8_mbT8_seed42.tsv",
+      "SCAD/results/Sorafenib/hdim512_zdim256_lr0.001_epoch20_lambda10.6_mbS8_mbT8_seed42_predicted_y.tsv",
+      "SCAD/run.sh",
+      "SCAD/run_embedding_bulk.py",
+      "SCAD/run_embedding_sc.py",
+      "ablation/README.md",
+      "ablation/ablation-00.ipynb",
+      "ablation/ablation-01.ipynb",
+      "ablation/ablation-02.ipynb",
+      "annotation/README.md",
+      "annotation/annotation_data.zip",
+      "annotation/celltype-plot.ipynb",
+      "apiexample/README.md",
+      "apiexample/client.py",
+      "apiexample/data/Source_exprs_resp_19264.Etoposide_demo.csv",
+      "apiexample/data/baron_human_samp_19264_fromsaver_demo.csv",
+      "apiexample/data/gene_batch.npy",
+      "apiexample/example.sh",
+      "enhancement/Baron_evaluation.ipynb",
+      "enhancement/PBMC68k_evaluation.ipynb",
+      "enhancement/README.md",
+      "enhancement/baron_human_samp_19264_fromsaver_50M-0.1B-res_tgthighres5_embedding.npy",
+      "enhancement/run.sh",
+      "enhancement/run_embedding_sc.py",
+      "genemodule/README.md",
+      "genemodule/auc_mtx_1000.csv",
+      "genemodule/plot_geneemb.ipynb",
+      "mapping/README.md",
+      "mapping/mapping-publish.ipynb",
+      "model/OS_scRNA_gene_index.19264.tsv",
+      "model/README.md",
+      "model/check_consistency.ipynb",
+      "model/demo.sh",
+      "model/finetune_model.py",
+      "model/get_embedding.py",
+      "model/load.py",
+      "model/models/download.txt",
+      "model/pretrainmodels/__init__.py",
+      "model/pretrainmodels/mae_autobin.py",
+      "model/pretrainmodels/performer.py",
+      "model/pretrainmodels/pytorchTransformer.py",
+      "model/pretrainmodels/reversible.py",
+      "model/pretrainmodels/select_model.py",
+      "model/pretrainmodels/transformer.py",
+      "model/training_hyperparameter.txt",
+      "preprocessing/OS_scRNA_gene_index.19264.tsv",
+      "preprocessing/README.md",
+      "preprocessing/demo.ipynb",
+      "preprocessing/demo.sh",
+      "preprocessing/down.sh",
+      "preprocessing/scRNA_workflow.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/scFoundation/LICENSE",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "bytes": 11357
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/scFoundation/README.md",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/README.md",
+        "sha256": "02a7ae44cf2cc9948b5c1520b18a261b45abf9f17e3149e37d9f48072184f376",
+        "bytes": 8960
+      },
+      {
+        "path": "model/README.md",
+        "local_path": "sources/scFoundation/model/README.md",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/README.md",
+        "sha256": "f62879233ecf5fac407cd516aca2ddb3df20370523cb111c9d057676b4721d5d",
+        "bytes": 6523
+      },
+      {
+        "path": "model/load.py",
+        "local_path": "sources/scFoundation/model/load.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/load.py",
+        "sha256": "6cd804545f80ad737c215339bd420f3e3e6d4d4ca47197a72dcd25b027d013f5",
+        "bytes": 7183,
+        "definitions": [
+          {
+            "name": "next_16x",
+            "line": 11,
+            "type": "function"
+          },
+          {
+            "name": "seed_all",
+            "line": 14,
+            "type": "function"
+          },
+          {
+            "name": "gatherDatanopad",
+            "line": 29,
+            "type": "function"
+          },
+          {
+            "name": "gatherData",
+            "line": 47,
+            "type": "function"
+          },
+          {
+            "name": "convertconfig",
+            "line": 76,
+            "type": "function"
+          },
+          {
+            "name": "load_model",
+            "line": 101,
+            "type": "function"
+          },
+          {
+            "name": "load_model_frommmf",
+            "line": 124,
+            "type": "function"
+          },
+          {
+            "name": "main_gene_selection",
+            "line": 149,
+            "type": "function"
+          },
+          {
+            "name": "get_genename",
+            "line": 173,
+            "type": "function"
+          },
+          {
+            "name": "save_AUCs",
+            "line": 177,
+            "type": "function"
+          },
+          {
+            "name": "getEncoerDecoderData",
+            "line": 181,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "model/pretrainmodels/__init__.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/__init__.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/__init__.py",
+        "sha256": "e7d125b0bb339be3d3d82d7612ac771bdbc677cfa124d442455c512c52f4af1e",
+        "bytes": 120,
+        "definitions": []
+      },
+      {
+        "path": "model/pretrainmodels/mae_autobin.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/mae_autobin.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/mae_autobin.py",
+        "sha256": "b68161adf0f6b5be8a0353f8d6f3c00519689498e5cf7a62e4e762a67854ca8f",
+        "bytes": 5847,
+        "definitions": [
+          {
+            "name": "exists",
+            "line": 15,
+            "type": "function"
+          },
+          {
+            "name": "AutoDiscretizationEmbedding2",
+            "line": 18,
+            "type": "class"
+          },
+          {
+            "name": "RandomPositionalEmbedding",
+            "line": 79,
+            "type": "class"
+          },
+          {
+            "name": "MaeAutobin",
+            "line": 89,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "model/pretrainmodels/performer.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/performer.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/performer.py",
+        "sha256": "c4021e1b0e2f3b6d0a9fee407bbd927fe3aea06f325975883e877a7680024187",
+        "bytes": 25864,
+        "definitions": [
+          {
+            "name": "exists",
+            "line": 24,
+            "type": "function"
+          },
+          {
+            "name": "empty",
+            "line": 27,
+            "type": "function"
+          },
+          {
+            "name": "default",
+            "line": 30,
+            "type": "function"
+          },
+          {
+            "name": "null_context",
+            "line": 34,
+            "type": "function"
+          },
+          {
+            "name": "cast_tuple",
+            "line": 37,
+            "type": "function"
+          },
+          {
+            "name": "get_module_device",
+            "line": 43,
+            "type": "function"
+          },
+          {
+            "name": "find_modules",
+            "line": 55,
+            "type": "function"
+          },
+          {
+            "name": "Always",
+            "line": 58,
+            "type": "class"
+          },
+          {
+            "name": "softmax_kernel",
+            "line": 71,
+            "type": "function"
+          },
+          {
+            "name": "generalized_kernel",
+            "line": 98,
+            "type": "function"
+          },
+          {
+            "name": "orthogonal_matrix_chunk",
+            "line": 114,
+            "type": "function"
+          },
+          {
+            "name": "gaussian_orthogonal_random_matrix",
+            "line": 120,
+            "type": "function"
+          },
+          {
+            "name": "linear_attention",
+            "line": 148,
+            "type": "function"
+          },
+          {
+            "name": "causal_linear_attention",
+            "line": 156,
+            "type": "function"
+          },
+          {
+            "name": "causal_linear_attention_noncuda",
+            "line": 179,
+            "type": "function"
+          },
+          {
+            "name": "norm_tensor",
+            "line": 198,
+            "type": "function"
+          },
+          {
+            "name": "FastAttention",
+            "line": 201,
+            "type": "class"
+          },
+          {
+            "name": "ReZero",
+            "line": 264,
+            "type": "class"
+          },
+          {
+            "name": "PreScaleNorm",
+            "line": 273,
+            "type": "class"
+          },
+          {
+            "name": "PreLayerNorm",
+            "line": 285,
+            "type": "class"
+          },
+          {
+            "name": "Chunk",
+            "line": 294,
+            "type": "class"
+          },
+          {
+            "name": "FeedForward",
+            "line": 307,
+            "type": "class"
+          },
+          {
+            "name": "SelfAttention",
+            "line": 330,
+            "type": "class"
+          },
+          {
+            "name": "AbsolutePositionalEmbedding",
+            "line": 407,
+            "type": "class"
+          },
+          {
+            "name": "rotate_every_two",
+            "line": 418,
+            "type": "function"
+          },
+          {
+            "name": "apply_rotary_pos_emb",
+            "line": 424,
+            "type": "function"
+          },
+          {
+            "name": "Gene2VecPositionalEmbedding",
+            "line": 433,
+            "type": "class"
+          },
+          {
+            "name": "Gene2VecPositionalEmbeddingIdx",
+            "line": 446,
+            "type": "class"
+          },
+          {
+            "name": "RandomPositionalEmbedding",
+            "line": 459,
+            "type": "class"
+          },
+          {
+            "name": "RandomPositionalEmbeddingIdx",
+            "line": 472,
+            "type": "class"
+          },
+          {
+            "name": "Performer",
+            "line": 485,
+            "type": "class"
+          },
+          {
+            "name": "PerformerModule",
+            "line": 576,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "model/pretrainmodels/pytorchTransformer.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/pytorchTransformer.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/pytorchTransformer.py",
+        "sha256": "83d0bfad5a500059034355fdf729df39fa91d2089d1c835ee719ac87461ed2a3",
+        "bytes": 2498,
+        "definitions": [
+          {
+            "name": "pytorchTransformerLM_mse",
+            "line": 11,
+            "type": "class"
+          },
+          {
+            "name": "exists",
+            "line": 70,
+            "type": "function"
+          },
+          {
+            "name": "_get_activation_fn",
+            "line": 74,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "model/pretrainmodels/reversible.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/reversible.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/reversible.py",
+        "sha256": "bd4673f38bdb15f644167880fce9cd134ab7a337855b9285e048de69a44f1ed4",
+        "bytes": 7492,
+        "definitions": [
+          {
+            "name": "route_args",
+            "line": 10,
+            "type": "function"
+          },
+          {
+            "name": "Deterministic",
+            "line": 22,
+            "type": "class"
+          },
+          {
+            "name": "ReversibleBlock",
+            "line": 56,
+            "type": "class"
+          },
+          {
+            "name": "_ReversibleFunction",
+            "line": 110,
+            "type": "class"
+          },
+          {
+            "name": "SequentialSequence",
+            "line": 128,
+            "type": "class"
+          },
+          {
+            "name": "SequentialSequenceGAU",
+            "line": 156,
+            "type": "class"
+          },
+          {
+            "name": "ReversibleSequence",
+            "line": 186,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "model/pretrainmodels/select_model.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/select_model.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/select_model.py",
+        "sha256": "8eae9694a34d26bbdab86336d18bf24ce90203e1035544a2911d9b104bfafcb7",
+        "bytes": 2157,
+        "definitions": [
+          {
+            "name": "select_module",
+            "line": 8,
+            "type": "function"
+          },
+          {
+            "name": "select_model",
+            "line": 30,
+            "type": "function"
+          },
+          {
+            "name": "get_sub_config",
+            "line": 52,
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "path": "model/pretrainmodels/transformer.py",
+        "local_path": "sources/scFoundation/model/pretrainmodels/transformer.py",
+        "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/transformer.py",
+        "sha256": "dfa1b30e6da09bb25f7c1c05c9d5f41a4a26799f8b250b87f0d187c4373b286c",
+        "bytes": 1612,
+        "definitions": [
+          {
+            "name": "pytorchTransformerModule",
+            "line": 8,
+            "type": "class"
+          }
+        ]
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "scBERT",
+    "repository": "https://github.com/TencentAILabHealthcare/scBERT",
+    "commit": "262fd4b91f3f1c21a6e595d03d4ef423e16ffc99",
+    "commit_date": "2023-12-13T16:42:32+08:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      "LICENSE",
+      "README.md",
+      "attn_sum_save.py",
+      "finetune.py",
+      "lr_baseline_crossorgan.py",
+      "performer_pytorch/__init__.py",
+      "performer_pytorch/performer_pytorch.py",
+      "performer_pytorch/reversible.py",
+      "predict.py",
+      "preprocess.py",
+      "pretrain.py",
+      "requirements.txt",
+      "utils.py"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/scBERT/LICENSE",
+        "url": "https://raw.githubusercontent.com/TencentAILabHealthcare/scBERT/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/LICENSE",
+        "sha256": "2a1cd1c518b360c3589b697ad3e7b091075d86c1386f205f9d48fd2c99fe78a1",
+        "bytes": 35106
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/scBERT/README.md",
+        "url": "https://raw.githubusercontent.com/TencentAILabHealthcare/scBERT/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/README.md",
+        "sha256": "c6ceec232c81ee7f02eae17513f77e69b9e3029a77d30b56c36f64bf9db39969",
+        "bytes": 5284
+      },
+      {
+        "path": "performer_pytorch/__init__.py",
+        "local_path": "sources/scBERT/performer_pytorch/__init__.py",
+        "url": "https://raw.githubusercontent.com/TencentAILabHealthcare/scBERT/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/performer_pytorch/__init__.py",
+        "sha256": "71b739f50ef8073d3b6ed58d192e6a230bb4f796e1219308aa3d906a3494cc67",
+        "bytes": 101,
+        "definitions": []
+      },
+      {
+        "path": "performer_pytorch/performer_pytorch.py",
+        "local_path": "sources/scBERT/performer_pytorch/performer_pytorch.py",
+        "url": "https://raw.githubusercontent.com/TencentAILabHealthcare/scBERT/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/performer_pytorch/performer_pytorch.py",
+        "sha256": "7d946c7d794a62830984eddf70331ff295ee5eeeafa849e5590ffaa8cdb0f4b5",
+        "bytes": 26557,
+        "definitions": [
+          {
+            "name": "exists",
+            "line": 23,
+            "type": "function"
+          },
+          {
+            "name": "empty",
+            "line": 26,
+            "type": "function"
+          },
+          {
+            "name": "default",
+            "line": 29,
+            "type": "function"
+          },
+          {
+            "name": "null_context",
+            "line": 33,
+            "type": "function"
+          },
+          {
+            "name": "cast_tuple",
+            "line": 36,
+            "type": "function"
+          },
+          {
+            "name": "get_module_device",
+            "line": 42,
+            "type": "function"
+          },
+          {
+            "name": "find_modules",
+            "line": 54,
+            "type": "function"
+          },
+          {
+            "name": "Always",
+            "line": 57,
+            "type": "class"
+          },
+          {
+            "name": "softmax_kernel",
+            "line": 70,
+            "type": "function"
+          },
+          {
+            "name": "generalized_kernel",
+            "line": 97,
+            "type": "function"
+          },
+          {
+            "name": "orthogonal_matrix_chunk",
+            "line": 113,
+            "type": "function"
+          },
+          {
+            "name": "gaussian_orthogonal_random_matrix",
+            "line": 119,
+            "type": "function"
+          },
+          {
+            "name": "linear_attention",
+            "line": 147,
+            "type": "function"
+          },
+          {
+            "name": "causal_linear_attention",
+            "line": 156,
+            "type": "function"
+          },
+          {
+            "name": "causal_linear_attention_noncuda",
+            "line": 179,
+            "type": "function"
+          },
+          {
+            "name": "norm_tensor",
+            "line": 198,
+            "type": "function"
+          },
+          {
+            "name": "FastAttention",
+            "line": 201,
+            "type": "class"
+          },
+          {
+            "name": "ReZero",
+            "line": 271,
+            "type": "class"
+          },
+          {
+            "name": "PreScaleNorm",
+            "line": 280,
+            "type": "class"
+          },
+          {
+            "name": "PreLayerNorm",
+            "line": 292,
+            "type": "class"
+          },
+          {
+            "name": "Chunk",
+            "line": 300,
+            "type": "class"
+          },
+          {
+            "name": "FeedForward",
+            "line": 313,
+            "type": "class"
+          },
+          {
+            "name": "SelfAttention",
+            "line": 336,
+            "type": "class"
+          },
+          {
+            "name": "AbsolutePositionalEmbedding",
+            "line": 413,
+            "type": "class"
+          },
+          {
+            "name": "rotate_every_two",
+            "line": 424,
+            "type": "function"
+          },
+          {
+            "name": "apply_rotary_pos_emb",
+            "line": 430,
+            "type": "function"
+          },
+          {
+            "name": "Gene2VecPositionalEmbedding",
+            "line": 439,
+            "type": "class"
+          },
+          {
+            "name": "Performer",
+            "line": 453,
+            "type": "class"
+          },
+          {
+            "name": "PerformerLM",
+            "line": 544,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "performer_pytorch/reversible.py",
+        "local_path": "sources/scBERT/performer_pytorch/reversible.py",
+        "url": "https://raw.githubusercontent.com/TencentAILabHealthcare/scBERT/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/performer_pytorch/reversible.py",
+        "sha256": "84726482e83a63328bbf02c9bb0cdfd51ec8c1b7870c4369b2136e3d2ac7ccb7",
+        "bytes": 5993,
+        "definitions": [
+          {
+            "name": "route_args",
+            "line": 8,
+            "type": "function"
+          },
+          {
+            "name": "Deterministic",
+            "line": 20,
+            "type": "class"
+          },
+          {
+            "name": "ReversibleBlock",
+            "line": 54,
+            "type": "class"
+          },
+          {
+            "name": "_ReversibleFunction",
+            "line": 108,
+            "type": "class"
+          },
+          {
+            "name": "SequentialSequence",
+            "line": 126,
+            "type": "class"
+          },
+          {
+            "name": "ReversibleSequence",
+            "line": 153,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "requirements.txt",
+        "local_path": "sources/scBERT/requirements.txt",
+        "url": "https://raw.githubusercontent.com/TencentAILabHealthcare/scBERT/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/requirements.txt",
+        "sha256": "1c15021a9ed68e17da00d22840e04ce18e27406ce706855b58718477caa44eed",
+        "bytes": 155
+      }
+    ],
+    "download_errors": []
+  },
+  {
+    "name": "scPRINT",
+    "repository": "https://github.com/cantinilab/scPRINT",
+    "commit": "e7c60766cbff58bb7280a1c8fe4b7461b1af1911",
+    "commit_date": "2026-08-03T19:18:21+02:00",
+    "retrieved_on": "2026-10-26",
+    "source_selection": "official model code plus root metadata",
+    "tree": [
+      ".cursorignore",
+      ".github/ISSUE_TEMPLATE/bug_report.md",
+      ".github/ISSUE_TEMPLATE/feature_request.md",
+      ".github/PULL_REQUEST_TEMPLATE.md",
+      ".github/dependabot.yml",
+      ".github/release_message.sh",
+      ".github/workflows/main.yml",
+      ".github/workflows/release.yml",
+      ".gitignore",
+      ".gitmodules",
+      "CONTRIBUTING.md",
+      "Containerfile",
+      "Dockerfile",
+      "HISTORY.md",
+      "LICENSE",
+      "MANIFEST.in",
+      "Makefile",
+      "README.md",
+      "config/ablation_study.yml",
+      "config/all_possible_ablations.yaml",
+      "config/base_v2.yml",
+      "config/compress_class_medium.yaml",
+      "config/others/pretrain_MLM.yml",
+      "config/others/pretrain_denoise.yml",
+      "config/others/pretrain_mvc.yml",
+      "config/others/pretrain_onlydenoise.yml",
+      "config/others/pretrain_small_2000.yml",
+      "config/others/pretrain_small_all.yml",
+      "config/others/pretrain_small_noClass.yml",
+      "config/others/pretrain_small_onlyDNS.yml",
+      "config/others/pretrain_small_onlyMLM.yml",
+      "config/predict.yml",
+      "config/pretrain_large.yml",
+      "config/pretrain_medium.yml",
+      "config/pretrain_small.yml",
+      "config/pretrain_vlarge.yml",
+      "config/pretrain_xlarge.yml",
+      "config/scgpt.yml",
+      "data/main/TFs.txt",
+      "data/main/avg_expr.parquet",
+      "data/main/biomart_pos.parquet",
+      "data/main/omnipath.parquet",
+      "data/main/stringdb_bias.parquet",
+      "data/main/token_dictionary.pkl",
+      "docs/cli.md",
+      "docs/embedder.md",
+      "docs/figure1.png",
+      "docs/illus_scprint_colored_darker.png",
+      "docs/index.md",
+      "docs/logo.png",
+      "docs/model.md",
+      "docs/notebooks/cancer_usecase.ipynb",
+      "docs/notebooks/cancer_usecase_part2.ipynb",
+      "docs/pretrain.md",
+      "docs/structure.md",
+      "docs/tasks.md",
+      "docs/usage.md",
+      "docs/utils.md",
+      "figures/README.md",
+      "figures/barplot_auprc.svg",
+      "figures/barplot_count.svg",
+      "figures/barplot_epr.svg",
+      "figures/data/ablation_scores.tsv",
+      "figures/data/ablation_scores_detail/metrics_25eer0xz_step0.json",
+      "figures/data/ablation_scores_detail/metrics_2rf0oi07_step0.json",
+      "figures/data/ablation_scores_detail/metrics_3mku8wkc_step0.json",
+      "figures/data/ablation_scores_detail/metrics_3pb76o4g_step0.json",
+      "figures/data/ablation_scores_detail/metrics_5rrqtg7z_step0.json",
+      "figures/data/ablation_scores_detail/metrics__step210000.json",
+      "figures/data/ablation_scores_detail/metrics_a6f0v297_step210000.json",
+      "figures/data/ablation_scores_detail/metrics_f5e4qfkr_step0.json",
+      "figures/data/ablation_scores_detail/metrics_lsr3pvnf_step0.json",
+      "figures/data/ablation_scores_detail/metrics_muwj73gx_step0.json",
+      "figures/data/ablation_scores_detail/metrics_n8jypo8z_step0.json",
+      "figures/data/ablation_scores_detail/metrics_o2uniqsx_step0.json",
+      "figures/data/ablation_scores_detail/metrics_or46096v_step0.json",
+      "figures/data/ablation_scores_detail/metrics_qv2cahmz_step0.json",
+      "figures/data/ablation_scores_detail/metrics_utttbeuw_step0.json",
+      "figures/data/ablation_scores_detail/metrics_xamtv8u3_step0.json",
+      "figures/data/denoising.tsv",
+      "figures/data/omni.tsv",
+      "figures/data/other.tsv",
+      "figures/data/sroy.tsv",
+      "figures/denoising_performance.svg",
+      "figures/figure1.svg",
+      "figures/figure2.svg",
+      "figures/figure3.svg",
+      "figures/figure4.svg",
+      "figures/figure5.svg",
+      "figures/figure6.svg",
+      "figures/generate_GN_fig1.ipynb",
+      "figures/generate_random_networks.ipynb",
+      "figures/main.excalidraw",
+      "figures/nice_umap prev.ipynb",
+      "figures/nice_umap.ipynb",
+      "figures/niceumap.py",
+      "figures/plot_results.ipynb",
+      "figures/pred_celltype_sampled_1M_datamap.pdf",
+      "figures/pred_disease_sampled_1M_datamap.pdf",
+      "figures/pyvis/grn_3.html",
+      "figures/pyvis/grn_4.html",
+      "figures/pyvis/grn_PAGE4.html",
+      "figures/pyvis/grn_c_4.html",
+      "figures/pyvis/grn_c_5.html",
+      "figures/pyvis/grn_c_PAGE4.html",
+      "figures/temp.html",
+      "figures/violin_auprc.svg",
+      "figures/violin_epr.svg",
+      "figures/violin_tf_targ.svg",
+      "mkdocs.yml",
+      "notebooks/additional/GeneFormer.ipynb",
+      "notebooks/additional/bench_omni.ipynb",
+      "notebooks/additional/bench_perturbseq_genie3_transp.ipynb",
+      "notebooks/additional/bench_sroy_large.ipynb",
+      "notebooks/additional/bias_matrices.ipynb",
+      "notebooks/additional/cells_and_genes_in_cxg.ipynb",
+      "notebooks/additional/create_sergio_network.ipynb",
+      "notebooks/additional/embedding_bench.ipynb",
+      "notebooks/additional/embedding_bench_large.ipynb",
+      "notebooks/additional/embedding_bench_large_mostvartest.ipynb",
+      "notebooks/additional/embedding_bench_medium.ipynb",
+      "notebooks/additional/finalQ_bench_omni.ipynb",
+      "notebooks/additional/finalQ_bench_sroy.ipynb",
+      "notebooks/additional/grn_bench_perturbseq_large.ipynb",
+      "notebooks/additional/mcreate_sergio_network.ipynb",
+      "notebooks/additional/nonprimary.txt",
+      "notebooks/additional/pseudotime_analysis.ipynb",
+      "notebooks/additional/scprint_overfit.ipynb",
+      "notebooks/additional/test.ipynb",
+      "notebooks/additional/test_embeddings.ipynb",
+      "notebooks/additional/test_zinb.ipynb",
+      "notebooks/additional/tests/2023-11-19-test-storage-assignment.ipynb",
+      "notebooks/additional/tests/GRNBenchmark_2.ipynb",
+      "notebooks/additional/tests/GRN_bench_compare.ipynb",
+      "notebooks/additional/tests/GRNbench_test_all.ipynb",
+      "notebooks/additional/tests/GRNbenchmark.ipynb",
+      "notebooks/additional/tests/add_bench_to_valid_2.ipynb",
+      "notebooks/additional/tests/add_bench_to_valid_3.ipynb",
+      "notebooks/additional/tests/add_bench_tovalid.ipynb",
+      "notebooks/additional/tests/bench_denoising.ipynb",
+      "notebooks/additional/tests/bench_omni.ipynb",
+      "notebooks/additional/tests/bench_omni2_trial.ipynb",
+      "notebooks/additional/tests/bench_omni_genie3_transp.ipynb",
+      "notebooks/additional/tests/bench_omni_prevdataset.ipynb",
+      "notebooks/additional/tests/bench_omni_prevdataset_nmodel.ipynb",
+      "notebooks/additional/tests/bench_omni_prevdataset_oldmodel.ipynb",
+      "notebooks/additional/tests/bench_omni_prevdataset_v2_denoise.ipynb",
+      "notebooks/additional/tests/bench_omni_prevdataset_v2_max_4h.ipynb",
+      "notebooks/additional/tests/bench_omni_prevdataset_v2_oldmodel.ipynb",
+      "notebooks/additional/tests/bench_perturbseq_cp.ipynb",
+      "notebooks/additional/tests/bench_perturbseq_genie3.ipynb",
+      "notebooks/additional/tests/bench_perturbseq_notransp.ipynb",
+      "notebooks/additional/tests/bench_sroy.ipynb",
+      "notebooks/additional/tests/bench_sroy_genie3.ipynb",
+      "notebooks/additional/tests/bench_sroy_notransp-Copy1.ipynb",
+      "notebooks/additional/tests/bench_sroy_notransp.ipynb",
+      "notebooks/additional/tests/checking_overlap_GT.ipynb",
+      "notebooks/additional/tests/data/other_data.txt",
+      "notebooks/additional/tests/data/training_time_log.txt",
+      "notebooks/additional/tests/debug_and_assess_embeddings.ipynb",
+      "notebooks/additional/tests/denoise_task_and_scgpt.ipynb",
+      "notebooks/additional/tests/denoise_validation.ipynb",
+      "notebooks/additional/tests/embedding_bench_and_task.ipynb",
+      "notebooks/additional/tests/embedding_bench_and_task_mediummodel.ipynb",
+      "notebooks/additional/tests/grn_bench_compare_2.ipynb",
+      "notebooks/additional/tests/grn_bench_mediumodel.ipynb",
+      "notebooks/additional/tests/grn_bench_perturbseq_large.ipynb",
+      "notebooks/additional/tests/look_remi_GT.ipynb",
+      "notebooks/additional/tests/regressiontomean_and_max_expr.ipynb",
+      "notebooks/additional/tests/reprocess_dataset.ipynb",
+      "notebooks/additional/tests/scprint_test copy.ipynb",
+      "notebooks/additional/tests/test_EGT.ipynb",
+      "notebooks/additional/tests/train_omni_pred_sroy.ipynb",
+      "notebooks/additional/tests/trial_remi_scprint.ipynb",
+      "notebooks/additional/tests/trial_tiny_retraining.ipynb",
+      "notebooks/additional/tests/trial_tiny_training_dataloader copy.ipynb",
+      "notebooks/additional/tests/trial_tiny_training_dataloader.ipynb",
+      "notebooks/additional/tests/work_on_dataloader_esm_embedding.ipynb",
+      "notebooks/additional/updates_on_grn.ipynb",
+      "notebooks/bench_denoising.ipynb",
+      "notebooks/bench_embedding.ipynb",
+      "notebooks/bench_omni.ipynb",
+      "notebooks/data/other_data.txt",
+      "notebooks/data/results_batch.json",
+      "notebooks/data/results_label.json",
+      "notebooks/data/training_time_log.txt",
+      "notebooks/generate_gene_embeddings.ipynb",
+      "notebooks/generate_gene_embeddings_esm2.ipynb",
+      "notebooks/generate_gene_embeddings_gena_lm.ipynb",
+      "notebooks/paper_repro_notebooks/bench_denoising.ipynb",
+      "notebooks/paper_repro_notebooks/bench_embedding_geneformer.ipynb",
+      "notebooks/paper_repro_notebooks/bench_embedding_scfoundation.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_deepsem.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_deepsem_newdataset.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_deepsem_newdataset2.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_geneformer.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_geneformer_newdataset.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_geneformer_newdataset2.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_genie3.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_genie3_newdataset.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_genie3_newdataset2.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_newdataset.ipynb",
+      "notebooks/paper_repro_notebooks/bench_omni_newdataset2.ipynb",
+      "notebooks/paper_repro_notebooks/bench_perturbseq.ipynb",
+      "notebooks/paper_repro_notebooks/bench_perturbseq_deepsem.ipynb",
+      "notebooks/paper_repro_notebooks/bench_perturbseq_geneformer.ipynb",
+      "notebooks/paper_repro_notebooks/bench_perturbseq_genie3_transp.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sergio.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sergio_deepsem.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sergio_geneformer.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sergio_genie3.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sroy.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sroy_deepsem.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sroy_geneformer.ipynb",
+      "notebooks/paper_repro_notebooks/bench_sroy_genie3_transp.ipynb",
+      "notebooks/scprint_train.ipynb",
+      "pyproject.toml",
+      "scprint/VERSION",
+      "scprint/__init__.py",
+      "scprint/__main__.py",
+      "scprint/base.py",
+      "scprint/cli.py",
+      "scprint/model/__init__.py",
+      "scprint/model/decoders.py",
+      "scprint/model/encoders.py",
+      "scprint/model/fsq.py",
+      "scprint/model/loss.py",
+      "scprint/model/model.py",
+      "scprint/model/utils.py",
+      "scprint/tasks/__init__.py",
+      "scprint/tasks/cell_emb.py",
+      "scprint/tasks/denoise.py",
+      "scprint/tasks/gene_emb.py",
+      "scprint/tasks/grn.py",
+      "scprint/tasks/knn_smooth.py",
+      "scprint/tasks/tmfg.py",
+      "scprint/tokenizers/__init__.py",
+      "scprint/tokenizers/embedder.py",
+      "scprint/tokenizers/protein_embedder.py",
+      "scprint/trainer/__init__.py",
+      "scprint/trainer/trainer.py",
+      "scprint/utils/__init__.py",
+      "scprint/utils/get_seq.py",
+      "scprint/utils/sinkhorn.py",
+      "scprint/utils/utils.py",
+      "slurm/submit.sh",
+      "tests/__init__.py",
+      "tests/conftest.py",
+      "tests/test.h5ad",
+      "tests/test.ipynb",
+      "tests/test_base.py",
+      "tests/test_emb.parquet",
+      "tools/DeepSEM",
+      "tools/Geneformer",
+      "tools/Geneformer-add/README.md",
+      "tools/Geneformer-add/emb_extractor.py",
+      "tools/Geneformer-add/perturber_utils.py",
+      "tools/SERGIO",
+      "tools/scFoundation",
+      "tools/scGPT",
+      "uv.lock"
+    ],
+    "files": [
+      {
+        "path": "LICENSE",
+        "local_path": "sources/scPRINT/LICENSE",
+        "url": "https://raw.githubusercontent.com/cantinilab/scPRINT/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "bytes": 35149
+      },
+      {
+        "path": "README.md",
+        "local_path": "sources/scPRINT/README.md",
+        "url": "https://raw.githubusercontent.com/cantinilab/scPRINT/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/README.md",
+        "sha256": "2fe2d4d4a8542a2a1b4752f3c2458cd4a698122b7d062f66f1e5ae50694efac3",
+        "bytes": 23186
+      },
+      {
+        "path": "pyproject.toml",
+        "local_path": "sources/scPRINT/pyproject.toml",
+        "url": "https://raw.githubusercontent.com/cantinilab/scPRINT/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/pyproject.toml",
+        "sha256": "81c9c77f7d836c87ad1e2ccf1de22a7dfee35ecc2756a7e8dfcc216dc99445b6",
+        "bytes": 2921
+      },
+      {
+        "path": "scprint/model/decoders.py",
+        "local_path": "sources/scPRINT/scprint/model/decoders.py",
+        "url": "https://raw.githubusercontent.com/cantinilab/scPRINT/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/scprint/model/decoders.py",
+        "sha256": "d5d294b418f11a06461a339e1851a244ca5d7db02d7aa8be384059a6357f1d89",
+        "bytes": 9293,
+        "definitions": [
+          {
+            "name": "GraphSDEExprDecoder",
+            "line": 8,
+            "type": "class"
+          },
+          {
+            "name": "ExprDecoder",
+            "line": 30,
+            "type": "class"
+          },
+          {
+            "name": "MVCDecoder",
+            "line": 91,
+            "type": "class"
+          },
+          {
+            "name": "ClsDecoder",
+            "line": 202,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "scprint/model/encoders.py",
+        "local_path": "sources/scPRINT/scprint/model/encoders.py",
+        "url": "https://raw.githubusercontent.com/cantinilab/scPRINT/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/scprint/model/encoders.py",
+        "sha256": "61ba67535d641637161dc84c88f4f4f3f89fb40ce255d6afd018cd0019efeb95",
+        "bytes": 8979,
+        "definitions": [
+          {
+            "name": "GeneEncoder",
+            "line": 9,
+            "type": "class"
+          },
+          {
+            "name": "PositionalEncoding",
+            "line": 50,
+            "type": "class"
+          },
+          {
+            "name": "DPositionalEncoding",
+            "line": 101,
+            "type": "class"
+          },
+          {
+            "name": "ContinuousValueEncoder",
+            "line": 161,
+            "type": "class"
+          },
+          {
+            "name": "CategoryValueEncoder",
+            "line": 212,
+            "type": "class"
+          }
+        ]
+      },
+      {
+        "path": "scprint/model/model.py",
+        "local_path": "sources/scPRINT/scprint/model/model.py",
+        "url": "https://raw.githubusercontent.com/cantinilab/scPRINT/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/scprint/model/model.py",
+        "sha256": "673078f292decbdc7271aaf107d6ac3d18848536e4f8dd26cf9f99a409ae9056",
+        "bytes": 72269,
+        "definitions": [
+          {
+            "name": "is_interactive",
+            "line": 32,
+            "type": "function"
+          },
+          {
+            "name": "scPrint",
+            "line": 38,
+            "type": "class"
+          }
+        ]
+      }
+    ],
+    "download_errors": []
+  }
+]

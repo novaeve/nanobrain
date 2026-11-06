@@ -1,0 +1,8 @@
+description = "Spatial latent target + teacher_gram on grad_equal: best spatial signal with best bio signal, stopped at 10k"
+status = "main"
+outcome = "Running"
+extends = ["latent_target.toml"]
+run = { name = "spatial_latent_teacher", out = "runs/spatial/latent_teacher" }
+
+[train]
+objectives = [{ name = "teacher_gram", weight = 1.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

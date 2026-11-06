@@ -1,0 +1,10 @@
+description = "Cajal v1: Cajal with grad_equal loss balancing (every loss the same encoder gradient norm), full 30k steps"
+status = "main"
+outcome = "At 30k: cell type F1 0.806, region 0.756, integration bio 0.618 / batch 0.426 (v0 0.263; batch rises at every 5k checkpoint), gene r 0.788, spatial r 0.267; vs v0 annotation -0.5 / -1.1 points"
+extends = ["cajal_1m.toml"]
+run = { name = "cajal_v1", out = "runs/cajal_v1" }
+
+[train]
+balancer = "grad_equal"
+balancer_params = { every = 50 }
+keep_every = 5000  # trajectory points at 5k, 10k, ..., 30k

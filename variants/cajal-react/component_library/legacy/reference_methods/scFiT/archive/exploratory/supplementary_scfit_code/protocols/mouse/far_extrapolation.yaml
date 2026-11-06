@@ -1,0 +1,102 @@
+protocol_name: mouse_neural_crest_far_extrapolation_v1
+data_bundle_path: <PREPROCESSED_BUNDLE_DIR>
+eligible_time_bins:
+  - E1000
+  - E1025
+  - E1050
+  - E1075
+  - E1100
+  - E1125
+  - E1150
+  - E1175
+  - E1200
+  - E1225
+  - E1250
+  - E1275
+  - E1300
+  - E1325
+  - E1350
+  - E1375
+  - E1400
+  - E1425
+  - E1433.3
+  - E1475
+  - E1500
+  - E1525
+  - E1550
+  - E1575
+  - E1600
+  - E1625
+  - E1650
+  - E1675
+  - E1700
+  - E1750
+  - E1775
+  - E1800
+  - E1825
+  - E1850
+  - E1875
+  - P0000
+observed_time_bins:
+  - E1000
+  - E1025
+  - E1050
+  - E1075
+  - E1100
+  - E1125
+  - E1150
+  - E1175
+  - E1200
+  - E1225
+  - E1250
+  - E1275
+  - E1300
+  - E1325
+  - E1350
+  - E1375
+  - E1400
+heldout_time_bins:
+  - E1425
+  - E1433.3
+  - E1475
+  - E1500
+  - E1525
+  - E1550
+  - E1575
+  - E1600
+  - E1625
+  - E1650
+  - E1675
+  - E1700
+  - E1750
+  - E1775
+  - E1800
+  - E1825
+  - E1850
+  - E1875
+  - P0000
+task_type: far_extrapolation
+source_policy: previous_observed
+direction_mode: forward_only
+eval_time_bins:
+  - E1425
+  - E1433.3
+  - E1475
+  - E1500
+  - E1525
+  - E1550
+  - E1575
+  - E1600
+  - E1625
+  - E1650
+  - E1675
+  - E1700
+  - E1750
+  - E1775
+  - E1800
+  - E1825
+  - E1850
+  - E1875
+  - P0000
+normalization: log1p_librarysize_10000_clip_0_10
+hvg_dim: 4096

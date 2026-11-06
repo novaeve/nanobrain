@@ -1,0 +1,79 @@
+data:
+  source: data/raw/neural_crest_pns_glia/Neural_crest_PNS_glia.h5ad
+  uce_npz: data/external/jax_uce_flow_data.npz
+  time_col: author_day
+  time_numeric_col:
+  cell_type_col: author_cell_type
+  max_cells: 512
+  cell_seed: 42
+
+pairing:
+  strategy: latent_knn
+  k: 3
+  future_only: true
+  similarity_chunk_size: 256
+  force_rebuild_pairs: true
+  group_by_tgt_time: true
+  drop_last: false
+  train:
+    src_min_time: 10.0
+    src_max_time: 14.0
+    tgt_min_time: 10.0
+    tgt_max_time: 14.0
+  val:
+    src_min_time: 12.0
+    src_max_time: 14.0
+    tgt_min_time: 14.0
+    tgt_max_time: 19.0
+
+experiment:
+  output_dir: experiments_mouse_temporal_smoke
+  run_name: smoke_temporal_latent_knn
+
+model:
+  top_k_genes: 64
+  d_model: 64
+  nhead: 4
+  d_ff: 128
+  nlayers: 2
+  dropout: 0.1
+  n_cell_types: 6
+  value_encoder:
+    max_value: 32.0
+  adaln:
+    share_projection: false
+  aux_bin_ce:
+    enabled: false
+    n_bins: 51
+
+training:
+  batch_size: 8
+  lr: 0.0003
+  weight_decay: 0.0001
+  epochs: 1
+  seed: 42
+  log_every_steps: 1
+  val_every_steps: 5
+  save_every_epochs: 1
+  amp: false
+  monitor_cls_attention: false
+  cls_attention_monitor_max_gb: 1.0
+  mmd_min_group_size: 2
+  gpu_reservation:
+    enabled: false
+    reserve_gb:
+    fraction_of_free: 0.3
+  resume:
+  loss_weights:
+    recon: 1.0
+    recon_pearson: 0.1
+    velocity: 0.5
+    distribution: 0.1
+    type: 0.1
+
+validation:
+  batch_size: 8
+  max_batches: 2
+
+inference:
+  n_steps: 4

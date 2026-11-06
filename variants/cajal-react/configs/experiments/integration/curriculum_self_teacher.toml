@@ -1,0 +1,9 @@
+description = "teacher_gram in one run: grad_equal whose first 2k steps train cell type only; from 2k all five tasks plus a Gram anchor to the run's own step-2000 checkpoint (DINOv3-style early self-teacher), stopped at 10k. Replaces the separately trained 30k-step cell-type teacher"
+status = "main"
+outcome = "Running; compare with curriculum_ct2k (same curriculum, no anchor), grad_equal_teacher_gram (external teacher) and balance_grad_equal"
+extends = ["balance_grad_equal.toml"]
+run = { name = "curriculum_self_teacher", out = "runs/integ/curriculum_self_teacher" }
+
+[train]
+task_schedule = [{ until = 2000, task_weights = { gene = 0.0, integration = 0.0, cell_type = 1.0, anatomy = 0.0, spatial = 0.0 } }]
+objectives = [{ name = "teacher_gram", weight = 1.0, start = 2000, checkpoint = "/data/brainwm/BrainWM-Unified/runs/integ/curriculum_self_teacher/step2000.pt" }]

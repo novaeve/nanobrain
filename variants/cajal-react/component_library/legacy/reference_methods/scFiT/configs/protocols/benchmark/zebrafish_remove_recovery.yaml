@@ -1,0 +1,36 @@
+protocol_name: zebrafish_remove_recovery_v1
+data_bundle_path: data/processed/benchmarks/zebrafish_remove_recovery_hvg2000
+eligible_time_bins:
+- A-HIGH
+- B-OBLONG
+- C-DOME
+- D-30
+- E-50
+- F-S
+- G-60
+- H-75
+- I-90
+- J-B
+- K-3S
+- L-6S
+observed_time_bins:
+- A-HIGH
+- B-OBLONG
+- D-30
+- F-S
+- H-75
+- J-B
+heldout_time_bins: &id001
+- C-DOME
+- E-50
+- G-60
+- I-90
+- K-3S
+- L-6S
+task_type: remove_recovery
+source_policy: hybrid_observed
+direction_mode: bidirectional
+eval_time_bins: *id001
+display_time_mode: index_0based
+normalization: librarysize_10000_log1p_clip_0_10_from_count_hvg
+hvg_dim: 2000

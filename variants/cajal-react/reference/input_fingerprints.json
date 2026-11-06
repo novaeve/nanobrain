@@ -1,0 +1,18 @@
+{
+  "pretrain": {
+    "path": "/data/brainwm/unified_1m",
+    "manifest_sha256": "eb97187d7b0d771d448410410943f13bfb2eb6d170488ed3accca26d8f830fad"
+  },
+  "annotation": {
+    "path": "/data/brainwm/eval_10k",
+    "manifest_sha256": "053113cc74a35c3cbc2b5f130511cdc2ed68e930a1cfa1b06542112c288d8a23"
+  },
+  "integration": {
+    "path": "/data/brainwm/eval_integration_10k",
+    "manifest_sha256": "8a090ed0befbbe701274f51652e2f39783bfa09e808e3d86e7f91bdb6e5f0ca8"
+  },
+  "spatial": {
+    "path": "/data/brainwm/eval_spatial",
+    "manifest_sha256": "07230460c853180f22a620101fab8d5d6d7ce2fe1d48686dc47718f40e1d0c07"
+  }
+}

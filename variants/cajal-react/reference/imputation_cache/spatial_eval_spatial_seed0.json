@@ -1,0 +1,18 @@
+{
+ "neighbour mean (log space)": {
+  "pearson_cell_median": 0.3678609452563165,
+  "mse": 0.8206373731495992,
+  "mse_nonzero": 21.126288146275833,
+  "pearson_global": 0.38681929509943963,
+  "cell_type_acc": 0.6154600505038123,
+  "cell_type_f1": 0.09247138177600732
+ },
+ "neighbour mean (CP10K space)": {
+  "pearson_cell_median": 0.2760043619219778,
+  "mse": 2.6591606643144208,
+  "mse_nonzero": 9.833446878289632,
+  "pearson_global": 0.29370862379946977,
+  "cell_type_acc": 0.6154600505038123,
+  "cell_type_f1": 0.09247138177600732
+ }
+}

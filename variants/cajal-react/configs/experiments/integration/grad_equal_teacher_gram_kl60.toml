@@ -1,0 +1,8 @@
+description = "grad_equal + teacher_gram + KL capacity 60 nats: the two best 10k signals together (bio 0.711 / cell type 0.770)"
+status = "main"
+outcome = "Running"
+extends = ["grad_equal_teacher_gram.toml"]
+run = { name = "grad_equal_teacher_gram_kl60", out = "runs/integ/grad_equal_teacher_gram_kl60" }
+
+[train]
+kl_target = 60.0

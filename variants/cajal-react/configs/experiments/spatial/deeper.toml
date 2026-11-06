@@ -1,0 +1,8 @@
+description = "Spatial capacity: grad_equal with a 4-layer neighbourhood transformer (was 2), stopped at 10k; is the weakest task short of model capacity?"
+status = "dropped"
+outcome = "4 layers at 10k vs grad_equal: spatial r 0.264 (0.264), cell type 0.746 (0.751), region 0.653 (0.646), batch 0.360 (0.358), all within the seed spread. Capacity is not what limits spatial imputation (the diagnostic: the learned prediction is below a plain mean of the neighbours latents)"
+extends = ["../integration/balance_grad_equal.toml"]
+run = { name = "spatial_deeper", out = "runs/spatial/deeper" }
+
+[model]
+spatial_layers = 4

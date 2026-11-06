@@ -1,0 +1,8 @@
+description = "SCTransform-style input: grad_equal with the encoder reading analytic Pearson residuals (Lause et al. 2021, the closed-form sctransform; gene rates from the pretraining set, kept in the checkpoint) instead of log1p CP10K, stopped at 10k. Targets and losses unchanged"
+status = "main"
+outcome = "Queued; compare with balance_grad_equal on all five tasks, integration first"
+extends = ["balance_grad_equal.toml"]
+run = { name = "pearson_input", out = "runs/integ/pearson_input" }
+
+[model]
+input_norm = "pearson"

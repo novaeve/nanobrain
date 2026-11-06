@@ -1,0 +1,8 @@
+description = "grad_equal + teacher_gram at weight 2 (twice the gradient share): more bio, at what cost?"
+status = "main"
+outcome = "Running"
+extends = ["balance_grad_equal.toml"]
+run = { name = "grad_equal_teacher_gram_w2", out = "runs/integ/grad_equal_teacher_gram_w2" }
+
+[train]
+objectives = [{ name = "teacher_gram", weight = 2.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

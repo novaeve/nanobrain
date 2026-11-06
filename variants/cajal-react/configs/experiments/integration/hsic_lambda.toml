@@ -1,0 +1,11 @@
+description = "Trade-off knob: conditional invariance strength swept over lambda 1 / 3 / 10 (lambda 30 collapsed cell-type information: cell-type loss stuck at 2.8 vs 0.29)"
+status = "stopped"
+outcome = "Stopped (lambda 1 at ~5.5k steps): under fixed weights integration gets 2% of the gradient, whatever the regulariser"
+extends = ["_base.toml"]
+run = { name = "hsic_lambda", out = "runs/integ/hsic_lambda" }
+[sweep]
+"train.objectives" = [
+  [{ name = "cond_hsic", weight = 1.0, label = "cell_type" }],
+  [{ name = "cond_hsic", weight = 3.0, label = "cell_type" }],
+  [{ name = "cond_hsic", weight = 10.0, label = "cell_type" }],
+]

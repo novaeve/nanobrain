@@ -1,0 +1,46 @@
+# scUniFlow SEA-AD ablation: predict velocity v directly, not x1.
+# Other settings mirror config.yaml.
+model:
+  n_genes: 35483
+  grid_size: 190
+  d_model: 512
+  d_state_row: 64
+  d_state_col: 16
+  n_layers: 8
+
+training:
+  experiment_dir: results/pretrain
+  n_gpus: 1
+  gpu_ids: "4"
+  master_port: 29511
+  batch_size_per_gpu: 16
+  spectral_coords: "data/gene_coords/92b37feb-aa2c-40d7-bd90-0a9b5ddb3b27_augmented_gene_coords.npy"
+  nonzero_mask_ratio: 0.2
+  zero_mask_ratio: 0.0
+  val_ratio: 0.1
+  seed: 42
+  epochs: 4
+  lr: 0.0005
+  min_lr: 0.000001
+  val_every_steps: 1000
+  save_every_epochs: 10
+  prediction_target: velocity
+
+  loss_weights:
+    weighted_x1: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+
+inference:
+  n_steps: 10
+  temperature: 0.1
+
+validation:
+  n_steps: 10
+  temperature: 0.1
+  nonzero_mask_ratio: 0.2
+  zero_mask_ratio: 0.0
+  mask_seed: 1234
+  noise_seed: 5678
+  max_batches: 10
+  batch_size: 25

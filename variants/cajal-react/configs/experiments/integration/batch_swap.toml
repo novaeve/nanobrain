@@ -1,0 +1,7 @@
+description = "3. Counterfactual batch swap: decode under another batch, re-encode, match mu (32 cells per step), lambda 2"
+status = "dropped"
+outcome = "Worse than baseline: bio 0.579, batch 0.201"
+extends = ["_base.toml"]
+run = { name = "batch_swap", out = "runs/integ/batch_swap" }
+[train]
+objectives = [{ name = "batch_swap", weight = 2.0, n_cells = 32 }]

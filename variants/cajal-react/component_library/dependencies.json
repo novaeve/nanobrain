@@ -1,0 +1,155 @@
+{
+  "environment": {
+    "project_scoped": [
+      {
+        "metadata_sha256": "2ead52d5adcfe319f79b107021be7707fe532b24b33d6cb1f8f39d013c33667d",
+        "name": "GraphST",
+        "record_sha256": "ae0ed6a2bbc33eef6e361abf103b784f7bab0657779c3c1a17c16c915fa22c95",
+        "version": "1.1.1"
+      },
+      {
+        "metadata_sha256": "e463e38f7fe7da36a11e6d3fecc5dfa5b97be8c8022620400750d79ae7d842bc",
+        "name": "certifi",
+        "record_sha256": "581dda50610347979dc0cd08ce2c41aecbf5ad02caa7048407d35f968d107b53",
+        "version": "2026.10.23"
+      },
+      {
+        "metadata_sha256": "89ce6362bb7be88558f4be99a98f5d1b4da93d19cd0323e5ee0bac05cf883dfb",
+        "name": "charset-normalizer",
+        "record_sha256": "7c10a3a7df97deb56345401d055ee8ac6b3747cc496399b207ed80bd30c6f364",
+        "version": "3.5.2"
+      },
+      {
+        "metadata_sha256": "60fae9c1fdf48a3cc9001b20e83fa05488236559a740f87f1a0801da26da9416",
+        "name": "easydict",
+        "record_sha256": "f983bc447419956913a69033aff333c36d1a7d3b952e73873c3e52df403133b4",
+        "version": "1.13"
+      },
+      {
+        "metadata_sha256": "26ce80563d3402f2935b7d881835b9b1a64d897dc2f986f52bf4114642de71ad",
+        "name": "huggingface-hub",
+        "record_sha256": "6b424af1e3608b3d6cf5d00308a129d33bd27dfe3ea171801df5217a55b55a92",
+        "version": "0.36.0"
+      },
+      {
+        "metadata_sha256": "ba27e84982e6044314125747cf6c51f202d2b323409bdb1273f26749064de73a",
+        "name": "hyper-connections",
+        "record_sha256": "3fa1404371b445c9d41ac9e394dce2f3eb10e479fcfac28327aa3677920cebd2",
+        "version": "0.4.11"
+      },
+      {
+        "metadata_sha256": "dbd8c14c1e4ca1e0c9824a6dbc7cbbf78884f38eb52d91148cd3025f671e4b85",
+        "name": "idna",
+        "record_sha256": "ec186cdc4e09f0e22f5d9313e862ba0d450f1606a875103a56d9d366aa24141c",
+        "version": "3.20"
+      },
+      {
+        "metadata_sha256": "ae9c887dcdd11a91cb49da5a6fdfb037e4775c651e34cfd2086c3d0547fc06ef",
+        "name": "local-attention",
+        "record_sha256": "9a4633428cb63df8372ce23f41580739724dffd0721666e201e92aace2e34237",
+        "version": "1.11.2"
+      },
+      {
+        "metadata_sha256": "57f89e5ed4513f97a931ea27a60dde85a6b88345dd697a9d3ea74f25764ba57b",
+        "name": "POT",
+        "record_sha256": "995f56ad838fa155335b05f3fdad70aec5273a21b90ff0bbc5987053a7e26bf5",
+        "version": "0.9.7.post1"
+      },
+      {
+        "metadata_sha256": "525f8ba78523cf7bc3759d62a105e7c57fd679ea702402b9449fb0746aa0217f",
+        "name": "psutil",
+        "record_sha256": "2af7e87b12ad6542c1eaaf20a299c109fa09b9dc5d69faf745219bd61e8cfca6",
+        "version": "7.2.2"
+      },
+      {
+        "metadata_sha256": "33859377dbf8dd38ee3de73fd97faebf4a63d50576e3cc1a9dfe44df08b0936a",
+        "name": "regex",
+        "record_sha256": "c75cd5ebc6afe2cb400e210fe13a9564eb1e02a47710fb6e861bb820d257c91c",
+        "version": "2026.9.29"
+      },
+      {
+        "metadata_sha256": "65b5a08da81f4915513e760965ff14b7518f65b7bb3efe0dab364bbcc4d40cb0",
+        "name": "requests",
+        "record_sha256": "ece7d0d8ab18263449f5c4fc777d42e6021d142008372a3a30267d81e4324fc2",
+        "version": "2.32.5"
+      },
+      {
+        "metadata_sha256": "8768f97439fd846ac9bec48a5e4cba450b268142529db527ce4681d29833a736",
+        "name": "safetensors",
+        "record_sha256": "d41f609d186c966843e9a6ad39c7764816aacb37cea9f113ea7327037dfa1211",
+        "version": "0.6.2"
+      },
+      {
+        "metadata_sha256": "ddc92f061ff422fb05d19da58e9161c5098da143c38aa23779bf8a5b48ce76ca",
+        "name": "tokenizers",
+        "record_sha256": "5a988d8e9449970281362adc9d7b928241560b5d9f3509b4e6bcfddb14765595",
+        "version": "0.22.1"
+      },
+      {
+        "metadata_sha256": "0ec797c2d67e1c295543ddd667cf489b0493182163cc0bb78c840f645cdc419c",
+        "name": "torch-einops-utils",
+        "record_sha256": "12fcea33623a97c88635af059a80d938e70fabe3286ab8fdf61ab094fae55dd1",
+        "version": "0.0.20"
+      },
+      {
+        "metadata_sha256": "3ac29f6efe0593786c23e72c545713b164d6ba7aee0c5c558829cc528daee495",
+        "name": "torch-geometric",
+        "record_sha256": "d91aed34a7ebd7406d7cf9c28ffff40ca5e73152ac1fc6d14279e2fb962b319c",
+        "version": "2.8.1"
+      },
+      {
+        "metadata_sha256": "e223d1000cfa44bc57f1a4cdcd69c3e3470058557f0ac91269b6c14e63f0d9c4",
+        "name": "torch_scatter",
+        "record_sha256": "0dda54b2083180c2fe284507fb9b64fc2493b99199de6639e1522934f8588e30",
+        "version": "2.1.2+pt29cu128"
+      },
+      {
+        "metadata_sha256": "ed318fb19ba5343aaaa1f95b65134b4f2f3ad4d9683617a70d50b3ca619d1349",
+        "name": "torch_sparse",
+        "record_sha256": "bdc1570dce8032197e32c482f89d6353a145671d586d5aec83c4988abdbf0223",
+        "version": "0.6.18+pt29cu128"
+      },
+      {
+        "metadata_sha256": "ab7bf54a8650a611b6e045af2b681993f261302f7ee4dca8857712de0737c577",
+        "name": "transformers",
+        "record_sha256": "ebf0e6698bfc7d47bcad347df2f933241642afa7d1e0ec0c9a45acaec5ff5a79",
+        "version": "4.57.3"
+      },
+      {
+        "metadata_sha256": "10898c620e8007c030e07fa5622b68358a43010025dfbd78a1cb797699de2bb4",
+        "name": "urllib3",
+        "record_sha256": "1753d325c8936a612ecdc947e686ade56b21f591fbb7518330cb0f2f7619c330",
+        "version": "2.8.0"
+      },
+      {
+        "metadata_sha256": "9dcdbae3ea685db00dc0691d6f90ec6c1d74349658f97e5a4f55f9bdf183db21",
+        "name": "xxhash",
+        "record_sha256": "5db7e0f16e6266af7e7ad30dc6aa50053ed6327e2daf9c3ada1a42de46d64034",
+        "version": "3.6.0"
+      }
+    ],
+    "python": "3.11.13",
+    "shared_environment": {
+      "einops": {
+        "metadata_sha256": "0bd65db043688a44f4a29608c1cba521c932f7ff76f238bbd869441e15012653",
+        "version": "0.8.2"
+      },
+      "numpy": {
+        "metadata_sha256": "22d648f53848429464ca643b40d73b49a920d47876fc77c395d4dca4e834904a",
+        "version": "2.2.6"
+      },
+      "scvi-tools": {
+        "metadata_sha256": "f0b4da6c7669c6c8c946675083b11f805634ec5f2fd61735d4d6cc827cdb288d",
+        "version": "1.4.2"
+      },
+      "torch": {
+        "metadata_sha256": "b3a05d366523420ea58a2b57f1c68d0f653768e6b4367744a89cf40e9713cfc5",
+        "version": "2.9.1+cu128"
+      }
+    }
+  },
+  "install_target": ".component_deps",
+  "note": "Exact versions and metadata fingerprints. CPU probes verify imports and tensor contracts; GPU execution has not been tested.",
+  "shared_venv_modified": false,
+  "torch_extension_wheel_index": "https://data.pyg.org/whl/torch-2.9.0+cu128.html"
+}

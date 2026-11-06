@@ -1,0 +1,11 @@
+description = "Cajal with the table_v1 mask curriculum (gene programs, panels, depth, regions), otherwise identical to cajal_1m"
+status = "parked"
+outcome = "Mask curriculum (gene programs, panels, depth, regions): defined, not trained"
+extends = ["cajal_1m.toml"]
+
+[run]
+name = "cajal_table_v1"
+out = "runs/cajal_table_v1"
+
+[data]
+masks = "table_v1"

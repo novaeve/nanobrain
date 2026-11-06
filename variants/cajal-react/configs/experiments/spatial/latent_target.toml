@@ -1,0 +1,8 @@
+description = "Spatial latent target: the spatial loss also matches each hidden cell's predicted latent to its own latent mean (stop-gradient, JEPA-style), on Cajal v1 (grad_equal), stopped at 10k; the sparse-count target plateaus from ~2k steps"
+status = "candidate"
+outcome = "At 10k vs grad_equal (spatial r 0.264): seed 0 0.279, seed 1 0.267, so the gain did not replicate clearly; other tasks within spread. Diagnostic: it narrows the learned-vs-mean gap (0.323 vs 0.342 expected-log). Final call once the grad_equal seeds give the spatial spread"
+extends = ["../integration/balance_grad_equal.toml"]
+run = { name = "spatial_latent", out = "runs/spatial/latent_target" }
+
+[model]
+spatial_latent = 1.0

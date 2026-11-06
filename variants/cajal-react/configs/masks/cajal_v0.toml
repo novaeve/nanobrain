@@ -1,0 +1,7 @@
+description = "Cajal v0: 15% scattered genes per cell, 30% scattered neighbours per spatial group (the original batches, bit-identical)"
+
+[rows]
+specs = [{ name = "random_genes", ratio = 0.15 }]
+
+[groups]
+specs = [{ name = "neighbours", ratio = 0.3 }]

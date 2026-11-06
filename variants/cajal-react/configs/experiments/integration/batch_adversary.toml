@@ -1,0 +1,11 @@
+description = "Batch adversary: grad_equal plus a batch discriminator on mu behind gradient reversal (DANN; the core of DIRAC), weight 1 under grad_equal (the encoder gets the same gradient norm from it as from each task), stopped at 10k. Zero-shot: only training changes. Risk: batches share structure with regions, so region F1 is watched"
+status = "main"
+outcome = "Queued; compare with balance_grad_equal: batch must rise beyond the seed spread with bio and region F1 within it"
+extends = ["balance_grad_equal.toml"]
+run = { name = "batch_adversary", out = "runs/integ/batch_adversary" }
+
+[model]
+batch_adversary = 256
+
+[train]
+objectives = [{ name = "batch_adversary", weight = 1.0 }]

@@ -1,0 +1,8 @@
+description = "Spatial latent target + 4-layer neighbourhood model together (each lifted spatial imputation slightly at 2k-4k), stopped at 10k"
+status = "main"
+outcome = "Running"
+extends = ["latent_target.toml"]
+run = { name = "spatial_latent_deeper", out = "runs/spatial/latent_deeper" }
+
+[model]
+spatial_layers = 4

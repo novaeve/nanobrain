@@ -1,0 +1,943 @@
+{
+  "entries": [
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.attention",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.moe",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.swiglu",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.recurrent_encoder"
+    },
+    {
+      "by_slot": {
+        "value_embedding": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.value_mlp",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.nbeats_block"
+    },
+    {
+      "by_slot": {
+        "latent": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.linear_latent",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.hierarchical_head",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "decoder": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.nb_decoder",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "decoder": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.unified_decoder",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "cajal.neighborhood_transformer",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.batch_discriminator"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.mog_prior"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.nb_likelihood"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.initial_loss"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.grad_equal"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.famo"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.cond_hsic"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.sigreg"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.batch_swap"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.teacher_gram"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.batch_adversary"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.grouped_muon"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.kl_capacity"
+    },
+    {
+      "by_slot": {},
+      "id": "cajal.budgeted_weight"
+    },
+    {
+      "by_slot": {
+        "latent": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "scvi.vae_encoder",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "decoder": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "scvi.nb_decoder",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "scanvi.classifier",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.encoder.identity"
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.mlp",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.encoder.panel_patches"
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.residual_mlp",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.scbrain_swiglu",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "value_embedding": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.scfoundation_autobin",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.scnode_mlp",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.scnym_mlp",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.encoder.scpoli_conditional"
+    },
+    {
+      "by_slot": {
+        "value_embedding": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.scprint_value",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.sctab_tabnet",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.scvi_fc",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.encoder.sedr_mlp",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.attention.bert",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.attention.differential_linear",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.attention.identity"
+    },
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.attention.scbert_performer",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.attention.scfit_block",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.attention.sdpa",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_attention": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.attention.torch_transformer",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.spatial.graphst_sparse",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.spatial.identity"
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.spatial.neighbor_mean",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.spatial.scbrain_gcn",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.spatial.sedr_gcn",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.spatial.spagcn_gcn",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "neighborhood": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.spatial.stagate_gat",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.residual.nbeats",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.residual.none"
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.residual.scnym_resblock",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.pairing.identity"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.pairing.sinkhorn"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.fmt"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.mioflow_ode"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.mlp"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.none"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.prescient_potential"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.scfit_adaln"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.scnode_time_mlp"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.scuniflow_field"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.flow.trajectorynet"
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.head.celltypist_linear",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.head.classification",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.head.regression"
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.head.scbrain",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.head.scfit",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.head.scpoli_prototype",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "classifier": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.head.scprint_classifier",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.add"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.bbknn"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.concat"
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.dropout",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.film"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.first_pool"
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.gelu",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.harmony"
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.layer_norm",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.linear",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.mean_pool"
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.rms_norm",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.scanorama"
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.scbrain_ffn",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.scfit_attention",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.scfit_ffn",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.scfit_time"
+    },
+    {
+      "by_slot": {
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.sctab_glu",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {
+        "block_mixer": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        },
+        "token": {
+          "status": "passed",
+          "synthetic_only": true,
+          "tasks": 5
+        }
+      },
+      "id": "legacy.operation.silu",
+      "status": "passed",
+      "synthetic_only": true,
+      "tasks": 5
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.stack"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.operation.subtract"
+    },
+    {
+      "by_slot": {},
+      "id": "legacy.endpoint.cellot_icnn_transport"
+    }
+  ],
+  "real_training_started": false,
+  "runnable_structural_components": 52,
+  "synthetic_only": true,
+  "total_entries": 111
+}

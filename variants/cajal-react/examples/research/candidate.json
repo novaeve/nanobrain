@@ -1,0 +1,21 @@
+{
+  "components": [],
+  "data": {
+    "dissociated_cells": 256,
+    "spatial_groups": 32
+  },
+  "files": {},
+  "hypothesis": "Test Cajal neighbourhood residual mean with a larger training minibatch while retaining all five tasks.",
+  "model": {
+    "spatial_residual_mean": true
+  },
+  "parent_ids": [
+    "033f9fc5374eadc550cd9a39588950fa1408d83a230e0705ba1aadc8e316c0dd"
+  ],
+  "plugins": [],
+  "schema_version": "cajal.research.candidate.v2",
+  "target_metrics": [
+    "Spatial imputation Pearson (cell median)"
+  ],
+  "train": {}
+}

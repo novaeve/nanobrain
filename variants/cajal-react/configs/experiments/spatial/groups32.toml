@@ -1,0 +1,8 @@
+description = "Spatial data per step: grad_equal with 32 spatial groups a step (was 16), stopped at 10k; grad_equal fixes the spatial gradient's share, so this lowers its noise without taking from other tasks"
+status = "main"
+outcome = "Running; compare with balance_grad_equal, spatial imputation first"
+extends = ["../integration/balance_grad_equal.toml"]
+run = { name = "spatial_groups32", out = "runs/spatial/groups32" }
+
+[data]
+spatial_groups = 32

@@ -1,0 +1,76 @@
+data:
+  source: mtg_full
+  max_cells:
+  cell_seed: 42
+
+experiment:
+  output_dir: experiments_v2
+  run_name:
+
+model:
+  top_k_genes: 2048
+  d_model: 512
+  nhead: 8
+  d_ff: 2048
+  nlayers: 12
+  dropout: 0.1
+  value_encoder:
+    max_value: 32.0
+  adaln:
+    share_projection: false
+  aux_bin_ce:
+    enabled: false
+    n_bins: 51
+
+training:
+  batch_size: 36
+  lr: 0.0003
+  weight_decay: 0.0001
+  epochs: 6
+  seed: 42
+  mask_ratio: 0.2
+  log_every_steps: 100
+  val_every_steps: 1000
+  save_every_epochs: 1
+  val_ratio: 0.1
+  amp: true
+  monitor_cls_attention: false
+  cls_attention_monitor_max_gb: 1.0
+  gpu_reservation:
+    enabled: false
+    reserve_gb:
+    fraction_of_free: 0.3
+  resume:
+  loss_weights:
+    weighted_huber: 1.0
+    pearson: 0.1
+    cell_pearson: 0.1
+    cross_entropy: 0.0
+
+validation:
+  batch_size: 16
+  mask_ratio: 0.2
+  mask_seed: 1234
+  max_batches: 50
+
+inference:
+  n_steps: 10
+
+evaluation:
+  checkpoint: results/experiments/legacy_v2/mtg_full_20260412_093126/checkpoints/epoch_1.pt
+  split: val
+  batch_size: 1
+  num_workers: 0
+  mask_ratio: 0.2
+  mask_seed: 1234
+  n_steps: 10
+  max_batches: 0
+  max_cells_per_donor: 20
+  donor_sample_seed: 42
+  seed: 42
+  split_seed: 42
+  val_ratio: 0.1
+  device: cpu
+  amp: false
+  result_dir: results/eval_results/legacy
+  save_json:

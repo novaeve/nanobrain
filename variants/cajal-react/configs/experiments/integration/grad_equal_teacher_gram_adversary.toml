@@ -1,0 +1,14 @@
+description = "The lead candidate plus the batch adversary: grad_equal + teacher_gram + a batch discriminator behind gradient reversal, stopped at 10k. teacher_gram anchors biology (bio 0.71-0.72 over three runs), so the adversary's risk of erasing biology confounded with batch should be smaller here than on grad_equal alone"
+status = "main"
+outcome = "Running; compare with grad_equal_teacher_gram and its seeds (batch 0.376-0.380) and with batch_adversary"
+extends = ["grad_equal_teacher_gram.toml"]
+run = { name = "grad_equal_teacher_gram_adversary", out = "runs/integ/grad_equal_teacher_gram_adversary" }
+
+[model]
+batch_adversary = 256
+
+[train]
+objectives = [
+  { name = "teacher_gram", weight = 1.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" },
+  { name = "batch_adversary", weight = 1.0 },
+]

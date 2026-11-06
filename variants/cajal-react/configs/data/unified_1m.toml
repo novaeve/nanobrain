@@ -1,0 +1,4 @@
+description = "Pretraining data: unified_1m (see catalog/datasets/unified_1m/card.toml)"
+
+[data]
+root = "/data/brainwm/unified_1m"

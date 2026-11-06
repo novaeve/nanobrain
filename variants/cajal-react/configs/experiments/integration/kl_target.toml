@@ -1,0 +1,8 @@
+description = "KL as a knob: grad_equal with the KL weight held to a capacity target of 15 or 60 nats (grad_equal settles at ~31, v0 at ~84), tracing batch / bio / annotation against the information kept"
+status = "done"
+outcome = "At 10k vs grad_equal (cell type 0.751, region 0.646, batch 0.358): 60 nats cell type 0.770, region 0.649, bio 0.648, batch 0.360, spatial 0.259 (small gains); 15 nats cell type 0.688, region 0.595, batch 0.319 (worse everywhere). Less KL pressure is not worse; 60 continues combined with teacher_gram"
+extends = ["balance_grad_equal.toml"]
+run = { name = "kl_target", out = "runs/integ/kl_target" }
+
+[sweep]
+"train.kl_target" = [15.0, 60.0]

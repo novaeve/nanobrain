@@ -1,0 +1,7 @@
+description = "L1. Balancing: FAMO, weights follow each loss's log-decrease rate (one extra forward per step)"
+status = "dropped"
+outcome = "Integration still 2-4% of the gradient (log-loss weighting shrinks the large NB loss): batch 0.258, bio 0.645, region F1 -3.5%, step +25%"
+extends = ["_base.toml"]
+run = { name = "balance_famo", out = "runs/integ/balance_famo" }
+[train]
+balancer = "famo"

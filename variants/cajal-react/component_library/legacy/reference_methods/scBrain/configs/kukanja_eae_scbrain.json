@@ -1,0 +1,17 @@
+{
+  "name": "kukanja_eae_scbrain_feature_residual",
+  "dataset": "Kukanja_EAE",
+  "data_path": "data/kukanja/kukanja_eae.npz",
+  "entrypoint": "experiments/kukanja/main_scbrain.py",
+  "command": "python experiments/kukanja/main_scbrain.py --npz_path data/kukanja/kukanja_eae.npz --device cuda:0 --bs 512 --max_epochs 500 --patience 30 --e_layers 3 --d_layers 1 --enc_hidden_dim 256 --dec_hidden_dim 256 --latent_dim 20 --residual_mode feature --seed 3028",
+  "model": {
+    "input_dim": 239,
+    "levels": [8, 16, 23, 41],
+    "encoder_hidden_dim": 256,
+    "decoder_hidden_dim": 256,
+    "latent_dim": 20,
+    "encoder_layers": 3,
+    "decoder_layers": 1,
+    "residual_mode": "feature"
+  }
+}

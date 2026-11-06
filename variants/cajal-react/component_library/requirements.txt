@@ -1,0 +1,23 @@
+# Install into .component_deps with --no-deps; use Cajal's existing .venv.
+--find-links https://data.pyg.org/whl/torch-2.9.0+cu128.html
+GraphST==1.1.1
+certifi==2026.10.23
+charset-normalizer==3.5.2
+easydict==1.13
+huggingface-hub==0.36.0
+hyper-connections==0.4.11
+idna==3.20
+local-attention==1.11.2
+POT==0.9.7.post1
+psutil==7.2.2
+regex==2026.9.29
+requests==2.32.5
+safetensors==0.6.2
+tokenizers==0.22.1
+torch-einops-utils==0.0.20
+torch-geometric==2.8.1
+torch_scatter==2.1.2+pt29cu128
+torch_sparse==0.6.18+pt29cu128
+transformers==4.57.3
+urllib3==2.8.0
+xxhash==3.6.0

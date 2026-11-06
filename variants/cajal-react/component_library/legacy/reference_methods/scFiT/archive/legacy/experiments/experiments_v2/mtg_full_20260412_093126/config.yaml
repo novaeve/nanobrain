@@ -1,0 +1,52 @@
+data:
+  cell_seed: 42
+  max_cells: null
+  source: mtg_full
+experiment:
+  output_dir: experiments_v2
+  run_name: null
+inference:
+  n_steps: 10
+model:
+  adaln:
+    share_projection: false
+  aux_bin_ce:
+    enabled: true
+    n_bins: 51
+  d_ff: 2048
+  d_model: 512
+  dropout: 0.1
+  nhead: 8
+  nlayers: 12
+  top_k_genes: 2048
+  value_encoder:
+    max_value: 32.0
+training:
+  amp: true
+  batch_size: 36
+  cls_attention_monitor_max_gb: 1.0
+  epochs: 6
+  gpu_reservation:
+    enabled: false
+    fraction_of_free: 0.3
+    reserve_gb: null
+  log_every_steps: 100
+  loss_weights:
+    cell_pearson: 0.1
+    cross_entropy: 0.2
+    pearson: 0.1
+    weighted_huber: 1.0
+  lr: 0.0003
+  mask_ratio: 0.2
+  monitor_cls_attention: false
+  resume: null
+  save_every_epochs: 1
+  seed: 42
+  val_every_steps: 1000
+  val_ratio: 0.1
+  weight_decay: 0.0001
+validation:
+  batch_size: 16
+  mask_ratio: 0.2
+  mask_seed: 1234
+  max_batches: 50

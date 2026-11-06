@@ -1,0 +1,7 @@
+description = "4. Distil the cell-type-only model's latent geometry (Gram matching), lambda 10"
+status = "parked"
+outcome = "Best bio 0.764 and fine cell-type F1 0.879, batch 0.322, but needs a separately trained 30k-step teacher"
+extends = ["_base.toml"]
+run = { name = "teacher_gram", out = "runs/integ/teacher_gram" }
+[train]
+objectives = [{ name = "teacher_gram", weight = 10.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

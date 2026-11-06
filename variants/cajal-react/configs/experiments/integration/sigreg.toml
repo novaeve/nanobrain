@@ -1,0 +1,9 @@
+description = "2. Replace KL by SIGReg: deterministic mu, isotropic-Gaussian regulariser, lambda 10"
+status = "dropped"
+outcome = "Worse than baseline: bio 0.550, batch 0.208"
+extends = ["_base.toml"]
+run = { name = "sigreg", out = "runs/integ/sigreg" }
+[model]
+latent_reg = "none"
+[train]
+objectives = [{ name = "sigreg", weight = 10.0 }]

@@ -1,352 +1,114 @@
 # nanoBrain
 
-<p align="center">
-  <strong>A readable, modifiable, reproducible entry point for virtual-cell experiments</strong>
-</p>
+用于虚拟细胞架构、目标函数和训练策略的可复现实验项目。nanoBrain 将固定数据、可组合模型、统一评估和实验记录放在同一条研究流程中，作为 Brain World Model 的快速实验场。
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#four-benchmark-tasks">Tasks</a> ·
-  <a href="#data-and-scale">Data</a> ·
-  <a href="#leaderboard">Leaderboard</a> ·
-  <a href="#custom-models">Custom Models</a> ·
-  <a href="#contributing">Contributing</a>
-</p>
+[项目介绍网站](https://novaeve.github.io/nanobrain/) · [Cajal ReAct 变体](variants/cajal-react/README.md) · [数据发布](https://github.com/novaeve/nanobrain/releases/tag/cajal-react-data-20261106) · [原四任务教程](docs/tasks/)
 
-**Language:** English · [简体中文](README_zh-CN.md)
+## 本分支的研究路线
 
-![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
-![Package manager](https://img.shields.io/badge/package%20manager-uv-6E56CF)
-![Dataset](https://img.shields.io/badge/frozen%20benchmark-100k%20cells-2da44e)
-![Tasks](https://img.shields.io/badge/benchmark-4%20tasks-0969da)
-![Scope](https://img.shields.io/badge/scope-internal%20open%20source-8250df)
+介绍网站以“提案、训练、复验、晋级”为主线。本分支沿用这套可追溯的研究流程，加入 **Cajal 联合模型上的 ReAct 架构与训练参数演化**。
 
-nanoBrain is a compact virtual-cell research, teaching, and prototyping project. Inspired by the readability of nanoGPT and the iteration loop of automated research frameworks, it keeps data loading, model definition, training, validation, and comparison in one understandable experiment path.
-
-nanoBrain is a fast experimentation entry point for Brain World Model, not a smaller deployment of Brain World Model. New architectures, objectives, sampling strategies, and tasks can be tested on a manageable dataset before the useful ideas move to larger cell datasets and model campaigns.
-
-> [!IMPORTANT]
-> This repository contains a frozen and verified 100,000-cell (100k) metadata-v2 dataset: 60,000 train / 20,000 validation / 20,000 test.
-
-> [!WARNING]
-> The fixed test labels and historical results have already been opened. Use train/validation for new model selection; test leaderboard scores are descriptive historical results, not a new blind holdout.
-
-## Quick Start
-
-### 1. Set up the environment
-
-The supported quick-start environment is Linux x86_64, Python 3.12, and [uv](https://docs.astral.sh/uv/):
-
-```bash
-git clone https://github.com/novaeve/nanobrain.git
-cd nanobrain
-
-# Download the dataset (100k cells, ~70MB)
-wget https://github.com/novaeve/nanobrain/releases/download/v1.0.0-data/nanobrain-v3-100k-metadata-v2.zip
-unzip nanobrain-v3-100k-metadata-v2.zip -d assets/
-
-# Install CPU PyTorch, development tools, and prepare the dataset
-cp .env.example .env
-bash scripts/bootstrap.sh
-```
-
-For a step-by-step setup:
-
-```
-uv sync --extra cpu --extra dev
-uv run nanobrain-data prepare
-```
-
-### 2. Run a minimal experiment
-
-```
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --task annotation \
-  --steps 20 \
-  --batch-size 16 \
-  --device cpu \
-  --precision fp32 \
-  --output results/annotation-smoke
-```
-
-Twenty steps verify data loading, model construction, backpropagation, validation, and receipt writing. They are a smoke test, not a benchmark-quality budget. The output directory contains checkpoints and a JSON receipt.
-
-### 3. Choose a task
-
-Set --task to one of:
-
-```text
-integration
-annotation
-development
-spatial_niche
-```
-
-The development tutorial exposes additional sampling and validation controls:
-
-```
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --task development \
-  --steps 20 \
-  --batch-size 16 \
-  --development-cells 64 \
-  --validation-development-groups 8 \
-  --device cpu \
-  --precision fp32 \
-  --output results/development-smoke
-```
-
-### 4. Run checks and rebuild the leaderboard
-
-```
-uv run pytest
-uv run python scripts/build_leaderboard.py
-```
-
-CI runs the same tests, lint checks, and leaderboard generation steps in [.github/workflows/ci.yml](.github/workflows/ci.yml).
-
-## Experiment flow
-
-```mermaid
-flowchart LR
-    A["Frozen data manifest"] --> B["Validated data loader"]
-    B --> C["Replaceable expression encoder"]
-    C --> D["Attention / spatial / residual modules"]
-    D --> E["Task heads and objectives"]
-    E --> F["Training and validation receipt"]
-    F --> G["Common evaluator"]
-    G --> H["Leaderboard"]
-```
-
-Single-task diagnostics can use an independent model and optimizer. Evolution candidates default to `--task joint`: one model and optimizer jointly optimize annotation, integration, development, and spatial niche, and promotion uses all four primary metrics. Normal training opens train and validation only. Every run records the task, manifest, seed, step budget, validation results, checkpoint, and stability checks so experiments can be reproduced and compared on internal servers.
-
-## Four benchmark tasks
-
-| Task | Question | Primary metrics | Guide |
-|---|---|---|---|
-| **Integration** | Preserve biological expression signal while reducing batch signal | Integration composite, biology conservation, batch removal | [Guide](docs/tasks/integration.md) |
-| **Annotation** | Predict cell-type labels observed in training | Macro F1, accuracy | [Guide](docs/tasks/annotation.md) |
-| **Development** | Predict a target population from a source population and condition | Population MSE, gene Spearman, MMD | [Guide](docs/tasks/development.md) |
-| **Spatial niche** | Predict anatomy-derived niche labels using expression and verified spatial context | ARI, NMI, spatial metrics | [Guide](docs/tasks/spatial-niche.md) |
-
-The tasks share the data contract, component registry, trainer, and evaluator, while using independent objectives, heads, and optimizers.
-
-## Data and scale
-
-### Reproducible benchmark release
-
-| Property | Current release |
-|---|---|
-| Dataset | nanobrain_v3_100k_metadata_v2 |
-| Total cells | 100,000 |
-| Split | 60,000 train / 20,000 validation / 20,000 test |
-| Split ID | BRAINWM-HUMAN-GLOBAL-6-2-2-V3 |
-| Expression panel | 256 genes |
-| Normalization | Fit on train only |
-| Metadata | metadata-v2 with repaired row identity |
-| Spatial neighbors | Independently verified sections only |
-
-Dataset preparation checks the split ID, exact row counts, metadata version, train-only normalization provenance, and every file hash declared in the manifest. It does not randomly resplit rows and does not open H5AD files in the training loop.
-
-```mermaid
-flowchart LR
-    T["Train 60k"] --> N["Train-only normalization"]
-    V["Validation 20k"] --> S["Checkpoint selection"]
-    E["Test 20k"] --> R["Historical descriptive evaluation"]
-    N --> M["Frozen manifest + receipts"]
-    S --> M
-    R --> M
-```
-
-See the [dataset contract](docs/data.md) and [data folder notes](assets/README.md).
-
-### Data scale overview
-
-| Tier | Intended use | Status |
+| 项目 | 既有 nanoBrain 路线 | 本分支 Cajal ReAct 路线 |
 |---|---|---|
-| Teaching | Courses, tutorials, and CPU smoke runs | Available through the quick start |
-| Benchmark | Frozen 100k (100,000 cells) data and four tasks | Current release |
+| 数据 | 冻结 100k，60k / 20k / 20k | 1,015,388 个预训练细胞与三个独立研究评估集 |
+| 输入 | 256-gene 表达面板 | 65,918 基因词表、原始 counts 与逐细胞测量面板 |
+| 任务 | 注释、整合、发育、空间生态位 | 细胞类型、脑区、整合、基因插补、空间插补 |
+| 模型 | 组件计算图与任务训练入口 | 一份共享模型、五目标联合训练、同一 checkpoint 评估 |
+| 搜索 | 原 Graph V2 协议 | ReAct 工具调用、完整演化 DAG、受限源码扩展 |
+| 候选预算 | 见既有协议配置 | 单 seed=0，每候选 10,000 步，50 代 × 6 候选 |
+| 当前阶段 | 已有教程和历史评测 | `prepared_not_started`，已有 Cajal 参考成绩 |
 
-## Leaderboard
+本变体的代码快照来自 `cajal-react-joint-20261106`，源提交为 `df8976caf24e993c1b33407f45d956b9843d5cdd`。源码、配置、测试、组件库和数据发布记录位于独立目录 `variants/cajal-react/`。本分支基于 main 提交 `cdf4b197ed52b3c58bf357fbe701ffec0bdef455`。
 
-The current leaderboard is generated from a frozen unified evaluation table:
+## 演化实验流程
 
-- [Leaderboard](benchmarks/nanobrain_v3_100k/LEADERBOARD.md)
-- [Machine-readable metrics](benchmarks/nanobrain_v3_100k/overall_metrics.csv)
-- [Benchmark status and protocol](docs/benchmark_status.md)
-
-The nanoBrain reference uses three seeds and 2,000 optimizer steps per seed:
-
-| Task | Metric | Mean | SD | Direction |
-|---|---|---:|---:|---|
-| Annotation | Accuracy | 0.2644 | 0.0101 | Higher is better |
-| Annotation | Macro F1 | 0.0136 | 0.0012 | Higher is better |
-| Integration | Integration composite | 0.3764 | 0.0152 | Higher is better |
-| Spatial niche | ARI | 0.0601 | 0.0282 | Higher is better |
-| Spatial niche | NMI | 0.1027 | 0.0138 | Higher is better |
-| Development | Population MSE | 0.2315 | 0.0076 | Lower is better |
-| Development | Gene Spearman | 0.5859 | 0.0340 | Higher is better |
-
-Training budgets, data coverage, and evaluation counts can differ across methods. Inspect each method protocol before drawing comparisons.
-
-Regenerate the summary with:
-
-```
-uv run python scripts/build_leaderboard.py \
-  --input benchmarks/nanobrain_v3_100k/frozen_test_metrics.csv
+```mermaid
+flowchart LR
+    A[固定数据与 Cajal v1 参考] --> B[LLM 查询组件与完整演化历史]
+    B --> C[提交架构、训练参数与插件源码]
+    C --> D[Schema、源码规则与 CPU 合成验收]
+    D --> E[共享模型五目标联合训练]
+    E --> F[统一评估六项指标]
+    F --> G[质量、Pareto 与结构探索归档]
+    G --> B
 ```
 
-## Custom models
+初始架构包括基因 token 编码、循环 MoE、N-BEATS 残差、层级分类头、NB 解码器和邻域模型。搜索可以组合 Cajal 与旧 nanoBrain 组件，也可以在候选源码约束内扩展模块、损失和优化器。组件目录登记 111 项，其中源快照记录了 52 个结构组件、67 个适用插槽接口的合成核验。
 
-nanoBrain uses a component registry so researchers can replace model parts without rewriting the data loader or trainer. The default path includes:
+每个候选独立初始化一份共享模型，联合优化五项任务。30,000 步学习率日程在 10,000 步固定停止。每代 6 次联合训练，50 代最多 300 次新训练。参考模型和对照方法使用已冻结的 Cajal 记录，详情见 [实验协议](variants/cajal-react/README_CAJAL_REACT.md)。
 
-- MLP expression encoder
-- Differential linear attention
-- Bounded neighbor-mean spatial fusion
-- N-BEATS-style residual correction
-- Sinkhorn population matching
-- Flow Matching Transformer
-- Classification, regression, and completion heads
+## 五项任务与六个报告指标
 
-An encoder receives [batch, genes] and returns [batch, hidden] or [batch, tokens, hidden]. Start with [examples/custom_encoder.py](examples/custom_encoder.py):
+| 任务 | 研究问题 | 报告指标 |
+|---|---|---|
+| 细胞类型注释 | 从表达预测细粒度细胞类型 | Fine macro-F1 ↑ |
+| 脑区注释 | 从表达预测细粒度解剖脑区 | Fine macro-F1 ↑ |
+| 批次整合 | 保留生物信号并降低批次影响 | Integration bio ↑、Integration batch ↑ |
+| 基因插补 | 重建遮蔽的测量基因表达 | 每细胞 Pearson 相关的中位数 ↑ |
+| 空间插补 | 利用可见邻居重建被遮蔽表达 | 每细胞 Pearson 相关的中位数 ↑ |
 
-```
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --plugin examples.custom_encoder \
-  --genome-json examples/custom_genome.json \
-  --task annotation \
-  --steps 20 \
-  --batch-size 16 \
-  --device cpu \
-  --precision fp32 \
-  --output results/custom-annotation
-```
+研究评估集与预训练细胞不重叠。它们会反复用于演化反馈，分数属于探索性研究结果。单 seed 的结果记录 `seed_count=1`、标准差为 null。完整口径见 [评估协议](variants/cajal-react/reference/evaluation_protocol.json)。
 
-See the [custom model tutorial](docs/custom-model.md). Receipts record plugin module names and source hashes.
+## 数据与下载
 
-## Baselines inside evolution
+数据采用 main 相同的 GitHub Releases 存放方式。Cajal 数据使用独立发布标签 `cajal-react-data-20261106`，分卷附带 SHA-256 清单。
 
-Baselines can now be recorded as generation-specific references during model evolution. Pass a generation number and a campaign ledger to the baseline CLI; it selects the strongest non-nanoBrain method for each primary metric on validation and appends a resumable JSON snapshot. Candidate promotion can then apply the same baseline regression gate.
+| 数据目录 | 细胞数 | 作用 |
+|---|---:|---|
+| `unified_1m` | 1,015,388 | 全量参与联合预训练 |
+| `eval_10k` | 9,960 | 细胞类型、脑区、基因插补 |
+| `eval_integration_10k` | 9,867 | 批次整合 |
+| `eval_spatial` | 40,789 | 空间插补 |
 
 ```bash
-uv run python scripts/run_nanobrain_baselines.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --generation 0 \
-  --campaign-ledger results/nanobrain/evolution/campaign.json \
-  --output results/nanobrain/evolution/generation-00-baselines
+git clone --branch research/cajal-react-joint-20261106 https://github.com/novaeve/nanobrain.git
+cd nanobrain
+python variants/cajal-react/scripts/download_data.py
 ```
 
-Use `nanobrain.load_generation_baseline` to read a generation snapshot and `nanobrain.baseline_regression_gate` to check a candidate against it. The ledger follows the train/validation protocol; the test split remains outside search and selection. The interface is independent of the LLM or search driver so it can be reused by longer, multi-GPU Brain World Model campaigns.
+下载器要求 Python 3.12+，默认解压到 `assets/cajal/`，校验每个分卷、合并归档、原始 manifest、行数和全部数据文件。完整解压体积约 16 GB，下载、合并和解压过程建议预留 35 GB 空间。已有分卷会通过校验后复用。
 
-## Servers and GPUs
-
-The quick start targets Linux CPU and works well for small servers, workstations, and cloud instances. For GPU training, install a PyTorch wheel matching the server CUDA runtime using the [PyTorch selector](https://pytorch.org/get-started/locally/), then use:
-
-```
---device cuda
+```bash
+python variants/cajal-react/scripts/download_data.py --verify-only
 ```
 
-nanoBrain currently provides experiment CLIs, receipts, and common evaluation. It does not present the experiment CLI as a production inference service.
+来源、面板、邻居和抽样定义见 [数据说明](variants/cajal-react/data_build/UNIFIED_1M.md)。原 100k 发布仍可从 [v1.0.0-data](https://github.com/novaeve/nanobrain/releases/tag/v1.0.0-data) 获取。
 
-## Reproducibility and fair comparison
+## 从配置检查开始
 
-Record at least:
+Cajal 代码运行环境为 Linux、Python 3.11+、PyTorch 2.9+。正式训练使用 Linux NVIDIA GPU 环境及对应 CUDA 扩展。
 
-- data manifest and split ID
-- task, seed, step budget, and batch size
-- validation split and evaluation settings
-- model genome and plugin source hash
-- checkpoint policy and stability thresholds
+```bash
+cd variants/cajal-react
+python -m pip install -e '.[dev]'
+python -m brainwm_unified.cli show configs/experiments/cajal_v1.toml
+python scripts/cajal_react.py
+```
 
-Iterate on train/validation before moving a design to a larger campaign. Do not tune against the already opened test leaderboard.
+最后一条命令打印演化计划。正式启动需要显式 `--execute`、API 环境配置，以及原协议要求的参考 checkpoint、教师权重、整合评估缓存和可用组件依赖。服务器快照中的数据与参考路径有指纹约束，迁移前请按 [变体部署说明](variants/cajal-react/README.md) 准备这些输入。
 
-## Repository layout
+原 nanoBrain 四任务教程、组件 API、自定义编码器和冻结排行榜位于 `docs/`、`src/`、`examples/` 和 `benchmarks/`。它们使用各自的数据与评估协议。
+
+## 可复现记录
+
+- 数据保留原 count、测量面板、标签层级、空间邻居和来源行身份。
+- 每个候选保存完整配置、源码哈希、父系、种子、训练参数和全部任务指标。
+- Schema 与源码验收之后，Linux bwrap 沙箱执行合成五目标梯度、更新和重载检查。
+- 验收失败、训练失败、资源不足和指标缺失分别记录。完整 DAG 保留未入选分支。
+- 六项指标共同参与质量、Pareto 与结构探索归档，晋级采用预先声明的工程阈值。
+
+## 仓库结构
 
 ```text
-src/nanobrain/       nanoBrain models, data contracts, objectives, and training
-src/brainwm*/        Shared model, data, and benchmark components
-scripts/              Environment, data, training, evaluation, and leaderboard commands
-docs/tasks/           Task-by-task tutorials
-benchmarks/           Frozen 100k leaderboard and source metrics
-configs/              Public model configurations
-examples/             Custom encoder and genome examples
-tests/                Contract, data, training, evaluation, and leaderboard tests
-assets/               Dataset notes; the actual bundle is not tracked
+variants/cajal-react/    Cajal 共享模型、ReAct 演化、组件库、配置与测试
+assets/cajal/           下载后的约 1M 预训练数据及研究评估数据
+src/                    既有 nanoBrain 与共享模型代码
+docs/                   四任务教程、数据契约和组件接口
+benchmarks/             原 100k 冻结评测记录
+site/                   项目介绍网站源码
+scripts/                原训练、评估和数据工具
 ```
 
-## Who this is for
+## 参与实验
 
-| User | What nanoBrain enables |
-|---|---|
-| Research scientists | Compare architectures, objectives, samplers, and task heads quickly |
-| Bioinformatics practitioners and students | Learn cell representations, training, and evaluation from readable code |
-| Database and agent builders | Add local cell representation, annotation, and retrieval capabilities |
-| Internal platform teams | Run bounded experiments, preserve receipts, and aggregate leaderboard results |
-
-## Roadmap
-
-- [x] Frozen 100k metadata-v2 data contract
-- [x] Integration, annotation, development, and spatial niche tasks
-- [x] CPU quick start, receipts, and common leaderboard
-- [x] Replaceable component registry and custom encoder example
-- [ ] More complete GPU, cloud, and server templates
-- [ ] Automated experiment search, budget control, and result retention
-- [ ] Local inference interfaces for bioinformatics databases and research agents
-
-## Contributing
-
-This is an internal open-source research foundation. A useful contribution loop is:
-
-1. Reproduce the current baseline on the frozen 100k data and four tasks.
-2. Add focused tests for new components, tasks, or data transforms.
-3. Preserve the data manifest, seed, step budget, and validation receipt.
-4. Update the relevant tutorial, benchmark protocol, or leaderboard generator.
-5. Open a pull request with hardware, runtime, and reproducible commands.
-
-Read the [component guide](docs/components.md), [dataset contract](docs/data.md), and [third-party notes](docs/third_party.md) before contributing.
-
-<details>
-<summary>FAQ</summary>
-
-### How do I download the dataset?
-
-Download the `nanobrain-v3-100k-metadata-v2.zip` file from the [GitHub Releases](https://github.com/novaeve/nanobrain/releases) page, extract it to `assets/nanobrain_v3_100k_metadata_v2/`, and run the data preparation command. The dataset contains 100,000 cells (100k) split into 60k train / 20k validation / 20k test.
-
-### Does a 20-step run produce a final result?
-
-No. It verifies the pipeline. The fixed nanoBrain reference uses 2,000 optimizer steps per seed.
-
-### Can I tune on test?
-
-No. Test labels are already open. Use train/validation for new model selection.
-
-### Is there an online API?
-
-The repository provides training and evaluation CLIs, not a production online service. An inference interface is part of the deployment roadmap.
-
-</details>
-
-<details>
-<summary>Related documentation</summary>
-
-- [简体中文 README](README_zh-CN.md)
-- [Component guide](docs/components.md)
-- [Dataset contract](docs/data.md)
-- [Benchmark status](docs/benchmark_status.md)
-- [Custom model tutorial](docs/custom-model.md)
-- [Task tutorials](docs/tasks/)
-- [Third-party notes](docs/third_party.md)
-
-</details>
-
-
-## Current evolution protocol: Graph V2
-
-Graph V2 is the canonical nanoBrain evolution protocol. Candidates are explicit backbone and flow computation graphs proposed as validated full genomes or constrained JSON Patches. Each candidate is trained independently for annotation, integration, spatial niche, and development, then screened on validation, reproduced with three paired seeds, and confirmed with a longer matched budget. The published test split is used only after selection freeze for descriptive reevaluation.
-
-The active component campaign is defined in configs/nanobrain_graph_v2/evolution_components_50g_20261023.json. Its focus is the registered input and task components bbknn, harmony, scanorama, and celltypist_linear. The scoring and promotion rules are implemented in src/nanobrain/evolution.py and scripts/run_nanobrain_evolution.py.
-
-The previous public protocol remains under configs/legacy/ for reproducibility. It is not the default evolution route.
+先确认数据和评估协议，再复现参考配置。组件变更保留来源、许可和接口检查，提交时说明训练预算、硬件、种子、各任务指标和失败记录。共享模型的改动需要同时核对全部五项任务。

@@ -1,0 +1,7 @@
+description = "1. Conditional invariance: HSIC(mu, batch | cell type), lambda 30"
+status = "dropped"
+outcome = "Lambda 30 collapsed cell types (CE stuck at 2.8, fine F1 0.00) while batch rose to 0.345"
+extends = ["_base.toml"]
+run = { name = "cond_hsic", out = "runs/integ/cond_hsic" }
+[train]
+objectives = [{ name = "cond_hsic", weight = 30.0, label = "cell_type" }]

@@ -1,0 +1,8 @@
+description = "Unified expression decoder: masked genes, reconstruction and spatial neighbours all decoded by one batch- and task-conditioned decoder (the gene head no longer forces the encoder to keep batch), on grad_equal, stopped at 10k"
+status = "dropped"
+outcome = "At 10k vs grad_equal: batch 0.327 (0.358), lower at every checkpoint (2k-10k); gene r 0.782 (0.774), cell type 0.744 (0.751), region 0.647, bio 0.634, spatial 0.267. Removing batch from the gene head did not free the encoder to drop batch; stage 2 not pursued"
+extends = ["balance_grad_equal.toml"]
+run = { name = "unified_decoder", out = "runs/integ/unified_decoder" }
+
+[model]
+decoder = "unified"
