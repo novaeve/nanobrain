@@ -22,6 +22,7 @@
     "train": {}
   },
   "evolution_started": false,
+  "existing_reference": "reference/existing_cajal_v1_10k.json",
   "first_seed_training_document": {
     "data": {
       "cell_fraction": 1.0,
@@ -130,8 +131,9 @@
       "weight_decay": 0.01
     }
   },
-  "initialization": "random weights using existing Cajal architecture; no previous weights or candidate state inherited",
+  "initialization": "Initial reference reuses existing Cajal v1@10000 result; evolved candidates initialize from scratch using the Cajal architecture.",
   "recipe": "configs/experiments/cajal_v1.toml",
+  "reference_evaluation": "reuse_existing_cajal_v1_10000",
   "resolved_existing_recipe": {
     "DataConfig": {
       "cell_fraction": 1.0,

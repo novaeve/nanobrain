@@ -174,9 +174,13 @@ def main():
     ap.add_argument("--knn-pcs", type=int, default=50)
     ap.add_argument("--k", type=int, default=15)
     ap.add_argument("--neighbors", type=int, default=16, help="spatial: neighbours used (DataConfig.neighbors)")
+    ap.add_argument(
+        "--predictions-only",
+        action="store_true",
+        help="score supplied predictions without loading or computing baselines",
+    )
     args = ap.parse_args()
 
-    ev = Cells(args.data)
     rows = {}
     for spec in args.pred:
         name, path = spec.split("=", 1)
@@ -191,6 +195,22 @@ def main():
             seen = np.unique(np.load(os.path.join(args.pretrain, "cell_type.npy")))
             rows[name] |= cell_type_scores(z[fine].argmax(-1), z["cell_type"], seen)
 
+    if not args.predictions_only:
+        add_baselines(args, rows)
+
+    os.makedirs(args.out, exist_ok=True)
+    cols = columns(args.task)
+    with open(os.path.join(args.out, "summary.csv"), "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["method", *(label for _, label in cols)])
+        for name, m in rows.items():
+            w.writerow([name, *(m.get(k, "") for k, _ in cols)])
+    for name, m in rows.items():
+        print(f"{name:28s} " + " ".join(f"{k}={m[k]:.4f}" for k, _ in cols if k in m))
+
+
+def add_baselines(args, rows):
+    ev = Cells(args.data)
     os.makedirs(args.cache, exist_ok=True)
     cache = os.path.join(
         args.cache, f"{args.task}_{os.path.basename(os.path.normpath(args.data))}_seed{args.seed}.json"
@@ -221,16 +241,6 @@ def main():
         with open(cache, "w") as fh:
             json.dump(base, fh, indent=1)
         rows |= base
-
-    os.makedirs(args.out, exist_ok=True)
-    cols = columns(args.task)
-    with open(os.path.join(args.out, "summary.csv"), "w", newline="") as fh:
-        w = csv.writer(fh)
-        w.writerow(["method", *(label for _, label in cols)])
-        for name, m in rows.items():
-            w.writerow([name, *(m.get(k, "") for k, _ in cols)])
-    for name, m in rows.items():
-        print(f"{name:28s} " + " ".join(f"{k}={m[k]:.4f}" for k, _ in cols if k in m))
 
 
 if __name__ == "__main__":

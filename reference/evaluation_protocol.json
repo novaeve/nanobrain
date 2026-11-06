@@ -1,0 +1,62 @@
+{
+  "baseline_policy": "reuse existing Cajal complete-method scores without training or rescoring; only new candidate predictions are scored",
+  "checkpoint_selection": "fixed step 10000 of 30000 LR schedule; no validation-based checkpoint selection",
+  "evaluation_sets": {
+    "annotation_and_genes": "/data/brainwm/eval_10k",
+    "integration": "/data/brainwm/eval_integration_10k",
+    "spatial": "/data/brainwm/eval_spatial"
+  },
+  "evaluation_sets_disjoint_from_pretraining": true,
+  "feedback_role": "same held-out research evaluation sets used by Cajal; reused for evolution feedback, not a fresh blind test",
+  "identity_audit": {
+    "annotation": {
+      "rows": 9960,
+      "source_row_sha256": "e628fcf1f2d6943286aecdff2da7527dc87b59a4bf9a53e912c26fffcbf8c4ca"
+    },
+    "integration": {
+      "rows": 9867,
+      "source_row_sha256": "7d2db9278290b178ca6e399360ccfb6bd650ecd163044cf3142deb632366bfe2"
+    },
+    "pretrain": {
+      "rows": 1015388,
+      "source_row_sha256": "80d0c7befcafdeba0e65741675494870ce31a83a1600b4e85d07b0499dc4be5c"
+    },
+    "spatial": {
+      "rows": 40789,
+      "source_row_sha256": "46136feb11820dded192b45e2981457583dcd48149f02f64a3564316cfa1d11e"
+    }
+  },
+  "initial_reference": "reuse existing cajal_v1@10000 scores and checkpoint",
+  "integration_PCR_reference": "Cajal existing cached HVGs/scaler/PCA; transform only, no baseline fitting or baseline metric recomputation",
+  "metric_implementations": [
+    "scripts/eval_zero_shot.py",
+    "scripts/eval_imputation.py",
+    "brainwm_unified/impute_metrics.py"
+  ],
+  "metrics": [
+    "Cell type fine macro-F1",
+    "Region fine macro-F1",
+    "Integration bio",
+    "Integration batch",
+    "Gene imputation Pearson (cell median)",
+    "Spatial imputation Pearson (cell median)"
+  ],
+  "new_train_validation_test_split_created": false,
+  "pairwise_shared_source_cells": {
+    "annotation__integration": 0,
+    "annotation__spatial": 0,
+    "integration__spatial": 0,
+    "pretrain__annotation": 0,
+    "pretrain__integration": 0,
+    "pretrain__spatial": 0
+  },
+  "pretraining_dataset": "/data/brainwm/unified_1m",
+  "pretraining_dataset_used_in_full": true,
+  "sealed_V4_test_used": false,
+  "source_docs": [
+    "README.md",
+    "data_build/UNIFIED_1M.md"
+  ],
+  "source_project": "/data/brainwm/BrainWM-Unified",
+  "upstream_pool": "V4 train + validation shards"
+}

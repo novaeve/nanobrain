@@ -65,7 +65,8 @@ def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
     assert doc["status"] == "prepared_not_started"
     assert not doc["llm_called"] and not doc["real_training_started"]
     assert doc["joint_trainings_per_generation"] == 6
-    assert doc["maximum_joint_trainings"] == 301
+    assert doc["maximum_joint_trainings"] == 300
+    assert doc["reference_trainings"] == 0
     assert doc["seeds"] == [0] and doc["seed_count"] == 1
     assert not doc["uncertainty_estimated"]
     assert not output.exists()
@@ -426,7 +427,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
     cfg = C.load_config()
     workflow = Workflow(cfg, tmp_path)
     workflow.store = Store(tmp_path / "lineage")
-    identifier = workflow.store.stage(C.reference_bundle())
+    identifier = workflow.store.stage(candidate(lr=0.0005))
     calls = []
 
     def fake_worker(directory, args, inputs, cpu=False):

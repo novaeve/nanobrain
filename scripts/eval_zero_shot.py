@@ -226,8 +226,16 @@ def main():
     ap.add_argument("--xgb-device", default="cuda")
     ap.add_argument("--prepare", action="store_true", help="only cache the pretraining features")
     ap.add_argument("--fit", choices=MODELS, help="only fit this baseline (run the four in parallel)")
+    ap.add_argument(
+        "--predictions-only",
+        action="store_true",
+        help="score supplied predictions only; never fit or score baseline methods",
+    )
+    ap.add_argument("--task", choices=["all", "annotation", "integration"], default="all")
     args = ap.parse_args()
 
+    if args.predictions_only and (args.prepare or args.fit):
+        ap.error("--predictions-only cannot prepare or fit baselines")
     if args.prepare:
         return prepare_features(args)
     if args.fit:
@@ -239,12 +247,20 @@ def main():
     for p in preds.values():  # every model must have scored the same cells
         assert np.array_equal(p["cell_type"], ref["cell_type"]) and np.array_equal(p["batch"], ref["batch"])
     parents = level_parents(args.data)
-    models = load_baselines(args)
-    x = log_normalize(load_counts(args.data))[:, models["genes"]].toarray()
-    z = models["scaler"].transform(x).astype(np.float32)
+    models = {}
+    if not args.predictions_only:
+        models = load_baselines(args)
+    elif args.task != "annotation":
+        # PCR uses the original cached pre-integration PCA as its reference. This
+        # is part of the candidate metric, not another baseline fit or score.
+        with open(os.path.join(args.cache, "features.pkl"), "rb") as fh:
+            models = pickle.load(fh)
+    if models:
+        x = log_normalize(load_counts(args.data))[:, models["genes"]].toarray()
+        z = models["scaler"].transform(x).astype(np.float32)
 
-    results = {"steps": {n: int(p["step"]) for n, p in preds.items()}, "cells": len(z), "annotation": {}}
-    for kind in KINDS:
+    results = {"steps": {n: int(p["step"]) for n, p in preds.items()}, "cells": len(ref["cell_type"]), "annotation": {}}
+    for kind in () if args.task == "integration" else KINDS:
         true = ref[kind].astype(np.int64)
         guesses = {}
         for name, p in preds.items():
@@ -271,25 +287,30 @@ def main():
                 "coarse": scores(parents[kind][true], c),
             }
 
-    log("integration metrics")
-    import anndata as ad
-    from scib_metrics.benchmark import Benchmarker
+    if args.task == "annotation":
+        import pandas as pd
 
-    adata = ad.AnnData(obs={"batch": ref["batch"].astype(str), "cell_type": ref["cell_type"].astype(str)})
-    adata.obsm["PCA (unintegrated)"] = models["pca"].transform(z)
-    for name, p in preds.items():
-        adata.obsm[name] = p["mu"]
-    bm = Benchmarker(
-        adata,
-        batch_key="batch",
-        label_key="cell_type",
-        embedding_obsm_keys=["PCA (unintegrated)", *preds],
-        pre_integrated_embedding_obsm_key="PCA (unintegrated)",
-        n_jobs=16,
-    )
-    bm.prepare(neighbor_computer=gpu_neighbors)
-    bm.benchmark()
-    table = bm.get_results(min_max_scale=False)
+        table = pd.DataFrame()
+    else:
+        log("integration metrics")
+        import anndata as ad
+        from scib_metrics.benchmark import Benchmarker
+
+        adata = ad.AnnData(obs={"batch": ref["batch"].astype(str), "cell_type": ref["cell_type"].astype(str)})
+        adata.obsm["PCA (unintegrated)"] = models["pca"].transform(z)
+        for name, p in preds.items():
+            adata.obsm[name] = p["mu"]
+        bm = Benchmarker(
+            adata,
+            batch_key="batch",
+            label_key="cell_type",
+            embedding_obsm_keys=list(preds) if args.predictions_only else ["PCA (unintegrated)", *preds],
+            pre_integrated_embedding_obsm_key="PCA (unintegrated)",
+            n_jobs=16,
+        )
+        bm.prepare(neighbor_computer=gpu_neighbors)
+        bm.benchmark()
+        table = bm.get_results(min_max_scale=False)
     results["integration"] = json.loads(table.to_json(orient="index"))
 
     os.makedirs(args.out, exist_ok=True)
@@ -307,6 +328,7 @@ def main():
         steps=results["steps"],
         data=record.data_fingerprint(args.data),
         baselines=sorted(k for k in models if "/" in k),
+        predictions_only=args.predictions_only,
         summary=json.loads(summary.to_json(orient="index")),
     )
     print(f"{results['cells']} evaluation cells; checkpoints {results['steps']}")

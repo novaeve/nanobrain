@@ -107,6 +107,8 @@ def load_config(path=None):
     cfg = json.loads(Path(path or ROOT / "configs/cajal_react.json").read_text())
     if cfg["reference_recipe"] != "configs/experiments/cajal_v1.toml":
         raise ValueError("reference must be the frozen existing Cajal v1 recipe")
+    if cfg["reference_evaluation"] != "reuse_existing_cajal_v1_10000":
+        raise ValueError("reuse the existing Cajal reference result; never silently refit it")
     if cfg["schedule_steps"] != 30000 or cfg["stop_at"] != 10000:
         raise ValueError("this protocol uses the Cajal 30k schedule stopped at 10k")
     if cfg["seeds"] != [0]:

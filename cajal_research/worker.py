@@ -261,20 +261,14 @@ def main():
             "/work/scores",
         ]
         if args.task in ("annotation", "integration"):
-            script("eval_zero_shot.py", [*common, "--cache", str(ROOT / "reference/baseline_cache")])
+            script(
+                "eval_zero_shot.py",
+                [*common, "--cache", str(ROOT / "reference/baseline_cache"), "--predictions-only", "--task", args.task],
+            )
         else:
-            import shutil
-
-            cache = Path("/work/imputation-cache")
-            shutil.copytree(ROOT / "reference/imputation_cache", cache, dirs_exist_ok=True)
-            if args.task == "genes":
-                mask = Path(args.prediction).parent / (
-                    "genes_mask_" + Path(cfg["data"][key]).name + "_seed" + str(cfg["evaluation_seed"]) + ".npz"
-                )
-                common += ["--mask", str(mask)]
             script(
                 "eval_imputation.py",
-                [*common, "--task", args.task, "--cache", str(cache), "--seed", str(cfg["evaluation_seed"])],
+                [*common, "--task", args.task, "--seed", str(cfg["evaluation_seed"]), "--predictions-only"],
             )
         result = {
             "status": "complete",

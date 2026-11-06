@@ -14,6 +14,7 @@ from . import selection
 from .contracts import (
     METRICS,
     ROOT,
+    digest,
     reference_bundle,
     reference_document,
     save,
@@ -38,7 +39,10 @@ def plan(cfg):
         "generations": cfg["generations"],
         "candidates_per_generation": cfg["candidates_per_generation"],
         "joint_trainings_per_generation": len(cfg["seeds"]) * cfg["candidates_per_generation"],
-        "maximum_joint_trainings": len(cfg["seeds"]) * (1 + cfg["generations"] * cfg["candidates_per_generation"]),
+        "maximum_joint_trainings": len(cfg["seeds"]) * cfg["generations"] * cfg["candidates_per_generation"],
+        "reference_evaluation": cfg["reference_evaluation"],
+        "reference_trainings": 0,
+        "baseline_policy": "reuse_existing_Cajal_scores_without_refitting_or_rescoring",
         "metrics": list(METRICS),
         "feedback": "existing Cajal held-out research evaluation sets; sealed V4 test inaccessible",
         "automatic_scaling": False,
@@ -77,6 +81,8 @@ def code_fingerprint():
 
 
 def input_fingerprint(cfg):
+    from .existing_reference import load
+
     result = {}
     for name, path in cfg["data"].items():
         if "test" in name or "test" in Path(path).name.lower():
@@ -91,6 +97,7 @@ def input_fingerprint(cfg):
         if actual != teacher["sha256"]:
             raise ValueError("frozen Cajal teacher artifact changed")
         result["teacher:" + name] = {"path": teacher["path"], "sha256": actual}
+    result["existing_reference"] = load(cfg)["artifact_hashes"]
     return result
 
 
@@ -180,6 +187,10 @@ class Workflow:
         return value
 
     def evaluate_seed(self, identifier, seed):
+        if identifier == digest(reference_bundle()):
+            from .existing_reference import seed_result
+
+            return seed_result(self.cfg, identifier, seed)
         folder = self.output / "jobs" / identifier / str(seed)
         result_path = folder / "result.json"
         if result_path.exists():

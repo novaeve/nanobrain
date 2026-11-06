@@ -38,5 +38,6 @@
       "sha256": "4655e53a9996757ef9bbbc061a43d72ff53205697050f962a8befe9b6189463d",
       "role": "Cajal existing train-only cell-type teacher"
     }
-  }
+  },
+  "reference_evaluation": "reuse_existing_cajal_v1_10000"
 }

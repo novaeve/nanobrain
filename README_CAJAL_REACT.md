@@ -11,7 +11,7 @@
 代码锚点是 `0ae20748c3b684b7aabecc07e29cbd1ed6767267`；没有把上游候选实验误作正式种子。
 
 每候选只有一份共享模型，联合优化 gene / integration / cell_type / anatomy / spatial 五个目标。
-同一 checkpoint 给出全部任务成绩。初始参考与候选从现成架构随机初始化重训，不继承旧演化结果。
+同一 checkpoint 给出全部任务成绩。初始参考直接复用 Cajal 已有的 cajal_v1@10000 checkpoint 和成绩；新候选从现成架构随机初始化训练，不继承旧演化结果。
 
 | 用途 | Cajal 当前数据 | 细胞数 |
 |---|---|---:|
@@ -22,13 +22,13 @@
 
 不采用旧 nanoBrain 的 100k / 256-gene 数据。保留 Cajal 的 65,918 基因词表、测量 panel、counts、
 标签层级、行身份和全部预训练数据。候选不可修改 data.root/seed/cell_fraction/neighbors/masks；
-cell_fraction 固定 1。封存 V4 test 不挂载。数据指纹见 `reference/input_fingerprints.json`，
+cell_fraction 固定 1。Cajal 本身从 V4 train+validation 分片构造预训练和评估数据，unified_1m 不再内部切 train/val/test；评估细胞与预训练细胞不重叠。封存 V4 test 不挂载。数据指纹见 `reference/input_fingerprints.json`，
 初始架构及训练文档见 `reference/initial_cajal_v1.json`。
 
 ## 单 seed 与预算
 
 按本次用户要求移除三 seed：使用 Cajal 原本的 **seed=0**，评估抽样 seed 也固定 0。
-50 代、每代 6 候选，每代 6 次联合训练，加初始参考 1 次，最多 301 次。没有末尾三 seed 确认。
+50 代、每代 6 候选，每代 6 次联合训练，初始参考直接复用已有结果，最多 300 次新训练。没有末尾三 seed 确认。
 结果中 seed_count=1、标准差为 null，不声称统计显著性。
 
 比较预算仍为 30,000 步学习率日程，在 10,000 步停止，评估固定结束 checkpoint。
@@ -98,7 +98,7 @@ capacity、预算权重、教师 Gram、对抗目标、分组 Muon 等登记到�
 `reference/opponents.json` 保存全部 13 个完整基线及选优对手；`reference/current_method_scores.json`
 保存现有 63 个方法/实验的 checkpoint 轨迹，baseline_detail 工具可按方法查看。
 `reference/cajal_existing_five_tasks.csv` 是原表快照。没有导入旧 100k benchmark 成绩；新组件组合
-须另行训练评估，不能继承来源整方法的分数。
+须另行训练评估，不能继承来源整方法的分数。演化 worker 使用 predictions-only 评分入口，不重训或重算原基线；整合 PCR 指标继续使用原缓存 PCA 作为度量参考，不拟合新 PCA。完整数据与评估口径见 `reference/evaluation_protocol.json`。
 
 ## ReAct、验收与恢复
 

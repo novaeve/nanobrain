@@ -1,0 +1,130 @@
+{
+ "kind": "train",
+ "created": "2026-11-05T12:36:57+0800",
+ "experiment": "configs/experiments/cajal_v1.toml",
+ "run": {
+  "name": "cajal_v1",
+  "out": "runs/cajal_v1"
+ },
+ "argv": [
+  "--config",
+  "configs/experiments/cajal_v1.toml",
+  "--out",
+  "runs/cajal_v1"
+ ],
+ "config": {
+  "ModelConfig": {
+   "n_genes": 65918,
+   "n_batches": 56,
+   "cell_type_levels": [
+    22,
+    167
+   ],
+   "anatomy_levels": [
+    5,
+    8,
+    91
+   ],
+   "d_model": 256,
+   "n_heads": 4,
+   "n_prelude": 2,
+   "n_core": 2,
+   "n_coda": 2,
+   "loops": 4,
+   "min_loops": 2,
+   "max_loops": 6,
+   "n_experts": 32,
+   "top_k": 4,
+   "n_shared_experts": 1,
+   "expert_hidden": 256,
+   "router_bias_rate": 0.001,
+   "moe_backend": "",
+   "router_score": "sqrtsoftplus",
+   "n_hash_layers": 1,
+   "nbeats": true,
+   "loop_injection": true,
+   "activation_checkpointing": true,
+   "recompute_scope": "core",
+   "recompute_granularity": "moe",
+   "selective_checkpointing": false,
+   "compile_blocks": true,
+   "attention_backend": "fa3",
+   "z_dim": 64,
+   "decoder_hidden": 512,
+   "likelihood": "nb",
+   "latent_reg": "kl",
+   "mog_components": 32,
+   "residual_dim": 0,
+   "recon_detach_mu": false,
+   "spatial_d": 128,
+   "spatial_layers": 2
+  },
+  "DataConfig": {
+   "root": "/data/brainwm/unified_1m",
+   "dissociated_cells": 128,
+   "spatial_groups": 16,
+   "neighbors": 16,
+   "max_nonzero_tokens": 4096,
+   "zero_tokens": 64,
+   "gene_mask_ratio": 0.15,
+   "neighbor_mask_ratio": 0.3,
+   "masks": "cajal_v0",
+   "gene_programs": "",
+   "seed": 0,
+   "cell_fraction": 1.0
+  },
+  "TrainConfig": {
+   "out_dir": "runs/cajal_v1",
+   "steps": 30000,
+   "lr": 0.001,
+   "weight_decay": 0.01,
+   "warmup_steps": 1000,
+   "min_lr_ratio": 0.1,
+   "kl_weight": 1.0,
+   "kl_warmup_steps": 5000,
+   "balancer": "grad_equal",
+   "balancer_params": {
+    "every": 50
+   },
+   "task_weights": {
+    "gene": 1.0,
+    "integration": 1.0,
+    "cell_type": 1.0,
+    "anatomy": 1.0,
+    "spatial": 1.0
+   },
+   "norm_steps": 200,
+   "grad_clip": 1.0,
+   "log_every": 10,
+   "grad_probe_every": 500,
+   "stop_at": 0,
+   "keep_every": 5000,
+   "keep_weights_only": true,
+   "objectives": [],
+   "ckpt_every": 1000,
+   "num_workers": 8,
+   "compile": true,
+   "optimizer": "grouped_muon"
+  }
+ },
+ "data": {
+  "root": "/data/brainwm/unified_1m",
+  "manifest_sha256": "eb97187d7b0d771d448410410943f13bfb2eb6d170488ed3accca26d8f830fad",
+  "rows": 1015388
+ },
+ "status": "done",
+ "updated": "2026-11-05T20:15:57+0800",
+ "fingerprint": {
+  "git_sha": "83982678baa65f5e5a925e1cf476f82d84cbc07f",
+  "git_dirty": false,
+  "env": {
+   "python": "3.11.13",
+   "host": "iZ2ze1xm7gd1j19f0f7mkzZ",
+   "torch": "2.9.1+cu128",
+   "numpy": "2.4.6",
+   "cuda": "12.8",
+   "gpu": "NVIDIA H20"
+  }
+ },
+ "step": 30000
+}
