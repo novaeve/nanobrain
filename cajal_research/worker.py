@@ -132,6 +132,8 @@ def probe(bundle):
         actual = restored(b, mask, 1)
         if not all(torch.allclose(expected[k], actual[k], atol=1e-6) for k in ("mu", "gene_pred")):
             raise ValueError("checkpoint reload changed predictions")
+    from brainwm_unified import record
+
     return {
         "status": "accepted",
         "full_parameter_count": count,
@@ -142,6 +144,7 @@ def probe(bundle):
         "synthetic_only": True,
         "benchmark_data_mounted": False,
         "gpu_used": False,
+        "code_fingerprint": record.fingerprint(),
     }
 
 

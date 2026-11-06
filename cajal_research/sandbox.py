@@ -58,7 +58,13 @@ def command(root, output, arguments, *, inputs=(), gpu=None):
     alias = python.parent.parent
     if not any(alias.is_relative_to(q) for q in bound):
         args += ["--ro-bind", info["venv"], str(alias)]
-    for rel in ("brainwm_unified", "cajal_research", "scripts", "configs", "reference", ".git", "toolchain"):
+    source_entries = {"brainwm_unified", "cajal_research", "scripts", "configs", "reference", ".git", "toolchain"}
+    if (root / ".git").exists():
+        tracked = subprocess.check_output(["git", "-C", str(root), "ls-files", "-z"], text=True).split("\0")
+        # Every tracked file must exist for Cajal's own git_dirty provenance check.
+        # Only tracked source roots are exposed; .env, preparation and research-runs stay hidden.
+        source_entries.update(Path(name).parts[0] for name in tracked if name)
+    for rel in sorted(source_entries):
         p = root / rel
         if p.exists():
             args += ["--ro-bind", str(p.resolve()), str(p)]
