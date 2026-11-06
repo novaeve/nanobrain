@@ -1,0 +1,4 @@
+description = "Defaults shared by every Cajal experiment; everything else stays at the dataclass defaults."
+
+[train]
+steps = 30000

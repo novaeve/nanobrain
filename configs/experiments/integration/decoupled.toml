@@ -1,0 +1,8 @@
+description = "5. Decouple representation from reconstruction: reconstruction stops at mu; a 16-d residual latent feeds the decoder"
+status = "stopped"
+outcome = "Stopped at ~6.6k steps, for the same reason as hsic_lambda"
+extends = ["_base.toml"]
+run = { name = "decoupled", out = "runs/integ/decoupled" }
+[model]
+recon_detach_mu = true
+residual_dim = 16

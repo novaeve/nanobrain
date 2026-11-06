@@ -1,0 +1,19 @@
+description = "Table v1: curriculum from scattered genes to gene programs, panels and depth; neighbours then regions (stage weights are initial guesses)"
+
+[rows]
+specs = [
+  { name = "random_genes", ratio = 0.15 },
+  { name = "gene_program", ratio = 0.15 },
+  { name = "panel", target_ratio = 0.25 },
+  { name = "depth", keep = [0.1, 0.6], ratio = 0.15 },
+]
+# [end of stage as a fraction of training, weights in spec order]
+stages = [
+  [0.2, [0.7, 0.2, 0.0, 0.1]],
+  [0.8, [0.4, 0.3, 0.2, 0.1]],
+  [1.01, [0.3, 0.3, 0.3, 0.1]],
+]
+
+[groups]
+specs = [{ name = "neighbours", ratio = 0.3 }, { name = "region", ratio = 0.3 }]
+stages = [[0.2, [1, 0]], [1.01, [0.5, 0.5]]]

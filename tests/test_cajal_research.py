@@ -1,0 +1,515 @@
+"""Cajal adaptation boundaries and real CPU numerical probes; no LLM/real training."""
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import pytest
+import torch
+
+from cajal_research import contracts as C
+from cajal_research import selection
+from cajal_research.agent import ToolSession, propose
+from cajal_research.store import Store
+
+
+def candidate(**train):
+    b = C.reference_bundle()
+    b["parent_ids"] = ["a" * 64]
+    b["hypothesis"] = "Test a declared change from the Cajal recipe."
+    b["train"] = train
+    return b
+
+
+def plugin_candidate():
+    b = candidate(lr=0.0005)
+    b["files"] = {
+        "modules/residual.py": """import torch
+from torch import nn
+
+class Residual(nn.Module):
+    def __init__(self, hidden_dim):
+        super().__init__()
+        self.norm = nn.LayerNorm(hidden_dim)
+        self.linear = nn.Linear(hidden_dim, hidden_dim)
+    def forward(self, x):
+        return x + 0.1 * self.linear(self.norm(x))
+
+def build(hidden_dim):
+    return Residual(hidden_dim)
+"""
+    }
+    b["plugins"] = [
+        {
+            "name": "custom_residual",
+            "kind": "token_transform",
+            "file": "modules/residual.py",
+            "parameters": {},
+            "settings": {},
+        }
+    ]
+    return b
+
+
+def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
+    from cajal_research import cli
+    from cajal_research.api_config import APIConfig
+
+    monkeypatch.setattr(APIConfig, "from_env", lambda *a, **k: pytest.fail("plan read API credentials"))
+    monkeypatch.setattr(cli.Workflow, "execute", lambda *a: pytest.fail("plan started evolution"))
+    output = tmp_path / "must_not_exist"
+    cli.main(["--output", str(output)])
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["status"] == "prepared_not_started"
+    assert not doc["llm_called"] and not doc["real_training_started"]
+    assert doc["joint_trainings_per_generation"] == 18
+    assert doc["maximum_joint_trainings"] == 903
+    assert not output.exists()
+
+
+def test_reference_is_actual_cajal_v1():
+    ref = C.reference_bundle()
+    C.validate_bundle(ref)
+    assert ref["model"] == ref["train"] == ref["files"] == {}
+    assert ref["plugins"] == []
+    doc = C.reference_document()
+    assert doc["ModelConfig"]["n_experts"] == 32
+    assert doc["ModelConfig"]["d_model"] == 256
+    assert doc["ModelConfig"]["n_core"] == 2
+    assert doc["ModelConfig"]["attention_backend"] == "fa3"
+    assert doc["TrainConfig"]["balancer"] == "grad_equal"
+    assert doc["TrainConfig"]["balancer_params"] == {"every": 50}
+    assert set(doc["TrainConfig"]["task_weights"]) == set(C.TASKS)
+
+
+def test_one_model_document_and_fixed_budget():
+    cfg = C.load_config()
+    doc = C.resolved_document(C.reference_bundle(), cfg, cfg["seeds"][0])
+    assert set(doc) == {"model", "data", "train"}
+    assert doc["train"]["steps"] == 30000 and doc["train"]["stop_at"] == 10000
+    assert doc["data"]["root"] == "/data/brainwm/unified_1m"
+    assert all(w > 0 for w in doc["train"]["task_weights"].values())
+    assert doc["model"]["research_plugins"] == {}
+
+
+@pytest.mark.parametrize("balancer", ["initial", "famo"])
+def test_balancer_switch_uses_its_own_parameters(balancer):
+    from brainwm_unified.balance import build_balancer
+
+    doc = C.resolved_document(candidate(balancer=balancer), C.load_config(), 0)
+    assert doc["train"]["balancer_params"] == {}
+    build_balancer(balancer, 200, doc["train"]["balancer_params"])
+
+
+@pytest.mark.parametrize(
+    "section,key,value",
+    [
+        ("model", "n_genes", 256),
+        ("model", "n_batches", 2),
+        ("model", "likelihood", "mse_log"),
+        ("model", "cell_type_levels", [2]),
+        ("model", "research_plugins", {}),
+        ("train", "steps", 20),
+        ("train", "stop_at", 2),
+        ("train", "out_dir", "/tmp"),
+        ("train", "task_schedule", []),
+        ("train", "research_plugins", {}),
+        ("train", "task_weights", {"gene": 1}),
+        ("train", "lr", float("nan")),
+        ("model", "d_model", True),
+        ("model", "n_heads", 8),
+        ("model", "top_k", 64),
+    ],
+)
+def test_immutable_and_invalid_changes_rejected(section, key, value):
+    b = candidate()
+    b[section][key] = value
+    with pytest.raises(ValueError):
+        C.validate_bundle(b)
+
+
+def test_all_five_weights_required_positive():
+    b = candidate(task_weights=dict.fromkeys(C.TASKS, 1.0))
+    C.validate_bundle(b)
+    b["train"]["task_weights"]["spatial"] = 0.0
+    with pytest.raises(ValueError):
+        C.validate_bundle(b)
+
+
+def test_source_io_and_unconnected_files_rejected():
+    b = plugin_candidate()
+    b["files"]["modules/residual.py"] = "import os\ndef build(hidden_dim):\n    return os.system('id')\n"
+    with pytest.raises(ValueError):
+        C.validate_bundle(b)
+    b = plugin_candidate()
+    b["files"]["modules/unused.py"] = "def build(hidden_dim):\n    return hidden_dim\n"
+    with pytest.raises(ValueError):
+        C.validate_bundle(b)
+
+
+def test_semantic_dedup_defaults_and_ancestry():
+    a = candidate(lr=0.0005)
+    b = copy.deepcopy(a)
+    b["parent_ids"] = ["b" * 64]
+    b["hypothesis"] = "Different prose, same numerical experiment."
+    b["model"]["d_model"] = 256
+    assert C.digest(a) != C.digest(b)
+    assert C.semantic_id(a) == C.semantic_id(b)
+
+
+def test_three_real_complete_seed_results_required():
+    seeds = C.load_config()["seeds"]
+    rows = [
+        {"status": "complete", "seed": s, "metrics": dict.fromkeys(C.METRICS, 0.6 + i * 0.01)}
+        for i, s in enumerate(seeds)
+    ]
+    result = selection.aggregate(rows, seeds)
+    assert result["metrics"][C.METRICS[0]] == pytest.approx(0.61)
+    for broken in [rows[:2], [rows[0], rows[0], rows[2]]]:
+        with pytest.raises(ValueError):
+            selection.aggregate(broken, seeds)
+    rows[0]["metrics"].pop(C.METRICS[-1])
+    with pytest.raises(ValueError):
+        selection.aggregate(rows, seeds)
+
+
+def test_nan_metrics_fail_closed():
+    seeds = C.load_config()["seeds"]
+    rows = [{"status": "complete", "seed": s, "metrics": dict.fromkeys(C.METRICS, 0.6)} for s in seeds]
+    rows[0]["metrics"][C.METRICS[2]] = float("nan")
+    with pytest.raises(ValueError):
+        selection.aggregate(rows, seeds)
+
+
+def test_champion_needs_improvement_above_spread_and_no_regression():
+    parent = {"metrics": dict.fromkeys(C.METRICS, 0.5), "std": dict.fromkeys(C.METRICS, 0.01)}
+    child = copy.deepcopy(parent)
+    baseline = dict.fromkeys(C.METRICS, 0.6)
+    child["metrics"][C.METRICS[0]] = 0.505
+    assert not selection.promote(child, parent, parent, baseline, [C.METRICS[0]])["passed"]
+    child["metrics"] = dict.fromkeys(C.METRICS, 0.53)
+    assert selection.promote(child, parent, parent, baseline, list(C.METRICS))["passed"]
+    child["metrics"][C.METRICS[-1]] = 0.47
+    assert not selection.promote(child, parent, parent, baseline, list(C.METRICS))["passed"]
+
+
+def test_store_is_immutable_and_tree_keeps_failures(tmp_path):
+    store = Store(tmp_path)
+    a = store.stage(C.reference_bundle(), origin={"generation": 0})
+    b = candidate(lr=0.0005)
+    b["parent_ids"] = [a]
+    i = store.stage(b, [a], {"generation": 1})
+    store.put(i, "result", {"candidate_id": i, "status": "failed", "reason": "synthetic failure", "generation": 1})
+    tree = store.tree_summary()
+    assert tree["complete"] and not tree["truncated"] and len(tree["nodes"]) == 2
+    assert [a, i] in tree["edges"]
+    p = store.candidates / i / "bundle.json"
+    changed = json.loads(p.read_text())
+    changed["train"]["lr"] = 0.0002
+    C.save(p, changed)
+    with pytest.raises(ValueError):
+        store.bundle(i)
+
+
+def test_token_plugins_cannot_mix_cells():
+    from cajal_research.plugins import apply_transforms
+
+    class Mean(torch.nn.Module):
+        def forward(self, x):
+            return x + x.mean(1, keepdim=True)
+
+    modules = torch.nn.ModuleList([Mean()])
+    x = torch.arange(12.0).reshape(6, 2)
+    doc = torch.tensor([0, 0, 0, 1, 1, -1])
+    a = apply_transforms(modules, x, doc)
+    y = x.clone()
+    y[3:5] += 1000
+    b = apply_transforms(modules, y, doc)
+    assert torch.equal(a[:3], b[:3])
+    assert torch.equal(a[-1], x[-1])
+
+
+def test_empty_extension_preserves_stock_parameters_and_forward():
+    from brainwm_unified import model as M
+    from brainwm_unified.config import ModelConfig
+
+    path = C.ROOT / "reference/stock_model.py"
+    spec = importlib.util.spec_from_file_location("brainwm_unified.stock_model", path)
+    stock = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = stock
+    spec.loader.exec_module(stock)
+    cfg = ModelConfig(
+        n_genes=24,
+        n_batches=2,
+        cell_type_levels=[3],
+        anatomy_levels=[2],
+        d_model=32,
+        n_heads=4,
+        n_prelude=1,
+        n_core=1,
+        n_coda=1,
+        n_experts=4,
+        top_k=2,
+        expert_hidden=32,
+        z_dim=8,
+        decoder_hidden=32,
+        spatial_d=16,
+        spatial_layers=1,
+        max_loops=2,
+        compile_blocks=False,
+        activation_checkpointing=False,
+        moe_backend="loop",
+    )
+    torch.manual_seed(9)
+    a = stock.UnifiedModel(cfg).eval()
+    torch.manual_seed(9)
+    b = M.UnifiedModel(cfg).eval()
+    assert a.state_dict().keys() == b.state_dict().keys()
+    assert all(torch.equal(v, b.state_dict()[k]) for k, v in a.state_dict().items())
+    batch = {
+        "tok_gene": torch.tensor([24, 0, 1, 24, 0, 1]),
+        "tok_doc": torch.tensor([0, 0, 0, 1, 1, 1]),
+        "tok_cls": torch.tensor([True, False, False, True, False, False]),
+        "tok_in": torch.tensor([0.0, 1.0, 0.0, 0.0, 0.5, 0.0]),
+        "tok_masked": torch.tensor([False, False, True, False, False, True]),
+    }
+    with torch.no_grad():
+        x = a(batch, stock.dense_mask(batch["tok_doc"]), 1)
+        y = b(batch, M.dense_mask(batch["tok_doc"]), 1)
+    assert all(torch.equal(x[k], y[k]) for k in x)
+
+
+def test_mock_react_uses_tools_no_real_llm(tmp_path):
+    store = Store(tmp_path / "lineage")
+    root = store.stage(C.reference_bundle())
+    b = candidate(lr=0.0005)
+    b["parent_ids"] = [root]
+    identifier = C.digest(b)
+    session = ToolSession(
+        store,
+        {},
+        lambda *a: {"status": "accepted"},
+        [root],
+        [C.semantic_id(C.reference_bundle())],
+        {"generation": 1},
+        tmp_path / "submission.json",
+    )
+    calls = [
+        ("write_candidate", {"bundle": b}),
+        ("validate_candidate", {"candidate_id": identifier}),
+        ("submit_candidate", {"candidate_id": identifier}),
+    ]
+
+    class Client:
+        def chat(self, messages, **kwargs):
+            name, args = calls.pop(0)
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "id": "call",
+                                    "type": "function",
+                                    "function": {"name": name, "arguments": json.dumps(args)},
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+
+    result = propose(Client(), session, {"test": True})
+    assert result["candidate_id"] == identifier and (tmp_path / "submission.json").is_file()
+
+
+@pytest.mark.parametrize("variant", ["reference", "module", "module_loss_optimizer"])
+def test_linux_sandbox_five_joint_gradients_update_and_reload(tmp_path, variant):
+    from cajal_research.sandbox import clean_environment, command, launch
+
+    b = plugin_candidate() if variant != "reference" else C.reference_bundle()
+    if variant == "module_loss_optimizer":
+        b["train"]["optimizer"] = "custom"
+        b["files"]["losses/gene.py"] = """import torch.nn.functional as F
+def compute(prediction, target):
+    return F.smooth_l1_loss(prediction, target)
+"""
+        b["files"]["optimizers/sgd.py"] = """import torch
+from torch.optim import Optimizer
+class Descent(Optimizer):
+    def __init__(self, parameters, lr, weight_decay):
+        super().__init__(parameters, dict(lr=lr, weight_decay=weight_decay))
+    @torch.no_grad()
+    def step(self):
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is not None:
+                    p.mul_(1.0 - group['lr'] * group['weight_decay'])
+                    p.add_(p.grad, alpha=-group['lr'])
+def build(parameters, lr, weight_decay):
+    return Descent(parameters, lr, weight_decay)
+"""
+        b["plugins"] += [
+            {"name": "custom_gene", "kind": "gene_loss", "file": "losses/gene.py", "parameters": {}, "settings": {}},
+            {
+                "name": "custom_descent",
+                "kind": "optimizer",
+                "file": "optimizers/sgd.py",
+                "parameters": {},
+                "settings": {},
+            },
+        ]
+    path = tmp_path / "bundle.json"
+    C.save(path, b)
+    args = command(C.ROOT, tmp_path / "probe", ["probe", "--bundle", str(path)], inputs=[path])
+    assert "--unshare-net" in args and set(clean_environment()) == {"PATH", "LANG"}
+    assert "/data/brainwm/unified_1m" not in args and "/data/brainwm/eval_10k" not in args
+    result = launch(C.ROOT, tmp_path / "probe", ["probe", "--bundle", str(path)], inputs=[path], timeout=600)
+    assert result["status"] == "accepted" and result["synthetic_only"]
+    assert result["shared_encoder_gradients"] and result["optimizer_update"] and result["checkpoint_reload"]
+    assert set(result["tasks"]) == set(C.TASKS)
+    assert not result["benchmark_data_mounted"] and not result["gpu_used"]
+
+
+def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monkeypatch):
+    """Exercise train/predict/score orchestration with file-producing fakes, no GPU/API."""
+    import csv
+
+    from cajal_research.workflow import Workflow
+
+    cfg = C.load_config()
+    workflow = Workflow(cfg, tmp_path)
+    workflow.store = Store(tmp_path / "lineage")
+    identifier = workflow.store.stage(C.reference_bundle())
+    calls = []
+
+    def fake_worker(directory, args, inputs, cpu=False):
+        directory.mkdir(parents=True, exist_ok=True)
+        calls.append(args)
+        if args[0] == "train":
+            path = directory / "train/latest.pt"
+            path.parent.mkdir()
+            path.write_bytes(b"one jointly trained model (mock)")
+            result = {
+                "status": "complete",
+                "seed": int(args[args.index("--seed") + 1]),
+                "artifact_hashes": {"train/latest.pt": C.sha(path)},
+            }
+        elif args[0] == "predict":
+            path = directory / "prediction.npz"
+            path.write_bytes(b"mock predictions")
+            result = {"status": "complete", "artifact_hashes": {"prediction.npz": C.sha(path)}}
+        else:
+            path = directory / "scores/summary.csv"
+            path.parent.mkdir()
+            with path.open("w") as fh:
+                w = csv.writer(fh)
+                w.writerow(["method", *C.METRICS])
+                w.writerow(["candidate", *[0.6] * len(C.METRICS)])
+            result = {"status": "complete", "artifact_hashes": {"scores/summary.csv": C.sha(path)}}
+        C.save(directory / "receipt.json", result)
+        return result
+
+    monkeypatch.setattr(workflow, "worker", fake_worker)
+    result = workflow.evaluate_seed(identifier, cfg["seeds"][0])
+    assert result["joint_model_count"] == 1 and set(result["metrics"]) == set(C.METRICS)
+    assert sum(c[0] == "train" for c in calls) == 1
+    assert len({c[c.index("--checkpoint") + 1] for c in calls if c[0] == "predict"}) == 1
+    before = len(calls)
+    workflow.evaluate_seed(identifier, cfg["seeds"][0])
+    assert len(calls) == before
+    checkpoint = Path(next(k for k in result["artifact_hashes"] if k.endswith("latest.pt")))
+    checkpoint.write_bytes(b"changed")
+    with pytest.raises(ValueError):
+        workflow.evaluate_seed(identifier, cfg["seeds"][0])
+
+
+def test_complete_mock_campaign_resume_and_contract_freeze(tmp_path, monkeypatch):
+    """Control-flow integration only: all training and LLM responses are simulated."""
+    from cajal_research import workflow as W
+
+    cfg = C.load_config()
+    cfg.update(generations=1, candidates_per_generation=1)
+    monkeypatch.setattr(W, "code_fingerprint", lambda: {"git_sha": "frozen-test-code"})
+    monkeypatch.setattr(W, "input_fingerprint", lambda cfg: {"mock_data": "fixed"})
+    workflow = W.Workflow(cfg, tmp_path)
+    monkeypatch.setattr(workflow, "validate", lambda *a: {"status": "accepted"})
+    evaluated = []
+
+    def evaluate(identifier, generation):
+        p = workflow.store.candidates / identifier / "result.json"
+        if p.exists():
+            return json.loads(p.read_text())
+        evaluated.append(identifier)
+        metrics = dict.fromkeys(C.METRICS, 0.6 + generation * 0.03)
+        node = {
+            "candidate_id": identifier,
+            "generation": generation,
+            "status": "complete",
+            "all_seeds_passed": True,
+            "metrics": metrics,
+            "std": dict.fromkeys(C.METRICS, 0.001),
+            "seed_results": [{"seed": s, "metrics": metrics} for s in cfg["seeds"]],
+        }
+        workflow.store.put(identifier, "result", node)
+        return node
+
+    monkeypatch.setattr(workflow, "evaluate", evaluate)
+    b = candidate(lr=0.0005)
+    b["parent_ids"] = [C.digest(C.reference_bundle())]
+    identifier = C.digest(b)
+    calls = [
+        ("write_candidate", {"bundle": b}),
+        ("validate_candidate", {"candidate_id": identifier}),
+        ("submit_candidate", {"candidate_id": identifier}),
+    ]
+
+    class Client:
+        def chat(self, messages, **kwargs):
+            name, args = calls.pop(0)
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "id": "mock",
+                                    "type": "function",
+                                    "function": {"name": name, "arguments": json.dumps(args)},
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+
+    state = workflow.execute(Client())
+    assert len(state["generations"]) == 1 and len(evaluated) == 2
+    assert (tmp_path / "standard_metrics.csv").is_file()
+    assert not json.loads((tmp_path / "frozen-champion.json").read_text())["scaling_started"]
+    before = (tmp_path / "decisions/g01-p00.json").read_bytes()
+    workflow.execute(Client())
+    assert len(evaluated) == 2 and (tmp_path / "decisions/g01-p00.json").read_bytes() == before
+    cfg["token_budget"] //= 2
+    with pytest.raises(ValueError, match="resume requires identical"):
+        workflow.execute(Client())
+
+
+def test_resource_interruption_does_not_freeze_a_failed_candidate(tmp_path, monkeypatch):
+    from cajal_research.workflow import InfrastructureError, Workflow
+
+    workflow = Workflow(C.load_config(), tmp_path)
+    workflow.store = Store(tmp_path / "lineage")
+    identifier = workflow.store.stage(C.reference_bundle())
+
+    def unavailable(*args):
+        raise InfrastructureError("temporary GPU resource exhaustion (mock)")
+
+    monkeypatch.setattr(workflow, "evaluate_seed", unavailable)
+    with pytest.raises(InfrastructureError):
+        workflow.evaluate(identifier, 0)
+    assert not (workflow.store.candidates / identifier / "result.json").exists()

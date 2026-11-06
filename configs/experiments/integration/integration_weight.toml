@@ -1,0 +1,11 @@
+description = "Batch-correction trade-off: grad_equal with the integration loss weighted 2x and 4x (twice / four times each other task's gradient), stopped at 10k; target scVI batch 0.449 / scANVI 0.454 without losing annotation"
+status = "done"
+outcome = "At 10k vs grad_equal (batch 0.358, cell type 0.751, region 0.646): x2 batch 0.402, cell type 0.731, region 0.627; x4 batch 0.444, cell type 0.697, region 0.594 (below XGBoost). x2 continues at 30k as cajal_v1_int2"
+extends = ["balance_grad_equal.toml"]
+run = { name = "integration_weight", out = "runs/integ/integration_weight" }
+
+[sweep]
+"train.task_weights" = [
+  { gene = 1.0, integration = 2.0, cell_type = 1.0, anatomy = 1.0, spatial = 1.0 },
+  { gene = 1.0, integration = 4.0, cell_type = 1.0, anatomy = 1.0, spatial = 1.0 },
+]

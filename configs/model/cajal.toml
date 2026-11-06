@@ -1,0 +1,8 @@
+description = "Cajal: 94M params; FA3 varlen attention 4 x 64, 32+1 experts top-4, 2 + 2 looped + 2 blocks, z = 64"
+
+[model]
+n_heads = 4
+attention_backend = "fa3"
+compile_blocks = true
+recompute_scope = "core"
+recompute_granularity = "moe"

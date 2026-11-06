@@ -1,0 +1,8 @@
+description = "Replicate of spatial/latent_target with data.seed = 1: is its spatial gain beyond run-to-run spread?"
+status = "main"
+outcome = "Running"
+extends = ["latent_target.toml"]
+run = { name = "spatial_latent_seed1", out = "runs/spatial/latent_target_seed1" }
+
+[data]
+seed = 1

@@ -1,0 +1,13 @@
+{
+  "anatomy_levels": [
+    5,
+    8,
+    91
+  ],
+  "cell_type_levels": [
+    22,
+    167
+  ],
+  "n_batches": 56,
+  "n_genes": 65918
+}

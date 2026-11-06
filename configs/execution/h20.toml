@@ -1,0 +1,5 @@
+description = "Execution policy for the 8x H20 server: which GPUs Cajal may use. Kept apart from the science configs."
+
+gpus = [6, 7]
+runs_per_gpu = 1
+num_workers = 8

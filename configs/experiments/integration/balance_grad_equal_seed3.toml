@@ -1,0 +1,8 @@
+description = "Replicate of balance_grad_equal with data.seed = 3 (data order and initial weights): the run-to-run spread the frontier rule needs"
+status = "main"
+outcome = "Running; a fourth equivalent run tightens the spread every decision is judged against (seeds 0-2: batch 0.358 / 0.347 / 0.363)"
+extends = ["balance_grad_equal.toml"]
+run = { name = "grad_equal_seed3", out = "runs/integ/balance_grad_equal_seed3" }
+
+[data]
+seed = 3

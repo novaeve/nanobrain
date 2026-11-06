@@ -1,0 +1,8 @@
+description = "grad_equal plus teacher_gram (Gram matching to the cell-type-only model, weight 1 = an equal gradient share): does the best-bio method keep its bio once integration gets its gradient share, and lift batch?"
+status = "candidate"
+outcome = "At 10k vs grad_equal: bio 0.711 (0.633), batch 0.380 (0.358), cell type 0.762 (0.751), region 0.637 (0.646), gene 0.776, spatial 0.269; continues at 30k as cajal_v1_teacher"
+extends = ["balance_grad_equal.toml"]
+run = { name = "grad_equal_teacher_gram", out = "runs/integ/grad_equal_teacher_gram" }
+
+[train]
+objectives = [{ name = "teacher_gram", weight = 1.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

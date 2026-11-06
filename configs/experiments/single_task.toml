@@ -1,0 +1,14 @@
+description = "Single-task controls: Cajal with only one objective's loss weight non-zero (the others are still computed and logged)"
+status = "done"
+outcome = "Controls: cell-type-only reaches integration bio 0.744, batch 0.373 at 10k, so joint training costs integration"
+extends = ["cajal_1m.toml"]
+
+[run]
+name = "cajal_single"
+out = "runs/cajal_single"
+
+[sweep]
+"train.task_weights" = [
+  { gene = 0.0, integration = 0.0, cell_type = 1.0, anatomy = 0.0, spatial = 0.0 },
+  { gene = 0.0, integration = 0.0, cell_type = 0.0, anatomy = 1.0, spatial = 0.0 },
+]

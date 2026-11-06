@@ -1,0 +1,11 @@
+description = "Cajal joint pretraining on unified_1m: all five objectives, cajal_v0 masks, 30k steps"
+status = "done"
+outcome = "Cajal v0, 30k steps: fine cell-type F1 0.811, fine region F1 0.767 (beats LogReg / XGBoost); integration bio 0.611, batch 0.263"
+extends = ["../base.toml", "../data/unified_1m.toml", "../model/cajal.toml"]
+
+[run]
+name = "cajal_1m"
+out = "runs/cajal_1m"
+
+[data]
+masks = "cajal_v0"

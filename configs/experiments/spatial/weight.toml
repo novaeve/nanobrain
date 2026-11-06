@@ -1,0 +1,8 @@
+description = "Spatial share: grad_equal with the spatial loss weighted 3x (three times each other task's gradient), stopped at 10k; is the weakest task short of gradient?"
+status = "dropped"
+outcome = "x3 at 10k vs grad_equal: spatial r 0.269 (0.264), cell type 0.717 (0.751), region 0.596 (0.646), batch 0.343 (0.358), bio 0.644; more spatial gradient buys almost no spatial and costs annotation"
+extends = ["../integration/balance_grad_equal.toml"]
+run = { name = "spatial_weight3", out = "runs/spatial/weight3" }
+
+[train]
+task_weights = { gene = 1.0, integration = 1.0, cell_type = 1.0, anatomy = 1.0, spatial = 3.0 }

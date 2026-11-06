@@ -1,0 +1,8 @@
+description = "Curriculum control: grad_equal whose first 2k steps train cell type only, then all five tasks, stopped at 10k; separates the curriculum's effect from the self-teacher's"
+status = "main"
+outcome = "Running; compare with balance_grad_equal and curriculum_self_teacher"
+extends = ["balance_grad_equal.toml"]
+run = { name = "curriculum_ct2k", out = "runs/integ/curriculum_ct2k" }
+
+[train]
+task_schedule = [{ until = 2000, task_weights = { gene = 0.0, integration = 0.0, cell_type = 1.0, anatomy = 0.0, spatial = 0.0 } }]

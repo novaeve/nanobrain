@@ -1,0 +1,431 @@
+"""Independent Cajal campaign; no work starts until the explicit execute entrypoint."""
+
+import csv
+import fcntl
+import importlib.metadata
+import json
+import os
+import platform
+import subprocess
+import time
+from pathlib import Path
+
+from . import selection
+from .contracts import (
+    METRICS,
+    ROOT,
+    reference_bundle,
+    reference_document,
+    save,
+    semantic_id,
+    sha,
+    validate_bundle,
+)
+
+
+def plan(cfg):
+    return {
+        "status": "prepared_not_started",
+        "reference_recipe": cfg["reference_recipe"],
+        "initial_candidate": reference_bundle(),
+        "reference_config": reference_document(cfg),
+        "training": "one shared Cajal model, all five objectives, per seed",
+        "seeds": cfg["seeds"],
+        "schedule_steps": cfg["schedule_steps"],
+        "fixed_stop": cfg["stop_at"],
+        "generations": cfg["generations"],
+        "candidates_per_generation": cfg["candidates_per_generation"],
+        "joint_trainings_per_generation": len(cfg["seeds"]) * cfg["candidates_per_generation"],
+        "maximum_joint_trainings": len(cfg["seeds"]) * (1 + cfg["generations"] * cfg["candidates_per_generation"]),
+        "metrics": list(METRICS),
+        "feedback": "existing Cajal held-out research evaluation sets; sealed V4 test inaccessible",
+        "automatic_scaling": False,
+        "llm_called": False,
+        "real_training_started": False,
+    }
+
+
+def baseline():
+    return json.loads((ROOT / "reference/opponents.json").read_text())
+
+
+def code_fingerprint():
+    env = {**os.environ, "GIT_OPTIONAL_LOCKS": "0"}
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(ROOT), *args], text=True, env=env).strip()
+
+    if git("status", "--porcelain", "--untracked-files=no"):
+        raise ValueError("commit the prepared code before any formal run")
+    files = git("ls-files").splitlines()
+    versions = {"python": platform.python_version()}
+    for name in ("torch", "numpy", "scipy", "scikit-learn", "scib-metrics", "jax", "cuml-cu12"):
+        try:
+            versions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            versions[name] = None
+    return {
+        "git_sha": git("rev-parse", "HEAD"),
+        "files": {p: sha(ROOT / p) for p in files if (ROOT / p).is_file()},
+        "environment": versions,
+    }
+
+
+def input_fingerprint(cfg):
+    result = {}
+    for name, path in cfg["data"].items():
+        if "test" in name or "test" in Path(path).name.lower():
+            raise ValueError("the sealed test is outside this protocol")
+        p = Path(path) / "manifest.json"
+        result[name] = {"path": str(Path(path).resolve()), "manifest_sha256": sha(p)}
+    for name, expected in json.loads((ROOT / "reference/input_fingerprints.json").read_text()).items():
+        if name not in result or result[name] != expected:
+            raise ValueError("Cajal data manifest or path changed since preparation")
+    return result
+
+
+class InfrastructureError(RuntimeError):
+    """Transient resource failures preserve an unfinished candidate for resume."""
+
+
+class Workflow:
+    def __init__(self, cfg, output):
+        # Construction is deliberately read-only; default plan never creates an output directory.
+        self.cfg, self.output = cfg, Path(output).resolve()
+
+    def acquire_gpu(self):
+        while True:
+            raw = subprocess.check_output(
+                ["nvidia-smi", "--query-gpu=index,memory.free", "--format=csv,noheader,nounits"], text=True
+            )
+            available = [
+                (int(row.split(",")[1]), int(row.split(",")[0]))
+                for row in raw.splitlines()
+                if int(row.split(",")[0]) in self.cfg["gpu_ids"]
+            ]
+            memory, gpu = max(available)
+            if memory >= self.cfg["minimum_free_gpu_mb"]:
+                return gpu
+            save(
+                self.output / "status.json",
+                {"status": "waiting_for_gpu", "minimum_free_mb": self.cfg["minimum_free_gpu_mb"]},
+            )
+            time.sleep(30)
+
+    @staticmethod
+    def verify_stage(directory):
+        directory = Path(directory)
+        value = json.loads((directory / "receipt.json").read_text())
+        if value.get("status") != "complete" or not value.get("artifact_hashes"):
+            raise ValueError("incomplete stage receipt")
+        for name, expected in value["artifact_hashes"].items():
+            path = (directory / name).resolve()
+            if not path.is_relative_to(directory.resolve()) or sha(path) != expected:
+                raise ValueError("stage artifact changed")
+        return value
+
+    def worker(self, directory, args, inputs, cpu=False):
+        from .sandbox import launch
+
+        for attempt in range(3):
+            gpu = None if cpu else self.acquire_gpu()
+            try:
+                return launch(
+                    ROOT,
+                    directory,
+                    args,
+                    inputs=inputs,
+                    gpu=gpu,
+                    timeout=600 if cpu else self.cfg["job_timeout_seconds"],
+                )
+            except RuntimeError as exc:
+                log = Path(directory) / "worker.log"
+                text = log.read_text(errors="replace").lower() if log.exists() else ""
+                oom = any(s in text for s in ("out of memory", "resource exhausted", "cuda_error_out_of_memory"))
+                if cpu or not oom:
+                    raise
+                log.rename(log.with_name(f"oom-attempt-{attempt}.log"))
+                if attempt == 2:
+                    raise InfrastructureError(
+                        "GPU OOM after three attempts; unfinished candidate preserved for resume"
+                    ) from exc
+                time.sleep(30)
+
+    def validate(self, identifier, bundle):
+        folder = self.store.candidates / identifier
+        path = folder / "validation.json"
+        if path.exists():
+            return json.loads(path.read_text())
+        try:
+            validate_bundle(bundle)
+            value = self.worker(
+                self.output / "probes" / identifier,
+                ["probe", "--bundle", str(folder / "bundle.json")],
+                [folder / "bundle.json"],
+                cpu=True,
+            )
+        except Exception as exc:  # noqa: BLE001 - record any candidate acceptance failure, then keep the archive
+            value = {"status": "rejected_validation", "reason": str(exc)[:1500], "synthetic_only": True}
+        self.store.put(identifier, "validation", value)
+        return value
+
+    def evaluate_seed(self, identifier, seed):
+        folder = self.output / "jobs" / identifier / str(seed)
+        result_path = folder / "result.json"
+        if result_path.exists():
+            result = json.loads(result_path.read_text())
+            for name, expected in result["artifact_hashes"].items():
+                if sha(Path(name)) != expected:
+                    raise ValueError("completed result artifact changed")
+            return result
+        bundle_path = self.store.candidates / identifier / "bundle.json"
+        train_dir = folder / "joint"
+        train_receipt = train_dir / "receipt.json"
+        if train_receipt.exists():
+            receipt = self.verify_stage(train_dir)
+            if receipt.get("status") != "complete" or receipt.get("seed") != seed:
+                raise ValueError("incompatible cached training receipt")
+        else:
+            self.worker(
+                train_dir,
+                ["train", "--bundle", str(bundle_path), "--seed", str(seed)],
+                [bundle_path, Path(self.cfg["data"]["pretrain"])],
+            )
+        self.verify_stage(train_dir)
+        checkpoint = train_dir / "train/latest.pt"
+        artifacts = {str(checkpoint): sha(checkpoint), str(train_receipt): sha(train_receipt)}
+        metrics = {}
+        for task in ("annotation", "integration", "genes", "spatial"):
+            data_key = "annotation" if task == "genes" else task
+            pred_dir, score_dir = folder / (task + "-predict"), folder / (task + "-score")
+            pred = pred_dir / "prediction.npz"
+            if not (pred_dir / "receipt.json").exists():
+                self.worker(
+                    pred_dir,
+                    ["predict", "--checkpoint", str(checkpoint), "--task", task],
+                    [checkpoint, Path(self.cfg["data"][data_key])],
+                )
+            self.verify_stage(pred_dir)
+            if not (score_dir / "receipt.json").exists():
+                self.worker(
+                    score_dir,
+                    ["score", "--prediction", str(pred), "--task", task],
+                    [pred_dir, Path(self.cfg["data"][data_key]), Path(self.cfg["data"]["pretrain"])],
+                )
+            self.verify_stage(score_dir)
+            summary = score_dir / "scores/summary.csv"
+            with summary.open() as fh:
+                rows = list(csv.DictReader(fh))
+            (row,) = [r for r in rows if r[next(iter(r))] == "candidate"]
+            wanted = {
+                "annotation": METRICS[:2],
+                "integration": METRICS[2:4],
+                "genes": METRICS[4:5],
+                "spatial": METRICS[5:],
+            }[task]
+            metrics.update({key: float(row[key]) for key in wanted})
+            for p in (pred, pred_dir / "receipt.json", score_dir / "receipt.json", summary):
+                artifacts[str(p)] = sha(p)
+        result = {
+            "status": "complete",
+            "seed": seed,
+            "metrics": metrics,
+            "artifact_hashes": artifacts,
+            "candidate_id": identifier,
+            "checkpoint_sha256": artifacts[str(checkpoint)],
+            "joint_model_count": 1,
+        }
+        # The same checkpoint supplies ALL task predictions; no task-wise model selection.
+        selection.check_metrics(metrics)
+        save(result_path, result)
+        return result
+
+    def evaluate(self, identifier, generation):
+        existing = self.store.candidates / identifier / "result.json"
+        if existing.exists():
+            node = json.loads(existing.read_text())
+            if node.get("status") == "complete":
+                for seed in self.cfg["seeds"]:
+                    self.evaluate_seed(identifier, seed)
+            return node
+        try:
+            results = [self.evaluate_seed(identifier, s) for s in self.cfg["seeds"]]
+            node = dict(
+                candidate_id=identifier,
+                status="complete",
+                generation=generation,
+                **selection.aggregate(results, self.cfg["seeds"]),
+            )
+        except InfrastructureError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - a failed model must not terminate other candidates
+            node = {
+                "candidate_id": identifier,
+                "status": "failed",
+                "generation": generation,
+                "all_seeds_passed": False,
+                "reason": str(exc)[:2000],
+            }
+        self.store.put(identifier, "result", node)
+        return node
+
+    def execute(self, client):
+        self.output.mkdir(parents=True, exist_ok=True)
+        with (self.output / "controller.lock").open("w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return self._execute_locked(client)
+
+    def _execute_locked(self, client):
+        from .agent import ToolSession, propose
+        from .store import Store
+
+        contract = {
+            "protocol": self.cfg,
+            "code": code_fingerprint(),
+            "data": input_fingerprint(self.cfg),
+            "reference": reference_document(self.cfg),
+            "reference_bundle": reference_bundle(),
+            "opponents": baseline(),
+        }
+        contract_path = self.output / "run-contract.json"
+        if contract_path.exists() and json.loads(contract_path.read_text()) != contract:
+            raise ValueError("resume requires identical code, data, config, reference and opponents")
+        save(contract_path, contract)
+        self.store = Store(self.output / "lineage")
+        root = self.store.stage(reference_bundle(), origin={"generation": 0, "role": "existing_cajal_v1"})
+        if self.validate(root, reference_bundle())["status"] != "accepted":
+            raise ValueError("initial existing Cajal reference failed synthetic acceptance")
+        reference = self.evaluate(root, 0)
+        if reference["status"] != "complete":
+            raise ValueError("initial reference requires all three seeds and all five tasks")
+        best = baseline()["best_opponents"]
+        state_path = self.output / "campaign.json"
+        state = (
+            json.loads(state_path.read_text())
+            if state_path.exists()
+            else {"champion": root, "generations": [], "processed": []}
+        )
+        for generation in range(1, self.cfg["generations"] + 1):
+            if any(g["generation"] == generation for g in state["generations"]):
+                continue
+            identifiers = []
+            for index in range(self.cfg["candidates_per_generation"]):
+                origin = {"generation": generation, "proposal": index}
+                submission = self.output / "proposals" / f"g{generation:02d}-p{index:02d}.json"
+                if submission.exists():
+                    saved = json.loads(submission.read_text())
+                    if saved["origin"] != origin:
+                        raise ValueError("proposal origin changed")
+                    identifier = saved["candidate_id"]
+                else:
+                    nodes = self.store.nodes()
+                    allowed = [
+                        n["candidate_id"] for n in nodes if n.get("status") == "complete" and n.get("all_seeds_passed")
+                    ]
+                    seen = [semantic_id(self.store.bundle(n["candidate_id"])) for n in nodes]
+                    session = ToolSession(self.store, baseline(), self.validate, allowed, seen, origin, submission)
+                    context = {
+                        "protocol": self.cfg["protocol_id"],
+                        "generation": generation,
+                        "proposal": index,
+                        "reference_candidate": root,
+                        "current_champion": state["champion"],
+                        "recommended_parents": selection.parents(nodes, self.store, best),
+                        "complete_evolution_dag": self.store.tree_summary(),
+                        "frozen_opponents": baseline(),
+                    }
+                    proposal_error = None
+                    for attempt in range(3):
+                        try:
+                            propose(client, session, context, reasoning=self.cfg["reasoning_effort"])
+                            proposal_error = None
+                            break
+                        except Exception as exc:  # noqa: BLE001 - persist proposal/API failures for resume
+                            secret = getattr(getattr(client, "config", None), "api_key", "")
+                            proposal_error = str(exc).replace(secret, "[redacted]") if secret else str(exc)
+                            save(
+                                submission.with_suffix(f".attempt{attempt}.json"),
+                                {"status": "failed_proposal", "reason": proposal_error[:1500]},
+                            )
+                    if proposal_error:
+                        raise RuntimeError("LLM proposal failed; progress preserved for resume")
+                    identifier = session.submitted
+                node = self.evaluate(identifier, generation)
+                identifiers.append(identifier)
+                label = f"g{generation:02d}-p{index:02d}"
+                if label not in state["processed"]:
+                    decision_path = self.output / "decisions" / (label + ".json")
+                    if decision_path.exists():
+                        decision = json.loads(decision_path.read_text())
+                        if decision["candidate_id"] != identifier or decision["previous_champion"] != state["champion"]:
+                            raise ValueError("inconsistent saved champion decision")
+                    else:
+                        gate = {"passed": False, "reason": "incomplete candidate"}
+                        if node["status"] == "complete":
+                            parent = self.store.node(state["champion"])
+                            gate = selection.promote(
+                                node, parent, reference, best, self.store.bundle(identifier)["target_metrics"]
+                            )
+                        decision = {
+                            "candidate_id": identifier,
+                            "previous_champion": state["champion"],
+                            "gate": gate,
+                            "next_champion": identifier if gate["passed"] else state["champion"],
+                        }
+                        save(decision_path, decision)
+                    state["champion"] = decision["next_champion"]
+                    state["processed"].append(label)
+                save(state_path, state)
+                save(
+                    self.output / "status.json",
+                    {
+                        "status": "evolution",
+                        "generation": generation,
+                        "proposal": index,
+                        "champion": state["champion"],
+                        "completed_generations": len(state["generations"]),
+                    },
+                )
+            state["generations"].append(
+                {"generation": generation, "candidates": identifiers, "champion": state["champion"]}
+            )
+            save(state_path, state)
+        self.report(state, root)
+        return state
+
+    def report(self, state, root):
+        with (self.output / "standard_metrics.csv").open("w", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["candidate_id", "generation", "seed", *METRICS])
+            for node in self.store.nodes():
+                if node.get("status") == "complete":
+                    for result in node["seed_results"]:
+                        writer.writerow(
+                            [
+                                node["candidate_id"],
+                                node["generation"],
+                                result["seed"],
+                                *[result["metrics"][k] for k in METRICS],
+                            ]
+                        )
+        save(
+            self.output / "frozen-champion.json",
+            {
+                "candidate_id": state["champion"],
+                "bundle": self.store.bundle(state["champion"]),
+                "result": self.store.node(state["champion"]),
+                "reference_candidate": root,
+                "improvement_found": state["champion"] != root,
+                "adoption": "research artifact only; no upstream recipe/tag adoption",
+                "scaling_started": False,
+            },
+        )
+        save(
+            self.output / "status.json",
+            {
+                "status": "complete",
+                "completed_generations": len(state["generations"]),
+                "champion": state["champion"],
+                "scaling_started": False,
+            },
+        )

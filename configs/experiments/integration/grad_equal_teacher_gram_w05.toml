@@ -1,0 +1,8 @@
+description = "grad_equal + teacher_gram at weight 0.5 (half the gradient share): how much of the bio gain remains?"
+status = "main"
+outcome = "Running"
+extends = ["balance_grad_equal.toml"]
+run = { name = "grad_equal_teacher_gram_w05", out = "runs/integ/grad_equal_teacher_gram_w05" }
+
+[train]
+objectives = [{ name = "teacher_gram", weight = 0.5, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

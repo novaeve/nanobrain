@@ -1,0 +1,8 @@
+description = "Cajal v1 with the integration loss weighted 2x, full 30k steps: at 10k it lifted batch 0.358 -> 0.402 for -1.7 / -8% on cell type / region, and v1's batch keeps rising with training (0.348 at 10k -> 0.426 at 30k); can it pass scVI / scANVI (0.449 / 0.454) at 30k while annotation recovers?"
+status = "candidate"
+outcome = "Running"
+extends = ["cajal_v1.toml"]
+run = { name = "cajal_v1_int2", out = "runs/cajal_v1_int2" }
+
+[train]
+task_weights = { gene = 1.0, integration = 2.0, cell_type = 1.0, anatomy = 1.0, spatial = 1.0 }

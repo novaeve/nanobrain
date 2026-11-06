@@ -1,0 +1,8 @@
+description = "Cajal v1 + 2x integration + teacher_gram, full 30k: 2x integration lifts batch, teacher_gram lifts bio; do they add up?"
+status = "candidate"
+outcome = "Running"
+extends = ["cajal_v1_int2.toml"]
+run = { name = "cajal_v1_int2_teacher", out = "runs/cajal_v1_int2_teacher" }
+
+[train]
+objectives = [{ name = "teacher_gram", weight = 1.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

@@ -1,0 +1,8 @@
+description = "Cajal v1 + teacher_gram (weight 1), full 30k: at 10k grad_equal + teacher_gram gave bio 0.711 / batch 0.380 (grad_equal 0.633 / 0.358) with annotation and imputation unchanged"
+status = "candidate"
+outcome = "Running"
+extends = ["cajal_v1.toml"]
+run = { name = "cajal_v1_teacher", out = "runs/cajal_v1_teacher" }
+
+[train]
+objectives = [{ name = "teacher_gram", weight = 1.0, checkpoint = "/data/brainwm/BrainWM-Unified/runs/cajal_single_cell_type_1m/step30000.pt" }]

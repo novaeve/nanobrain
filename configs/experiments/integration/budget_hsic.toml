@@ -1,0 +1,7 @@
+description = "L2. Constrained invariance: grad_equal plus conditional HSIC whose weight is a dual variable keeping cell-type CE <= 0.28 and anatomy CE <= 0.40 (about 1.25x baseline's 6k-10k means 0.223 / 0.322)"
+status = "parked"
+outcome = "Dual weight stayed at its floor (budget below grad_equal's own cell-type CE until ~8k), so this is a grad_equal replicate (batch 0.364); the constraint is untested"
+extends = ["balance_grad_equal.toml"]
+run = { name = "budget_hsic", out = "runs/integ/budget_hsic" }
+[train]
+objectives = [{ name = "cond_hsic", weight = 0.1, label = "cell_type", budget = { cell_type = 0.28, anatomy = 0.40 } }]

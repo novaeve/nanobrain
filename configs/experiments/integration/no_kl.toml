@@ -1,0 +1,7 @@
+description = "2a. Ablation: deterministic mu, no KL and no replacement (is KL the culprit?)"
+status = "dropped"
+outcome = "Same as baseline: bio 0.618, batch 0.223 (KL is not what holds integration back)"
+extends = ["_base.toml"]
+run = { name = "no_kl", out = "runs/integ/no_kl" }
+[model]
+latent_reg = "none"

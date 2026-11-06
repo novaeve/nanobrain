@@ -1,0 +1,8 @@
+description = "Replicate of grad_equal_teacher_gram with data.seed = 2: is its bio gain (+0.078) beyond run-to-run spread?"
+status = "main"
+outcome = "Running"
+extends = ["grad_equal_teacher_gram.toml"]
+run = { name = "grad_equal_teacher_gram_seed2", out = "runs/integ/grad_equal_teacher_gram_seed2" }
+
+[data]
+seed = 2

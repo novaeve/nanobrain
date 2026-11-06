@@ -1,0 +1,7 @@
+description = "2b. Replace N(0, I) by a learned 32-component mixture prior (VampPrior-like)"
+status = "dropped"
+outcome = "Same as baseline: bio 0.630, batch 0.222"
+extends = ["_base.toml"]
+run = { name = "mog_prior", out = "runs/integ/mog_prior" }
+[model]
+latent_reg = "mog"

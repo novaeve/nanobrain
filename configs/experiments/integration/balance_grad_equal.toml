@@ -1,0 +1,8 @@
+description = "L1. Balancing: every loss gets the same gradient norm on the encoder (EMA every 50 steps) instead of the frozen initial-loss scale, which left integration 1-3% of the gradient"
+status = "done"
+outcome = "Adopted for Cajal v1. At 10k vs baseline: integration batch 0.228 -> 0.358, bio 0.613 -> 0.633; cell type, region, gene and spatial imputation within the spread of three equivalent runs. Integration gets 18% of the gradient (was 2%)"
+extends = ["_base.toml"]
+run = { name = "balance_grad_equal", out = "runs/integ/balance_grad_equal" }
+[train]
+balancer = "grad_equal"
+balancer_params = { every = 50 }

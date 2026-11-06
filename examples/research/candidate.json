@@ -1,0 +1,16 @@
+{
+  "files": {},
+  "hypothesis": "Test the existing Cajal residual-to-neighbour-mean switch while retaining the full joint model.",
+  "model": {
+    "spatial_residual_mean": true
+  },
+  "parent_ids": [
+    "2bc3048cb8cfa56d951f28b9d844f29fd2716f385371a546dc1db3ed13c687df"
+  ],
+  "plugins": [],
+  "schema_version": "cajal.research.candidate.v1",
+  "target_metrics": [
+    "Spatial imputation Pearson (cell median)"
+  ],
+  "train": {}
+}

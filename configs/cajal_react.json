@@ -1,0 +1,27 @@
+{
+  "protocol_id": "CAJAL-V1-JOINT-REACT-20261106",
+  "status": "prepared_not_started",
+  "reference_recipe": "configs/experiments/cajal_v1.toml",
+  "generations": 50,
+  "candidates_per_generation": 6,
+  "seeds": [202609180, 202609181, 202609182],
+  "schedule_steps": 30000,
+  "stop_at": 10000,
+  "checkpoint_selection": "fixed_stop",
+  "evaluation_seed": 0,
+  "token_budget": 524288,
+  "data": {
+    "pretrain": "/data/brainwm/unified_1m",
+    "annotation": "/data/brainwm/eval_10k",
+    "integration": "/data/brainwm/eval_integration_10k",
+    "spatial": "/data/brainwm/eval_spatial"
+  },
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "max",
+  "api_env_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/.env",
+  "gpu_ids": [0, 1, 2, 3, 4],
+  "max_workers": 1,
+  "minimum_free_gpu_mb": 65536,
+  "job_timeout_seconds": 86400,
+  "scaling_enabled": false
+}

@@ -1,0 +1,7 @@
+description = "Integration method sweep: Cajal joint pretraining, 30k-step LR schedule, stopped at 10k steps (comparable with Cajal@10000); checkpoints every 2k steps"
+extends = ["../cajal_1m.toml"]
+
+[train]
+stop_at = 10000
+keep_every = 2000  # checkpoints at 2k, 4k, ..., 10k: integration scores along training
+ckpt_every = 1000

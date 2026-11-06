@@ -1,0 +1,15 @@
+{
+ "gene mean": {
+  "pearson_cell_median": 0.5306792223296861,
+  "mse": 0.8739420043676194,
+  "mse_nonzero": 0.8970489070371375,
+  "pearson_global": 0.5066449052219848
+ },
+ "kNN (k=15, same panel)": {
+  "pearson_cell_median": 0.7002158820633035,
+  "mse": 0.6503453214585304,
+  "mse_nonzero": 0.6665074764659513,
+  "pearson_global": 0.5859139047936076,
+  "fallback_tokens": 0.0
+ }
+}

@@ -1,0 +1,9 @@
+description = "1+2. Conditional invariance (lambda 3) with SIGReg in place of KL (lambda 10)"
+status = "stopped"
+outcome = "Not run, for the same reason as hsic_lambda"
+extends = ["_base.toml"]
+run = { name = "hsic_sigreg", out = "runs/integ/hsic_sigreg" }
+[model]
+latent_reg = "none"
+[train]
+objectives = [{ name = "cond_hsic", weight = 3.0, label = "cell_type" }, { name = "sigreg", weight = 10.0 }]

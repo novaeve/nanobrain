@@ -1,0 +1,5 @@
+description = "0. Baseline: Cajal exactly (same config and data order), re-run to 10k with checkpoints every 2k for its trajectory"
+status = "done"
+outcome = "Reproduces Cajal@10k: bio 0.613, batch 0.228, flat from 2k to 10k; integration gets 2-3% of the encoder gradient"
+extends = ["_base.toml"]
+run = { name = "baseline", out = "runs/integ/baseline" }
