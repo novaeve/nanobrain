@@ -231,3 +231,32 @@ def test_changed_existing_reference_fails_without_refitting(monkeypatch):
     monkeypatch.setattr(existing_reference, "sha", changed)
     with pytest.raises(ValueError, match="artifact changed"):
         existing_reference.load(C.load_config())
+
+
+def test_llm_uses_cajal_scores_and_reuses_legacy_components_only(tmp_path):
+    from cajal_research.agent import SYSTEM, ToolSession
+    from cajal_research.workflow import baseline
+
+    opponents = baseline()
+    session = ToolSession(None, opponents, None, [], [], {}, tmp_path / "unused.json")
+    detail = session.call("baseline_detail", {})
+    assert detail["source_csv"] == "/data/brainwm/BrainWM-Unified/runs/eval/five_tasks.csv"
+    policy = detail["performance_input_policy"]
+    assert policy["legacy_component_implementations_reused"]
+    assert not policy["existing_baselines_refitted_or_rescored"] and not policy["sealed_V4_test_used"]
+    assert "three paired seeds" not in detail["regime"]
+    assert "Do not use legacy nanoBrain experiment scores" in SYSTEM
+    entries = []
+    offset = 0
+    while True:
+        page = session.call("list_components", {"offset": offset, "available_only": False})
+        entries.extend(page["entries"])
+        if page["next_offset"] is None:
+            break
+        offset = page["next_offset"]
+    legacy = [entry for entry in entries if entry["id"].startswith("legacy.")]
+    assert legacy and any(entry["available"] for entry in legacy)
+    assert all("metrics" not in entry for entry in legacy)
+    scored = [entry for entry in entries if "metrics" in entry]
+    assert len(scored) == 13
+    assert all(entry["source_family"] == "Cajal existing whole-method benchmark" for entry in scored)

@@ -32,7 +32,10 @@ are single-seed exploratory evidence; do not invent a standard deviation or sign
 Use the merged component catalogue to combine original nanoBrain parts and newly split Cajal,
 scVI and scANVI parts. Respect declared compatible slots and availability; never substitute a
 different implementation for an unavailable source. Whole-method baseline scores do not transfer
-automatically to a component hybrid. Reuse existing Cajal baseline scores and the saved cajal_v1@10000 reference; never refit or rescore historical methods. A named frozen Cajal teacher is available for teacher_gram;
+automatically to a component hybrid. Do not use legacy nanoBrain experiment scores as evidence or
+comparison thresholds: those experiments used different data and evaluation protocols. Reuse legacy
+component implementations, but use only Cajal-compatible performance results in the LLM context.
+Reuse existing Cajal baseline scores and the saved cajal_v1@10000 reference; never refit or rescore historical methods. A named frozen Cajal teacher is available for teacher_gram;
 arbitrary checkpoint/file paths remain forbidden. Retain all desired ancestral changes explicitly.
 The complete DAG includes every failed/unselected branch and every parent edge. Read details
 with paginated tools. Parent recommendations are a mixture of quality, Pareto and novelty;

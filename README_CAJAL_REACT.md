@@ -98,7 +98,7 @@ capacity、预算权重、教师 Gram、对抗目标、分组 Muon 等登记到�
 `reference/opponents.json` 保存全部 13 个完整基线及选优对手；`reference/current_method_scores.json`
 保存现有 63 个方法/实验的 checkpoint 轨迹，baseline_detail 工具可按方法查看。
 `reference/cajal_existing_five_tasks.csv` 是原表快照。没有导入旧 100k benchmark 成绩；新组件组合
-须另行训练评估，不能继承来源整方法的分数。演化 worker 使用 predictions-only 评分入口，不重训或重算原基线；整合 PCR 指标继续使用原缓存 PCA 作为度量参考，不拟合新 PCA。完整数据与评估口径见 `reference/evaluation_protocol.json`。
+须另行训练评估，不能继承来源整方法的分数。 发给 LLM 的历史性能和比较门槛只使用 Cajal 现有结果；旧 nanoBrain 在不同数据、划分或指标下的实验成绩不进入该输入，原组件实现继续复用。演化 worker 使用 predictions-only 评分入口，不重训或重算原基线；整合 PCR 指标继续使用原缓存 PCA 作为度量参考，不拟合新 PCA。完整数据与评估口径见 `reference/evaluation_protocol.json`。
 
 ## ReAct、验收与恢复
 

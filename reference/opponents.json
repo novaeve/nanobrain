@@ -15,7 +15,7 @@
     "Region fine macro-F1": 0.6815090643435028,
     "Spatial imputation Pearson (cell median)": 0.3678609452563165
   },
-  "regime": "Historical existing Cajal opponents; same pretraining subset and task definitions. Transductive fits excluded from promotion frontier; initial Cajal reference retrains on three paired seeds.",
+  "regime": "Existing Cajal results under its own training/evaluation protocol. Reuse the saved seed-0 cajal_v1@10000 reference without refitting. Transductive comparisons remain labelled and excluded from the promotion frontier. The sealed V4 test was not used.",
   "rows": [
     {
       "Cell type fine macro-F1": "0.7399146731097425",
@@ -324,5 +324,12 @@
     "teacher_gram_int4",
     "unified_decoder",
     "v0"
-  ]
+  ],
+  "performance_input_policy": {
+    "allowed_source": "Cajal existing five-task results and new candidates evaluated under the same protocol",
+    "excluded_source": "legacy nanoBrain experiment scores obtained with different training data, splits or metric definitions",
+    "existing_baselines_refitted_or_rescored": false,
+    "legacy_component_implementations_reused": true,
+    "sealed_V4_test_used": false
+  }
 }
