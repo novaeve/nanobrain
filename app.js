@@ -75,7 +75,7 @@
       return '<tr class="row' + (ours ? ' is-ours' : '') + '" data-i="' + i + '" tabindex="0" aria-expanded="false">' +
         '<td class="r rank">' + rank + '</td>' +
         '<td class="m"><b>' + esc(r.display_name || r.method) + '</b><small>' + esc(r.method) + '</small></td>' +
-        '<td class="fam hide-sm"><span class="chip' + (ours ? ' ours' : '') + '">' + esc(fam) + '</span>' + esc(String(r.training_regime || '').replace(/_/g, ' ')) + '</td>' +
+        '<td class="fam hide-sm"><span class="st' + (ours ? ' ours' : '') + '">' + esc(fam) + '</span>' + esc(String(r.training_regime || '').replace(/_/g, ' ')) + '</td>' +
         '<td><div class="score"><span class="bar"><i style="width:' + w + '%"></i></span><span class="v">' + fmt(v) + '</span></div></td>' +
         '<td class="r hide-sm">' + (sd === null ? '—' : fmt(sd)) + '</td>' +
         '<td class="r hide-sm">' + esc(r.n_runs || '—') + '</td></tr>';
@@ -136,7 +136,7 @@
     var s = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': '参数量与 ' + mlabel(metric) + ' 散点图' });
     for (var i = 0; i <= 4; i++) {
       var yv = y0 + (y1 - y0) * i / 4, yy = sy(yv);
-      s.appendChild(svg('line', { x1: L, x2: W - R, y1: yy, y2: yy, 'class': 'ax' }));
+      s.appendChild(svg('line', { x1: L, x2: W - R, y1: yy, y2: yy, 'class': 'gl' }));
       s.appendChild(svg('text', { x: L - 10, y: yy + 4, 'text-anchor': 'end', 'class': 'tk' }, Math.abs(yv) >= 100 ? yv.toFixed(0) : yv.toFixed(3)));
     }
     [1e5, 2e5, 3e5, 5e5, 1e6].forEach(function (t) {
@@ -176,26 +176,42 @@
   /* ---------- hero: two batches drifting into shared cell-type clusters ---------- */
   function hero() {
     var el = $('#cells'); if (!el) return;
-    var colors = ['#3fa9cf', '#4fc9a8', '#7088ee', '#a77bf3', '#8fb8f0'];
-    var centers = [[110, 110], [300, 95], [210, 190], [105, 270], [315, 265]];
+    var colors = ['#2a78d6', '#eb6834', '#1baf7a', '#6250d6', '#e87ba4'];
+    var centers = [[150, 110], [300, 200], [400, 95], [500, 205], [630, 120]];
     var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
     function gauss() { return (rnd() + rnd() + rnd() - 1.5) * 1.4; }
     var dots = [];
-    for (var i = 0; i < 230; i++) {
+    for (var i = 0; i < 320; i++) {
       var k = i % 5, batch = i % 2, c = centers[k];
-      var jx = gauss() * 26, jy = gauss() * 26;
-      var off = batch ? [26, -18] : [-26, 18];
-      var d = svg('circle', { cx: c[0] + jx, cy: c[1] + jy, r: batch ? 4.2 : 3.4, fill: colors[k], 'fill-opacity': batch ? 0.85 : 0.5 });
+      var jx = gauss() * 30, jy = gauss() * 26;
+      var off = batch ? [38, 34] : [-38, -34];
+      var d = svg('circle', { cx: c[0] + jx, cy: c[1] + jy, r: batch ? 4 : 3.2, fill: colors[k], 'fill-opacity': batch ? 0.9 : 0.45 });
       d.style.transform = 'translate(' + off[0] + 'px,' + off[1] + 'px)';
       dots.push({ el: d, off: off });
       el.appendChild(d);
     }
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var merged = false;
+    var merged = false, cap = $('#cells-cap');
     setInterval(function () {
       merged = !merged;
       dots.forEach(function (d) { d.el.style.transform = merged ? 'translate(0,0)' : 'translate(' + d.off[0] + 'px,' + d.off[1] + 'px)'; });
-    }, 3200);
+      if (cap) cap.textContent = merged ? '整合后：同一细胞类型聚在一起' : '整合前：两个批次各自成团';
+    }, 3600);
+  }
+
+  /* ---------- news feed: append-only file, newest date first, same-day entries keep file order ---------- */
+  function renderNews(items) {
+    var el = $('#feed'); if (!el) return;
+    var sorted = items.map(function (n, i) { return { n: n, i: i }; })
+      .sort(function (a, b) { return a.n.date < b.n.date ? 1 : a.n.date > b.n.date ? -1 : b.i - a.i; })
+      .map(function (x) { return x.n; });
+    var latest = sorted.length ? sorted[0].date : null;
+    el.innerHTML = sorted.map(function (n) {
+      return '<article class="post"><div class="side"><time>' + esc(n.date) + '</time>' +
+        '<div class="fig"><b>' + esc(n.figure) + '</b><span>' + esc(n.figure_label) + '</span></div></div>' +
+        '<div class="main"><span class="tag">' + esc(n.tag) + '</span>' + (n.date === latest ? '<span class="new">最新</span>' : '') +
+        '<h3>' + esc(n.title) + '</h3><p>' + esc(n.body) + '</p></div></article>';
+    }).join('');
   }
 
   function stats() {
@@ -229,4 +245,5 @@
     $('#board-table tbody').innerHTML = '<tr><td colspan="6" class="foot">排行榜数据加载失败：' + esc(err.message) + '</td></tr>';
   });
   getJSON('data/frontier-evidence.json').then(function (d) { state.evidence = d; renderFrontier(); }).catch(function () { $('#frontier').textContent = '演化数据加载失败'; });
+  getJSON('data/news.json').then(renderNews).catch(function () { $('#feed').textContent = '进展加载失败'; });
 })();

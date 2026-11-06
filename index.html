@@ -6,7 +6,7 @@
 <title>nanoBrain · 虚拟细胞架构演化</title>
 <meta name="description" content="nanoBrain：固定 10 万细胞、四个任务、一套评估器。LLM 在可组合计算图上提出新架构，只有可复现的改进才能晋级。">
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <header class="top">
@@ -17,85 +17,100 @@
       <a href="#tasks">任务</a>
       <a href="#board">排行榜</a>
       <a href="#evolution">演化</a>
-      <a href="#log">进展</a>
+      <a href="#news">进展</a>
       <a href="#start">上手</a>
     </nav>
-    <a class="btn btn-sm" href="https://github.com/novaeve/nanobrain" target="_blank" rel="noopener">GitHub ↗</a>
+    <a class="btn btn-sm" href="https://github.com/novaeve/nanobrain" target="_blank" rel="noopener">GitHub</a>
   </div>
 </header>
 
 <main>
 <section class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <p class="eyebrow">Canchen Tech AI Group · Brain World Model 的快速实验入口</p>
-      <h1><span class="nw">每一次架构演化，</span><br><em class="nw">都留下证据。</em></h1>
-      <p class="lede">固定 10 万个人脑细胞、四个任务、一套评估器。LLM 在可组合计算图上提出新架构，程序负责训练、多 seed 复验和记账——只有可复现的改进才能晋级。</p>
-      <div class="cta">
-        <a class="btn" href="#board">查看排行榜</a>
-        <a class="btn btn-ghost" href="#start">五分钟跑通</a>
-      </div>
+  <div class="wrap">
+    <p class="eyebrow">Canchen Tech AI Group · Brain World Model 的快速实验场</p>
+    <h1><span class="nw">十万个细胞，</span><br><em class="nw">一个不停进化的架构。</em></h1>
+    <p class="lede">固定的数据、四个任务、同一套评估器。LLM 在可组合计算图上提出新架构，程序负责训练、多 seed 复验和记账，只有可复现的改进才能晋级。</p>
+    <div class="cta">
+      <a class="btn" href="#board">查看排行榜</a>
+      <a class="btn btn-ghost" href="#start">五分钟跑通</a>
     </div>
     <figure class="hero-fig" aria-hidden="true">
-      <svg viewBox="0 0 420 360" class="cells" id="cells"></svg>
+      <svg viewBox="0 0 760 300" class="cells" id="cells"></svg>
+      <figcaption class="hero-cap" id="cells-cap">两个批次的细胞，按细胞类型整合到一起</figcaption>
     </figure>
-  </div>
-  <div class="wrap stats" id="stats">
-    <div><b>100,000</b><span>冻结细胞</span></div>
-    <div><b>60 / 20 / 20</b><span>train · val · test（千）</span></div>
-    <div><b>256</b><span>基因面板</span></div>
-    <div><b>4</b><span>独立训练的任务</span></div>
-    <div><b data-stat="methods">—</b><span>对照方法</span></div>
-    <div><b data-stat="rows">—</b><span>已发布指标行</span></div>
-  </div>
-</section>
-
-<section id="how" class="block">
-  <div class="wrap">
-    <p class="kicker">01 · 原理</p>
-    <h2>一个闭环：提案、训练、复验、晋级。</h2>
-    <p class="sub">nanoBrain 不是 Brain World Model 的缩小版，而是它的试验台：新的架构、目标和采样策略先在可控的数据上被证伪或证实，有用的想法再搬到大规模训练。</p>
-    <ol class="loop">
-      <li><span class="n">1</span><h3>架构即 JSON 图</h3><p>主干、速度场、任务头都是有向无环图：≤32 节点，节点来自已注册组件（scBrain SwiGLU、scFiT attention、Harmony、BBKNN…），非法连接在构建前被拒绝。</p></li>
-      <li><span class="n">2</span><h3>LLM 提案</h3><p>LLM 读取父架构、各任务完整指标和历史成败，提交完整图或 RFC 6902 JSON Patch，并写明改动假设与预期代价。</p></li>
-      <li><span class="n">3</span><h3>四任务独立训练</h3><p>每个候选为四个任务各训练一份权重，三颗配对 seed；非当前任务参数冻结，不从不同候选拼接分数。</p></li>
-      <li><span class="n">4</span><h3>晋级门槛</h3><p>综合分须比父代与参考模型都提高 ≥0.002，且单任务退化不超上限、每个 seed 都成功。失败方案保留记录，不传播。</p></li>
-    </ol>
-    <figure class="graph-demo">
-      <figcaption>一个候选架构片段（Graph V2）</figcaption>
-<pre><code>{ "id": "swiglu",  "kind": "operation", "name": "scbrain_ffn",
-  "inputs": ["normalized"], "params": { "expansion": 2.67, "dropout": 0.05 },
-  "repeat": 2 }</code></pre>
-    </figure>
-  </div>
-</section>
-
-<section id="tasks" class="block alt">
-  <div class="wrap">
-    <p class="kicker">02 · 任务</p>
-    <h2>四个问题，覆盖虚拟细胞的核心能力。</h2>
-    <div class="tasks">
-      <article data-task="annotation"><i></i><h3>细胞注释</h3><p>从表达向量识别细胞类型。类别极不均衡，主指标用 Macro F1，稀有类型与常见类型等权。</p><dl><dt>主指标</dt><dd>Macro F1 ↑</dd></dl></article>
-      <article data-task="integration"><i></i><h3>数据整合</h3><p>去除批次差异，同时保留生物信号。只做批次对抗会丢信息，因此整合目标内置表达重建。</p><dl><dt>主指标</dt><dd>Integration composite ↑</dd></dl></article>
-      <article data-task="development"><i></i><h3>发育预测</h3><p>给定来源群体和年龄间隔，预测目标时间点的细胞群体分布（非配对横截面数据）。</p><dl><dt>主指标</dt><dd>Population MSE ↓</dd></dl></article>
-      <article data-task="spatial_niche"><i></i><h3>空间生态位</h3><p>理解细胞所处的空间邻域。当前榜单沿用旧协议，以解剖区域标签作代理衡量聚类一致性；V3 已改为邻域组成预测。</p><dl><dt>主指标</dt><dd>ARI ↑</dd></dl></article>
+    <div class="stats" id="stats">
+      <div><b>100k</b><span>冻结细胞</span></div>
+      <div><b>60/20/20</b><span>train · val · test（千）</span></div>
+      <div><b>256</b><span>基因面板</span></div>
+      <div><b>4</b><span>独立训练的任务</span></div>
+      <div><b data-stat="methods">—</b><span>对照方法</span></div>
+      <div><b data-stat="rows">—</b><span>已发布指标</span></div>
     </div>
   </div>
 </section>
 
-<section id="board" class="block">
+<section id="how" class="block alt">
   <div class="wrap">
-    <p class="kicker">03 · 排行榜</p>
-    <h2>同一份数据、同一套评估器。</h2>
-    <p class="sub">冻结测试集上的方法级结果，每个方法只在其原生适用的任务上参评。</p>
-    <div class="note"><b>如何读这张表</b>测试集标签已于 2026-09-16 公开，这些分数是描述性的历史结果，不是新的盲测。各方法训练方式与运行次数不同，比较前请看每行的协议说明（点击行展开）。</div>
-    <div class="board-ctl">
-      <div class="tabs" role="tablist" id="task-tabs"></div>
-      <label class="sel">指标 <select id="metric-sel"></select></label>
+    <p class="kicker">原理</p>
+    <h2>提案、训练、复验、晋级。</h2>
+    <p class="sub">nanoBrain 不是 Brain World Model 的缩小版，而是它的试验台：新架构、新目标先在可控的数据上被证实或证伪，有用的想法再搬去大规模训练。</p>
+    <div class="steps">
+      <div class="card"><span class="n">01</span><b>架构即 JSON 图</b><p>主干、速度场、任务头都是 ≤32 节点的有向无环图，节点来自已注册组件，非法连接在构建前被拒绝。</p></div>
+      <div class="card"><span class="n">02</span><b>LLM 提案</b><p>读取父架构、各任务完整指标和历史成败，提交完整图或 JSON Patch，并写明改动假设与代价。</p></div>
+      <div class="card"><span class="n">03</span><b>独立训练</b><p>每个候选为四个任务各训一份权重、三颗配对 seed；不从不同候选拼接各任务的最好分数。</p></div>
+      <div class="card"><span class="n">04</span><b>晋级门槛</b><p>综合分须比父代和参考模型都高 ≥0.002，单任务退化不超上限，每个 seed 都成功。</p></div>
+    </div>
+    <figure class="card loop-fig" aria-label="演化闭环示意图">
+      <svg viewBox="0 0 960 200">
+        <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="ar" d="M0,0 L8,4 L0,8 z"/></marker></defs>
+        <g class="nd"><rect x="10" y="40" width="150" height="64" rx="12"/><text x="85" y="68">父架构</text><text class="s" x="85" y="88">JSON 计算图</text></g>
+        <g class="nd hot"><rect x="200" y="40" width="150" height="64" rx="12"/><text x="275" y="68">LLM 提案</text><text class="s" x="275" y="88">完整图 / JSON Patch</text></g>
+        <g class="nd"><rect x="390" y="40" width="150" height="64" rx="12"/><text x="465" y="68">构建前校验</text><text class="s" x="465" y="88">形状 · 连接 · 血缘</text></g>
+        <g class="nd"><rect x="580" y="40" width="160" height="64" rx="12"/><text x="660" y="68">4 任务 × 3 seeds</text><text class="s" x="660" y="88">独立权重，同一预算</text></g>
+        <g class="nd hot"><rect x="780" y="40" width="170" height="64" rx="12"/><text x="865" y="68">统一评估 + 门槛</text><text class="s" x="865" y="88">≥0.002 且无超限退化</text></g>
+        <path class="lk" d="M160 72 H198" marker-end="url(#ah)"/>
+        <path class="lk" d="M350 72 H388" marker-end="url(#ah)"/>
+        <path class="lk" d="M540 72 H578" marker-end="url(#ah)"/>
+        <path class="lk" d="M740 72 H778" marker-end="url(#ah)"/>
+        <path class="lk back" d="M865 104 V160 H85 V106" marker-end="url(#ah)"/>
+        <text class="s" x="475" y="182">通过：成为新的父代　·　未通过：保留父代，失败原因写进下一轮提示</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<section id="tasks" class="block">
+  <div class="wrap">
+    <p class="kicker">任务</p>
+    <h2>四个问题，覆盖虚拟细胞的核心能力。</h2>
+    <p class="sub">每个方法只在它原生适用的任务上参评。指标随协议演进，当前榜单与 V3 协议分别列出。</p>
+    <div class="table-wrap">
+      <table class="board tasks">
+        <thead><tr><th>任务</th><th>预测什么</th><th>当前榜单主指标</th><th class="hide-sm">V3 协议</th></tr></thead>
+        <tbody>
+          <tr><td>细胞注释</td><td>中心细胞的细胞类型（类别极不均衡）</td><td class="m">Macro F1 ↑</td><td class="hide-sm">Macro F1 ↑</td></tr>
+          <tr><td>数据整合</td><td>去除批次差异、同时保留生物信号的表征</td><td class="m">Integration composite ↑</td><td class="hide-sm">scIB 单项分别报告</td></tr>
+          <tr><td>发育预测</td><td>给定来源群体与年龄间隔，预测目标群体的分布</td><td class="m">Population MSE ↓</td><td class="hide-sm">W₂ 距离 ↓</td></tr>
+          <tr><td>空间生态位</td><td>细胞所处的空间邻域</td><td class="m">ARI ↑<small>以解剖区域作代理</small></td><td class="hide-sm">邻域组成 MAE ↓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="board" class="block alt">
+  <div class="wrap">
+    <p class="kicker">排行榜</p>
+    <h2>同一份数据，同一套评估器。</h2>
+    <p class="sub">冻结测试集上的方法级结果。点击一行查看该方法的训练方式与评估说明。</p>
+    <div class="note"><b>如何读这张表</b>测试标签已于 2026-09-16 公开，这些是描述性的历史结果，不是新的盲测；各方法的训练方式与运行次数不同，比较前请看每行的说明。</div>
+    <div class="ctl">
+      <div class="seg" role="tablist" id="task-tabs"></div>
+      <label class="sel"><select id="metric-sel" aria-label="指标"></select></label>
     </div>
     <div class="table-wrap">
       <table class="board" id="board-table">
-        <thead><tr><th class="r">#</th><th>方法</th><th class="hide-sm">类别 · 训练方式</th><th class="score-h">分数</th><th class="r hide-sm">SD</th><th class="r hide-sm">Runs</th></tr></thead>
+        <thead><tr><th class="r">#</th><th>方法</th><th class="hide-sm">类别 · 训练方式</th><th>分数</th><th class="r hide-sm">SD</th><th class="r hide-sm">Runs</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -103,53 +118,39 @@
   </div>
 </section>
 
-<section id="evolution" class="block alt">
+<section id="evolution" class="block">
   <div class="wrap">
-    <p class="kicker">04 · 演化</p>
-    <h2>参数量与性能：历史演化候选。</h2>
-    <p class="sub">2026-09 首轮架构演化的候选在 validation 上的成绩，每个点是一个单 seed、150–300 步的短预算训练。横轴为训练回执记录的参数量（对数），线连接 Pareto 前沿。</p>
-    <div class="note warn"><b>不要和排行榜直接比较</b>这些点来自 validation、短预算、单 seed，且发育指标的尺度与测试榜不同；它们说明搜索在探索什么，而不是谁更强。</div>
-    <div class="board-ctl"><div class="tabs" role="tablist" id="fr-tabs"></div></div>
-    <div class="chart" id="frontier"></div>
-    <div class="evo-facts">
-      <div><b>V1 联合训练</b><p>1 代、4 个真实 LLM 提案；最好的候选提升 0.0008，低于 0.002 门槛，按协议保留原模型。负结果同样被记录。</p></div>
-      <div><b>V2 任务独立 + 计算图</b><p>四任务分别训练；架构从固定流水线改为 JSON 计算图，可插入、删除、重排节点与跳连。</p></div>
-      <div><b>输入组件扩展</b><p>Harmony / Scanorama / BBKNN 作为冻结的数据集级输入组件，CellTypist 作为线性任务头，可被 LLM 组合。</p></div>
+    <p class="kicker">演化</p>
+    <h2>参数量与性能。</h2>
+    <p class="sub">2026-09 首轮演化的候选在 validation 上的成绩：每个点是一次单 seed、150–300 步的短训练，蓝线连接 Pareto 前沿。</p>
+    <div class="note"><b>不要和排行榜直接比较</b>这些点来自 validation、短预算、单 seed，发育指标的尺度也与测试榜不同；它们说明搜索在探索什么，不说明谁更强。</div>
+    <div class="ctl"><div class="seg" role="tablist" id="fr-tabs"></div></div>
+    <div class="panel" id="frontier"></div>
+    <div class="facts">
+      <div><b>V1 联合训练</b><p>最好的候选只提高 0.0008，低于 0.002 门槛，按协议保留原模型。负结果同样入账。</p></div>
+      <div><b>V2 独立训练 + 计算图</b><p>四任务分别训练；架构从固定流水线改为可插入、删除、重排节点与跳连的 JSON 图。</p></div>
+      <div><b>输入组件</b><p>Harmony、Scanorama、BBKNN 作为冻结的输入组件，CellTypist 作为线性任务头，由 LLM 组合。</p></div>
     </div>
   </div>
 </section>
 
-<section id="log" class="block">
+<section id="news" class="block alt">
   <div class="wrap">
-    <p class="kicker">05 · 进展</p>
-    <h2>项目时间线</h2>
-    <ol class="timeline">
-      <li class="live"><time>2026-11-03</time><div><b>V3 指标下的 50 代演化启动</b><p>每代 6 个候选 × 3 seed × 4 任务、每次 10,000 步；测试成绩参与架构选择（探索性搜索，非 holdout 结果）。运行中，结果未发布。</p></div></li>
-      <li><time>2026-11-02</time><div><b>四任务指标协议 V3</b><p>空间任务改为 Nicheformer 式邻域组成预测（MAE），发育改用 W₂ 距离，整合报告 scIB 单项。</p></div></li>
-      <li><time>2026-10-27</time><div><b>Graph V2 成为标准演化协议</b><p>合入 main；官网与排行榜服务上线，结果回执可自动提交。</p></div></li>
-      <li><time>2026-10-23</time><div><b>输入组件扩展</b><p>新增 CellTypist、Harmony、Scanorama、BBKNN 组件；全部测试 244 项通过。</p></div></li>
-      <li><time>2026-09-20</time><div><b>可组合架构 API V2</b><p>JSON 计算图、独立目标注册接口、JSON Patch 提案。</p></div></li>
-      <li><time>2026-09-17</time><div><b>首轮 LLM 演化</b><p>改进未过门槛，保留参考模型；随后改为任务独立训练流程。</p></div></li>
-      <li><time>2026-09-16</time><div><b>冻结测试评估</b><p>nanoBrain FMT 3 seeds × 2,000 步与 28 个对照方法完成测试集评估，错误行 0。</p></div></li>
-    </ol>
+    <p class="kicker">进展</p>
+    <h2>阶段性进展，最新的在最上面。</h2>
+    <p class="sub">只追加，不改写；负结果和未完成的实验也照常记录。</p>
+    <div class="feed" id="feed"></div>
   </div>
 </section>
 
-<section id="start" class="block alt">
-  <div class="wrap start-grid">
-    <div>
-      <p class="kicker">06 · 上手</p>
-      <h2>五分钟跑通一次实验。</h2>
-      <p class="sub">Linux x86_64 · Python 3.12 · <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a>。20 步只验证数据加载、反传和回执写出，不是 benchmark 预算。</p>
-      <ul class="links">
-        <li><a href="https://github.com/novaeve/nanobrain/blob/main/README_zh-CN.md" target="_blank" rel="noopener">中文 README</a></li>
-        <li><a href="https://github.com/novaeve/nanobrain/blob/main/NANOBRAIN_GRAPH_API.md" target="_blank" rel="noopener">计算图 API</a></li>
-        <li><a href="https://github.com/novaeve/nanobrain/blob/main/benchmarks/nanobrain_v3_100k/LEADERBOARD.md" target="_blank" rel="noopener">完整排行榜与 CSV</a></li>
-        <li><a href="https://github.com/novaeve/nanobrain/blob/main/docs/custom-model.md" target="_blank" rel="noopener">接入自己的模型</a></li>
-      </ul>
-    </div>
-    <div class="term">
-      <div class="term-bar"><span></span><span></span><span></span><button class="copy" type="button" data-copy="qs">复制</button></div>
+<section id="start" class="block">
+  <div class="wrap">
+    <p class="kicker">上手</p>
+    <h2>五分钟跑通一次实验。</h2>
+    <p class="sub">Linux x86_64 · Python 3.12 · uv。20 步只验证数据加载、反传与回执写出，不是 benchmark 预算。</p>
+    <div class="start">
+      <div class="term">
+        <div class="term-bar"><span></span><span></span><span></span><em class="t">zsh</em><button class="copy" type="button" data-copy="qs">复制</button></div>
 <pre id="qs"><code>git clone https://github.com/novaeve/nanobrain.git && cd nanobrain
 wget https://github.com/novaeve/nanobrain/releases/download/v1.0.0-data/nanobrain-v3-100k-metadata-v2.zip
 unzip nanobrain-v3-100k-metadata-v2.zip -d assets/
@@ -159,12 +160,24 @@ uv run python scripts/train_nanobrain.py \
   --data assets/nanobrain_v3_100k_metadata_v2 \
   --task annotation --steps 20 --batch-size 16 \
   --device cpu --precision fp32 --output results/annotation-smoke</code></pre>
-    </div>
-    <div class="submit">
-      <h3>提交结果</h3>
-      <p>训练回执可直接推送到排行榜服务，服务追加记录并原子重建 <code>leaderboard.json</code>。</p>
-<pre><code>python3 scripts/submit_leaderboard.py results/receipt.json \
+      </div>
+      <div class="card">
+        <b>文档</b>
+        <p>从数据、任务到自定义模型。</p>
+        <ul class="links">
+          <li><a href="https://github.com/novaeve/nanobrain/blob/main/README_zh-CN.md" target="_blank" rel="noopener">中文 README</a></li>
+          <li><a href="https://github.com/novaeve/nanobrain/blob/main/NANOBRAIN_GRAPH_API.md" target="_blank" rel="noopener">计算图 API</a></li>
+          <li><a href="https://github.com/novaeve/nanobrain/blob/main/benchmarks/nanobrain_v3_100k/LEADERBOARD.md" target="_blank" rel="noopener">完整排行榜与 CSV</a></li>
+          <li><a href="https://github.com/novaeve/nanobrain/blob/main/docs/custom-model.md" target="_blank" rel="noopener">接入自己的模型</a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <b>提交结果</b>
+        <p>训练回执推送到排行榜服务后，服务追加记录并原子重建 <code>leaderboard.json</code>。</p>
+<pre><code>python3 scripts/submit_leaderboard.py \
+  results/receipt.json \
   --endpoint http://&lt;host&gt;:4173/api/submit</code></pre>
+      </div>
     </div>
   </div>
 </section>
@@ -178,6 +191,6 @@ uv run python scripts/train_nanobrain.py \
   </div>
 </footer>
 
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
