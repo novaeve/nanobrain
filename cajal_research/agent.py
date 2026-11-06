@@ -1,6 +1,7 @@
 """Adapted from nanoBrain ReAct: inspect → write → sandbox-validate → submit."""
 
 import json
+from contextlib import nullcontext
 
 from .contracts import (
     BALANCER_RANGES,
@@ -133,9 +134,10 @@ TOOLS = [
 
 
 class ToolSession:
-    def __init__(self, store, baseline, validator, parents, seen, origin, submission):
+    def __init__(self, store, baseline, validator, parents, seen, origin, submission, seen_lock=None):
         self.store, self.baseline, self.validator = store, baseline, validator
-        self.parents, self.seen, self.origin = parents, set(seen), origin
+        self.parents, self.seen, self.origin = parents, set(seen) if seen_lock is None else seen, origin
+        self.seen_lock = seen_lock
         self.submission = submission
         self.staged, self.validated = set(), set()
         self.submitted, self.validation_attempts = None, 0
@@ -208,9 +210,12 @@ class ToolSession:
             return {"node": self.store.node(identifier), "parent_ids": self.store.bundle(identifier)["parent_ids"]}
         if name == "write_candidate":
             validate_bundle(args["bundle"], self.parents)
-            if semantic_id(args["bundle"]) in self.seen:
-                raise ValueError("semantic duplicate; metadata/comments are not mutations")
-            identifier = self.store.stage(args["bundle"], self.parents, self.origin)
+            with self.seen_lock or nullcontext():
+                semantic = semantic_id(args["bundle"])
+                if semantic in self.seen:
+                    raise ValueError("semantic duplicate; metadata/comments are not mutations")
+                identifier = self.store.stage(args["bundle"], self.parents, self.origin)
+                self.seen.add(semantic)
             self.staged.add(identifier)
             return {"candidate_id": identifier}
         identifier = args["candidate_id"]

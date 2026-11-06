@@ -1,17 +1,30 @@
 """Content addressed immutable bundles and a complete, untruncated research DAG."""
 
 import json
+import threading
+from functools import wraps
 from pathlib import Path
 
 from .contracts import METRICS, digest, save, validate_bundle
 
 
+def locked(method):
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        with self.lock:
+            return method(self, *args, **kwargs)
+
+    return call
+
+
 class Store:
     def __init__(self, root):
+        self.lock = threading.RLock()
         self.root = Path(root)
         self.candidates = self.root / "candidates"
         self.candidates.mkdir(parents=True, exist_ok=True)
 
+    @locked
     def stage(self, bundle, parents=None, origin=None):
         validate_bundle(bundle, parents)
         identifier = digest(bundle)
@@ -23,6 +36,7 @@ class Store:
             save(p.with_name("origin.json"), origin or {})
         return identifier
 
+    @locked
     def resolve(self, identifier):
         if (
             not isinstance(identifier, str)
@@ -35,6 +49,7 @@ class Store:
             raise ValueError("unknown or ambiguous artifact reference")
         return matches[0]
 
+    @locked
     def bundle(self, identifier):
         identifier = self.resolve(identifier)
         b = json.loads((self.candidates / identifier / "bundle.json").read_text())
@@ -42,6 +57,7 @@ class Store:
             raise ValueError("candidate artifact was mutated")
         return b
 
+    @locked
     def put(self, identifier, kind, value):
         self.bundle(identifier)
         if kind not in ("validation", "result"):
@@ -52,6 +68,7 @@ class Store:
         if not p.exists():
             save(p, value)
 
+    @locked
     def node(self, identifier):
         b = self.bundle(identifier)
         folder = self.candidates / identifier
@@ -63,9 +80,11 @@ class Store:
             status = json.loads((folder / "validation.json").read_text())["status"]
         return dict(candidate_id=identifier, parent_ids=b["parent_ids"], status=status, **origin)
 
+    @locked
     def nodes(self):
         return [self.node(p.name) for p in sorted(self.candidates.iterdir()) if (p / "bundle.json").exists()]
 
+    @locked
     def tree_summary(self):
         nodes = self.nodes()
         result, edges = [], []
@@ -93,6 +112,7 @@ class Store:
             )
         return {"complete": True, "truncated": False, "metric_order": list(METRICS), "nodes": result, "edges": edges}
 
+    @locked
     def read(self, identifier, kind, offset=0):
         identifier = self.resolve(identifier)
         self.bundle(identifier)

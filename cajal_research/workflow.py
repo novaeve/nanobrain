@@ -1,5 +1,6 @@
 """Independent Cajal campaign; no work starts until the explicit execute entrypoint."""
 
+import concurrent.futures
 import csv
 import fcntl
 import importlib.metadata
@@ -7,7 +8,8 @@ import json
 import os
 import platform
 import subprocess
-import time
+import threading
+from datetime import UTC, datetime
 from pathlib import Path
 
 from . import selection
@@ -43,6 +45,12 @@ def plan(cfg):
         "reference_evaluation": cfg["reference_evaluation"],
         "reference_trainings": 0,
         "baseline_policy": "reuse_existing_Cajal_scores_without_refitting_or_rescoring",
+        "gpu_ids": cfg["gpu_ids"],
+        "max_workers": cfg["max_workers"],
+        "per_gpu_workers": cfg["per_gpu_workers"],
+        "model": cfg["model"],
+        "reasoning_effort": cfg["reasoning_effort"],
+        "generation_policy": "parallel cohort, ordered champion decisions",
         "metrics": list(METRICS),
         "feedback": "existing Cajal held-out research evaluation sets; sealed V4 test inaccessible",
         "automatic_scaling": False,
@@ -109,25 +117,24 @@ class Workflow:
     def __init__(self, cfg, output):
         # Construction is deliberately read-only; default plan never creates an output directory.
         self.cfg, self.output = cfg, Path(output).resolve()
+        from .resources import ResourcePool
 
-    def acquire_gpu(self):
-        while True:
-            raw = subprocess.check_output(
-                ["nvidia-smi", "--query-gpu=index,memory.free", "--format=csv,noheader,nounits"], text=True
+        self.activity_lock = threading.RLock()
+        self.activity, self.status = {}, {}
+        self.cpu_slots = threading.Semaphore(cfg.get("cpu_probe_workers", 2))
+        self.resources = ResourcePool(cfg["gpu_ids"], cfg["per_gpu_workers"], cfg["resources"])
+
+    def progress(self, **fields):
+        with self.activity_lock:
+            self.status.update(fields)
+            self.status.update(
+                updated_at=datetime.now(UTC).isoformat(),
+                active_jobs=list(self.activity.values()),
+                maximum_workers=self.cfg["max_workers"],
+                gpu_ids=self.cfg["gpu_ids"],
+                per_gpu_workers=self.cfg["per_gpu_workers"],
             )
-            available = [
-                (int(row.split(",")[1]), int(row.split(",")[0]))
-                for row in raw.splitlines()
-                if int(row.split(",")[0]) in self.cfg["gpu_ids"]
-            ]
-            memory, gpu = max(available)
-            if memory >= self.cfg["minimum_free_gpu_mb"]:
-                return gpu
-            save(
-                self.output / "status.json",
-                {"status": "waiting_for_gpu", "minimum_free_mb": self.cfg["minimum_free_gpu_mb"]},
-            )
-            time.sleep(30)
+            save(self.output / "status.json", self.status)
 
     @staticmethod
     def verify_stage(directory):
@@ -144,8 +151,37 @@ class Workflow:
     def worker(self, directory, args, inputs, cpu=False):
         from .sandbox import launch
 
+        key = str(directory)
+        reserve = (
+            self.cfg["minimum_free_gpu_mb"]
+            if args[0] == "train"
+            else self.cfg["resources"]["evaluation_reservation_mb"]
+        )
+        host = 8192 if args[0] == "train" else 4096
         for attempt in range(3):
-            gpu = None if cpu else self.acquire_gpu()
+            with self.activity_lock:
+                self.activity[key] = {
+                    "directory": key,
+                    "mode": args[0],
+                    "phase": "waiting_cpu" if cpu else "waiting_gpu",
+                    "attempt": attempt + 1,
+                    "gpu": None,
+                    "reservation_mb": 0 if cpu else reserve,
+                }
+            self.progress()
+            if cpu:
+                self.cpu_slots.acquire()
+                gpu = None
+            else:
+                gpu = self.resources.acquire(key, reserve, host)
+
+            def started(pid, gpu=gpu):
+                if not cpu:
+                    self.resources.started(key, pid)
+                with self.activity_lock:
+                    self.activity[key].update(pid=pid, gpu=gpu, phase="running")
+                self.progress()
+
             try:
                 return launch(
                     ROOT,
@@ -154,19 +190,28 @@ class Workflow:
                     inputs=inputs,
                     gpu=gpu,
                     timeout=600 if cpu else self.cfg["job_timeout_seconds"],
+                    on_started=started,
                 )
             except RuntimeError as exc:
                 log = Path(directory) / "worker.log"
                 text = log.read_text(errors="replace").lower() if log.exists() else ""
-                oom = any(s in text for s in ("out of memory", "resource exhausted", "cuda_error_out_of_memory"))
+                oom = any(x in text for x in ("out of memory", "resource exhausted", "cuda_error_out_of_memory"))
                 if cpu or not oom:
                     raise
                 log.rename(log.with_name(f"oom-attempt-{attempt}.log"))
                 if attempt == 2:
                     raise InfrastructureError(
-                        "GPU OOM after three attempts; unfinished candidate preserved for resume"
+                        "GPU OOM after three attempts; candidate resource limit recorded"
                     ) from exc
-                time.sleep(30)
+                reserve = min(90112, int(reserve * 1.5))
+            finally:
+                if cpu:
+                    self.cpu_slots.release()
+                else:
+                    self.resources.release(key)
+                with self.activity_lock:
+                    self.activity.pop(key, None)
+                self.progress()
 
     def validate(self, identifier, bundle):
         folder = self.store.candidates / identifier
@@ -312,10 +357,52 @@ class Workflow:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return self._execute_locked(client)
 
-    def _execute_locked(self, client):
+    def run_proposal(self, client, generation, index, root, champion, allowed, seen, seen_lock, context):
         from .agent import ToolSession, propose
+
+        origin = {"generation": generation, "proposal": index}
+        submission = self.output / "proposals" / f"g{generation:02d}-p{index:02d}.json"
+        if submission.exists():
+            saved = json.loads(submission.read_text())
+            if saved["origin"] != origin:
+                raise ValueError("proposal origin changed")
+            identifier = saved["candidate_id"]
+            self.store.bundle(identifier)
+        else:
+            for attempt in range(3):
+                session = ToolSession(
+                    self.store, baseline(), self.validate, allowed, seen, origin, submission, seen_lock=seen_lock
+                )
+                try:
+                    propose(
+                        client,
+                        session,
+                        dict(context, generation=generation, proposal=index),
+                        reasoning=self.cfg["reasoning_effort"],
+                    )
+                    identifier = session.submitted
+                    break
+                except Exception as exc:  # noqa: BLE001 - proposal failures are persisted and credentials redacted
+                    secret = getattr(getattr(client, "config", None), "api_key", "")
+                    reason = str(exc).replace(secret, "[redacted]") if secret else str(exc)
+                    save(
+                        submission.with_suffix(f".attempt{attempt}.json"),
+                        {"status": "failed_proposal", "reason": reason[:1500]},
+                    )
+            else:
+                raise RuntimeError(f"LLM proposal g{generation:02d}-p{index:02d} failed; progress preserved")
+        return identifier, self.evaluate(identifier, generation)
+
+    def _execute_locked(self, client):
         from .store import Store
 
+        self.progress(
+            status="preflight",
+            generations=self.cfg["generations"],
+            candidates_per_generation=self.cfg["candidates_per_generation"],
+            model=self.cfg["model"],
+            reasoning_effort=self.cfg["reasoning_effort"],
+        )
         contract = {
             "protocol": self.cfg,
             "code": code_fingerprint(),
@@ -342,52 +429,60 @@ class Workflow:
             if state_path.exists()
             else {"champion": root, "generations": [], "processed": []}
         )
+        self.progress(status="evolution", completed_generations=len(state["generations"]), champion=state["champion"])
         for generation in range(1, self.cfg["generations"] + 1):
             if any(g["generation"] == generation for g in state["generations"]):
                 continue
+            nodes = self.store.nodes()
+            allowed = [n["candidate_id"] for n in nodes if n.get("status") == "complete" and n.get("all_seeds_passed")]
+            seen = {semantic_id(self.store.bundle(n["candidate_id"])) for n in nodes}
+            seen_lock = threading.Lock()
+            context = {
+                "protocol": self.cfg["protocol_id"],
+                "reference_candidate": root,
+                "current_champion": state["champion"],
+                "recommended_parents": selection.parents(nodes, self.store, best),
+                "complete_evolution_dag": self.store.tree_summary(),
+                "frozen_opponents": baseline(),
+                "generation_policy": "parallel cohort; parents and champion frozen at generation start; decisions applied in proposal order",
+            }
+            completed, failures = {}, []
+            self.progress(
+                status="evolution",
+                generation=generation,
+                phase="parallel_proposals_and_evaluation",
+                completed_candidates_in_generation=0,
+            )
+            with concurrent.futures.ThreadPoolExecutor(max_workers=self.cfg["max_workers"]) as pool:
+                futures = {
+                    pool.submit(
+                        self.run_proposal,
+                        client,
+                        generation,
+                        index,
+                        root,
+                        state["champion"],
+                        allowed,
+                        seen,
+                        seen_lock,
+                        context,
+                    ): index
+                    for index in range(self.cfg["candidates_per_generation"])
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    index = futures[future]
+                    try:
+                        completed[index] = future.result()
+                    except Exception as exc:  # noqa: BLE001 - finish other lanes and leave failed proposals resumable
+                        failures.append({"proposal": index, "error": str(exc)[:1500]})
+                    self.progress(completed_candidates_in_generation=len(completed), proposal_failures=failures)
+            if failures:
+                self.progress(status="interrupted", proposal_failures=failures)
+                raise RuntimeError("parallel proposal failed; other completed candidates preserved for resume")
             identifiers = []
+            # Completion order must not change the champion trajectory or a resumed decision.
             for index in range(self.cfg["candidates_per_generation"]):
-                origin = {"generation": generation, "proposal": index}
-                submission = self.output / "proposals" / f"g{generation:02d}-p{index:02d}.json"
-                if submission.exists():
-                    saved = json.loads(submission.read_text())
-                    if saved["origin"] != origin:
-                        raise ValueError("proposal origin changed")
-                    identifier = saved["candidate_id"]
-                else:
-                    nodes = self.store.nodes()
-                    allowed = [
-                        n["candidate_id"] for n in nodes if n.get("status") == "complete" and n.get("all_seeds_passed")
-                    ]
-                    seen = [semantic_id(self.store.bundle(n["candidate_id"])) for n in nodes]
-                    session = ToolSession(self.store, baseline(), self.validate, allowed, seen, origin, submission)
-                    context = {
-                        "protocol": self.cfg["protocol_id"],
-                        "generation": generation,
-                        "proposal": index,
-                        "reference_candidate": root,
-                        "current_champion": state["champion"],
-                        "recommended_parents": selection.parents(nodes, self.store, best),
-                        "complete_evolution_dag": self.store.tree_summary(),
-                        "frozen_opponents": baseline(),
-                    }
-                    proposal_error = None
-                    for attempt in range(3):
-                        try:
-                            propose(client, session, context, reasoning=self.cfg["reasoning_effort"])
-                            proposal_error = None
-                            break
-                        except Exception as exc:  # noqa: BLE001 - persist proposal/API failures for resume
-                            secret = getattr(getattr(client, "config", None), "api_key", "")
-                            proposal_error = str(exc).replace(secret, "[redacted]") if secret else str(exc)
-                            save(
-                                submission.with_suffix(f".attempt{attempt}.json"),
-                                {"status": "failed_proposal", "reason": proposal_error[:1500]},
-                            )
-                    if proposal_error:
-                        raise RuntimeError("LLM proposal failed; progress preserved for resume")
-                    identifier = session.submitted
-                node = self.evaluate(identifier, generation)
+                identifier, node = completed[index]
                 identifiers.append(identifier)
                 label = f"g{generation:02d}-p{index:02d}"
                 if label not in state["processed"]:
@@ -399,9 +494,12 @@ class Workflow:
                     else:
                         gate = {"passed": False, "reason": "incomplete candidate"}
                         if node["status"] == "complete":
-                            parent = self.store.node(state["champion"])
                             gate = selection.promote(
-                                node, parent, reference, best, self.store.bundle(identifier)["target_metrics"]
+                                node,
+                                self.store.node(state["champion"]),
+                                reference,
+                                best,
+                                self.store.bundle(identifier)["target_metrics"],
                             )
                         decision = {
                             "candidate_id": identifier,
@@ -413,21 +511,15 @@ class Workflow:
                     state["champion"] = decision["next_champion"]
                     state["processed"].append(label)
                 save(state_path, state)
-                save(
-                    self.output / "status.json",
-                    {
-                        "status": "evolution",
-                        "generation": generation,
-                        "proposal": index,
-                        "champion": state["champion"],
-                        "completed_generations": len(state["generations"]),
-                    },
-                )
             state["generations"].append(
                 {"generation": generation, "candidates": identifiers, "champion": state["champion"]}
             )
             save(state_path, state)
+            self.progress(
+                completed_generations=len(state["generations"]), champion=state["champion"], phase="generation_complete"
+            )
         self.report(state, root)
+        self.progress(status="complete", completed_generations=len(state["generations"]), phase="complete")
         return state
 
     def report(self, state, root):

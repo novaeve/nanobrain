@@ -2,8 +2,8 @@
   "protocol_id": "CAJAL-V1-JOINT-REACT-SINGLE-SEED-MERGED-20261106",
   "status": "prepared_not_started",
   "reference_recipe": "configs/experiments/cajal_v1.toml",
-  "generations": 50,
-  "candidates_per_generation": 6,
+  "generations": 30,
+  "candidates_per_generation": 10,
   "seeds": [
     0
   ],
@@ -20,7 +20,7 @@
   },
   "model": "gpt-6.1-sol",
   "reasoning_effort": "max",
-  "api_env_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/.env",
+  "api_env_file": "/mnt/aliyunsb/zim_rider/nanobrain/try/cajal-react-joint-20261106/.env",
   "gpu_ids": [
     0,
     1,
@@ -28,8 +28,8 @@
     3,
     4
   ],
-  "max_workers": 1,
-  "minimum_free_gpu_mb": 65536,
+  "max_workers": 10,
+  "minimum_free_gpu_mb": 32768,
   "job_timeout_seconds": 86400,
   "scaling_enabled": false,
   "trusted_teachers": {
@@ -39,5 +39,12 @@
       "role": "Cajal existing train-only cell-type teacher"
     }
   },
-  "reference_evaluation": "reuse_existing_cajal_v1_10000"
+  "reference_evaluation": "reuse_existing_cajal_v1_10000",
+  "per_gpu_workers": 2,
+  "cpu_probe_workers": 2,
+  "resources": {
+    "evaluation_reservation_mb": 8192,
+    "gpu_memory_margin_mb": 4096,
+    "minimum_host_available_mb": 32768
+  }
 }

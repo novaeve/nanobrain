@@ -117,8 +117,10 @@ def load_config(path=None):
         raise ValueError("fixed-stop Cajal evaluation; no automatic scaling in this protocol")
     if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(5) for g in cfg["gpu_ids"]):
         raise ValueError("GPU whitelist is 0..4")
-    if cfg["max_workers"] != 1:
-        raise ValueError("prepared scheduler has one active Cajal worker; edit protocol implementation before widening")
+    if type(cfg["max_workers"]) is not int or not 1 <= cfg["max_workers"] <= 10:
+        raise ValueError("candidate concurrency must be between 1 and 10")
+    if cfg["per_gpu_workers"] not in (1, 2) or cfg["max_workers"] > len(cfg["gpu_ids"]) * cfg["per_gpu_workers"]:
+        raise ValueError("candidate concurrency exceeds the authorized per-GPU slots")
     return cfg
 
 

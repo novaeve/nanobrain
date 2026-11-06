@@ -64,7 +64,7 @@ def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
     doc = json.loads(capsys.readouterr().out)
     assert doc["status"] == "prepared_not_started"
     assert not doc["llm_called"] and not doc["real_training_started"]
-    assert doc["joint_trainings_per_generation"] == 6
+    assert doc["joint_trainings_per_generation"] == 10
     assert doc["maximum_joint_trainings"] == 300
     assert doc["reference_trainings"] == 0
     assert doc["seeds"] == [0] and doc["seed_count"] == 1

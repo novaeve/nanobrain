@@ -132,7 +132,7 @@ def clean_environment():
     return {"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8"}
 
 
-def launch(root, output, arguments, *, inputs=(), gpu=None, timeout=600):
+def launch(root, output, arguments, *, inputs=(), gpu=None, timeout=600, on_started=None):
     output = Path(output)
     args = command(root, output, arguments, inputs=inputs, gpu=gpu)
     with (output / "worker.log").open("w") as log:
@@ -140,6 +140,8 @@ def launch(root, output, arguments, *, inputs=(), gpu=None, timeout=600):
             args, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=clean_environment()
         )
         try:
+            if on_started is not None:
+                on_started(p.pid)
             code = p.wait(timeout=timeout)
         except BaseException:
             try:
