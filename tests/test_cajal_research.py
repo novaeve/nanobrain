@@ -693,3 +693,24 @@ def test_available_components_preserve_masked_spatial_causality():
             a = model.neighborhood(z, rel, masked, pad)
             b = model.neighborhood(changed, rel, masked, pad)
         assert torch.allclose(a[:, 0], b[:, 0]), row["id"]
+
+
+def test_sandbox_username_allows_torch_compile_initialization(tmp_path):
+    import subprocess
+
+    from cajal_research.sandbox import clean_environment, command
+
+    args = command(C.ROOT, tmp_path / "worker", [])
+    separator = args.index("--")
+    python = args[separator + 1]
+    code = (
+        "import getpass, torch; "
+        "assert getpass.getuser() == 'cajal-worker'; "
+        "torch.compile(torch.nn.Linear(2, 2)); "
+        "print('sandbox compile initialization passed')"
+    )
+    args[separator:] = ["--", python, "-B", "-c", code]
+    result = subprocess.run(
+        args, env=clean_environment(), capture_output=True, text=True, timeout=120, check=True
+    )
+    assert "sandbox compile initialization passed" in result.stdout

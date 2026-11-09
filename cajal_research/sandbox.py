@@ -85,6 +85,8 @@ def command(root, output, arguments, *, inputs=(), gpu=None):
     env = {
         "PATH": "/usr/local/cuda-13.0/bin:/usr/bin:/bin",
         "HOME": "/tmp",
+        "USER": "cajal-worker",
+        "LOGNAME": "cajal-worker",
         "TMPDIR": "/tmp",
         "PYTHONPATH": str(root),
         "PYTHONDONTWRITEBYTECODE": "1",
