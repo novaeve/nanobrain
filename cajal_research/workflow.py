@@ -19,6 +19,7 @@ from .contracts import (
     digest,
     reference_bundle,
     reference_document,
+    resolved_document,
     save,
     semantic_id,
     sha,
@@ -33,6 +34,8 @@ def plan(cfg):
         "initial_candidate": reference_bundle(),
         "reference_config": reference_document(cfg),
         "training": "one shared Cajal model, all five objectives, per seed",
+        "weight_policy": cfg["weight_policy"],
+        "external_weight_dependencies": [],
         "seeds": cfg["seeds"],
         "seed_count": len(cfg["seeds"]),
         "uncertainty_estimated": False,
@@ -100,11 +103,8 @@ def input_fingerprint(cfg):
     for name, expected in json.loads((ROOT / "reference/input_fingerprints.json").read_text()).items():
         if name not in result or result[name] != expected:
             raise ValueError("Cajal data manifest or path changed since preparation")
-    for name, teacher in cfg.get("trusted_teachers", {}).items():
-        actual = sha(teacher["path"])
-        if actual != teacher["sha256"]:
-            raise ValueError("frozen Cajal teacher artifact changed")
-        result["teacher:" + name] = {"path": teacher["path"], "sha256": actual}
+    if cfg.get("trusted_teachers"):
+        raise ValueError("historical teacher weights cannot be inputs to independent training")
     result["existing_reference"] = load(cfg)["artifact_hashes"]
     return result
 
@@ -256,10 +256,15 @@ class Workflow:
             from .existing_reference import seed_result
 
             return seed_result(self.cfg, identifier, seed)
+        from .training_policy import validate_identity
+
+        bundle = self.store.bundle(identifier)
+        validate_bundle(bundle)
         folder = self.output / "jobs" / identifier / str(seed)
         result_path = folder / "result.json"
         if result_path.exists():
             result = json.loads(result_path.read_text())
+            validate_identity(result, bundle, self.cfg, seed)
             for name, expected in result["artifact_hashes"].items():
                 if sha(Path(name)) != expected:
                     raise ValueError("completed result artifact changed")
@@ -272,18 +277,13 @@ class Workflow:
             if receipt.get("status") != "complete" or receipt.get("seed") != seed:
                 raise ValueError("incompatible cached training receipt")
         else:
-            bundle = self.store.bundle(identifier)
-            teacher_paths = [
-                Path(self.cfg["trusted_teachers"][s["teacher"]]["path"])
-                for s in bundle["train"].get("objectives", [])
-                if s["name"] == "teacher_gram"
-            ]
             self.worker(
                 train_dir,
                 ["train", "--bundle", str(bundle_path), "--seed", str(seed)],
-                [bundle_path, Path(self.cfg["data"]["pretrain"]), *teacher_paths],
+                [bundle_path, Path(self.cfg["data"]["pretrain"])],
             )
-        self.verify_stage(train_dir)
+        receipt = self.verify_stage(train_dir)
+        validate_identity(receipt, bundle, self.cfg, seed)
         checkpoint = train_dir / "train/latest.pt"
         artifacts = {str(checkpoint): sha(checkpoint), str(train_receipt): sha(train_receipt)}
         metrics = {}
@@ -326,6 +326,9 @@ class Workflow:
             "candidate_id": identifier,
             "checkpoint_sha256": artifacts[str(checkpoint)],
             "joint_model_count": 1,
+            "weight_policy": self.cfg["weight_policy"],
+            "external_weight_dependencies": [],
+            "training_identity": receipt["training_identity"],
             "training_parameters": json.loads(train_receipt.read_text()).get("record", {}).get("config", {}),
         }
         # The same checkpoint supplies ALL task predictions; no task-wise model selection.
@@ -583,6 +586,9 @@ class Workflow:
             {
                 "candidate_id": state["champion"],
                 "bundle": self.store.bundle(state["champion"]),
+                "resolved_training_config": resolved_document(self.store.bundle(state["champion"]), self.cfg, 0),
+                "weight_policy": self.cfg["weight_policy"],
+                "external_weight_dependencies": [],
                 "result": self.store.node(state["champion"]),
                 "reference_candidate": root,
                 "improvement_found": state["champion"] != root,

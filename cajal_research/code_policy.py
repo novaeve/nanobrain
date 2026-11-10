@@ -108,6 +108,8 @@ FUNCTIONAL = {
 FORBIDDEN_ATTRS = {
     "save",
     "load",
+    "load_state_dict",
+    "from_pretrained",
     "storage",
     "untyped_storage",
     "data_ptr",
