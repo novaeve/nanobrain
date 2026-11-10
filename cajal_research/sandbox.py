@@ -110,8 +110,8 @@ def command(root, output, arguments, *, inputs=(), gpu=None):
         "TRANSFORMERS_OFFLINE": "1",
     }
     if gpu is not None:
-        if type(gpu) is not int or gpu not in range(8):
-            raise ValueError("GPU whitelist is 0..7")
+        if type(gpu) is not int or gpu not in range(7):
+            raise ValueError("GPU whitelist is 0..6; GPU 7 is excluded by the user")
         for name in ("nvidiactl", "nvidia-uvm", "nvidia-uvm-tools", f"nvidia{gpu}"):
             p = Path("/dev") / name
             if p.exists():

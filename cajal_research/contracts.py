@@ -117,8 +117,8 @@ def load_config(path=None):
         raise ValueError("this revision uses the existing Cajal seed 0 only")
     if cfg["checkpoint_selection"] != "fixed_stop" or cfg["scaling_enabled"]:
         raise ValueError("fixed-stop Cajal evaluation; no automatic scaling in this protocol")
-    if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(8) for g in cfg["gpu_ids"]):
-        raise ValueError("GPU whitelist is 0..7")
+    if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(7) for g in cfg["gpu_ids"]):
+        raise ValueError("GPU whitelist is 0..6; GPU 7 is excluded by the user")
     if len(set(cfg["gpu_ids"])) != len(cfg["gpu_ids"]):
         raise ValueError("GPU IDs must be unique")
     if type(cfg["max_workers"]) is not int or not 1 <= cfg["max_workers"] <= 16:

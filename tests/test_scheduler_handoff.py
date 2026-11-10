@@ -41,7 +41,7 @@ def stage_plan(tmp_path):
 def test_sixteen_slot_config_preserves_existing_scientific_settings(tmp_path):
     cfg = C.load_config()
     assert cfg["max_workers"] == 16 and cfg["per_gpu_workers"] == 3
-    assert cfg["gpu_ids"] == list(range(8))
+    assert cfg["gpu_ids"] == list(range(7))
     assert cfg["cpu_probe_workers"] == 4 and cfg["task_evaluation_workers"] == 2
     assert cfg["generations"] == 30 and cfg["candidates_per_generation"] == 10
     assert cfg["stop_at"] == 10000 and cfg["seeds"] == [0]
@@ -49,7 +49,7 @@ def test_sixteen_slot_config_preserves_existing_scientific_settings(tmp_path):
     for key, value in [
         ("max_workers", 17),
         ("per_gpu_workers", 4),
-        ("gpu_ids", [8]),
+        ("gpu_ids", [7]),
         ("cpu_probe_workers", 9),
         ("task_evaluation_workers", 5),
     ]:
@@ -99,3 +99,40 @@ def test_handoff_cannot_mount_other_campaign_jobs(tmp_path, monkeypatch):
     C.save(path, plan)
     with pytest.raises(ValueError, match="outside this campaign"):
         Workflow(C.load_config(), tmp_path)
+
+
+def test_a_live_worker_on_gpu7_cannot_be_adopted(tmp_path):
+    stage_plan(tmp_path)
+    path = tmp_path / "scheduler-handoff.json"
+    plan = json.loads(path.read_text())
+    plan["stages"][0]["gpu"] = 7
+    C.save(path, plan)
+    with pytest.raises(ValueError, match="GPU is not authorized"):
+        Workflow(C.load_config(), tmp_path)
+
+
+@pytest.mark.parametrize("second_state", ["T", "R"])
+def test_nested_handoffs_retire_only_verified_paused_controller_keepers(tmp_path, monkeypatch, second_state):
+    from types import SimpleNamespace
+
+    real_path = H.Path
+
+    def path(value):
+        if str(value).startswith("/proc/"):
+            state = second_state if "/888/" in str(value) else "T"
+            return SimpleNamespace(read_text=lambda: f"999 (python) {state}")
+        return real_path(value)
+
+    monkeypatch.setattr(H, "Path", path)
+    monkeypatch.setattr(H, "process_start", lambda pid: "keeper" if pid in [999, 888] else "reused-pid")
+    killed = []
+    monkeypatch.setattr(H.os, "kill", lambda pid, sig: killed.append(pid))
+    parents = [{"pid": pid, "process_start": "keeper"} for pid in [999, 888, 777]]
+    plan = {"stages": [], "previous_controller": parents[0], "previous_controllers": parents}
+    if second_state == "R":
+        with pytest.raises(ValueError, match="explicitly paused"):
+            H.retire_parent(tmp_path, plan)
+        assert killed == []
+    else:
+        H.retire_parent(tmp_path, plan)
+        assert sorted(killed) == [888, 999] and plan["retired_controller_pids"] == [888, 999]

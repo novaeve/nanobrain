@@ -89,11 +89,19 @@ def _retire_parent(output, plan):
             and process_start(stage["pid"]) == stage["process_start"]
         ):
             return
-    parent = plan["previous_controller"]
-    if process_start(parent["pid"]) == parent["process_start"]:
-        state = Path(f"/proc/{parent['pid']}/stat").read_text().rsplit(")", 1)[1].split()[0]
-        if state not in {"T", "t"}:
-            raise ValueError("retire only the explicitly paused previous scheduler")
-        os.kill(parent["pid"], signal.SIGKILL)
+    parents = plan.get("previous_controllers") or [plan["previous_controller"]]
+    paused = set()
+    for parent in parents:
+        if process_start(parent["pid"]) == parent["process_start"]:
+            state = Path(f"/proc/{parent['pid']}/stat").read_text().rsplit(")", 1)[1].split()[0]
+            if state not in {"T", "t"}:
+                raise ValueError("retire only the explicitly paused previous scheduler")
+            paused.add(parent["pid"])
+    for pid in paused:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    plan["retired_controller_pids"] = sorted(paused)
     plan["parent_retired_at"] = datetime.now(UTC).isoformat()
     save(Path(output) / "scheduler-handoff.json", plan)
