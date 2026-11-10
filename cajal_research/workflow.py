@@ -123,6 +123,9 @@ class Workflow:
         self.activity, self.status = {}, {}
         self.cpu_slots = threading.Semaphore(cfg.get("cpu_probe_workers", 2))
         self.resources = ResourcePool(cfg["gpu_ids"], cfg["per_gpu_workers"], cfg["resources"])
+        from .handoff import load_handoff
+
+        self.adopted_stages, self.stage_reservations, self.handoff_plan = load_handoff(self.output, self.resources)
 
     def progress(self, **fields):
         with self.activity_lock:
@@ -158,7 +161,10 @@ class Workflow:
             else self.cfg["resources"]["evaluation_reservation_mb"]
         )
         host = 8192 if args[0] == "train" else 4096
-        for attempt in range(3):
+        adopted = self.adopted_stages.pop(key, None)
+        previous = self.stage_reservations.get(key, {})
+        reserve = max(reserve, previous.get("reservation_mb", 0))
+        for attempt in range(max(0, previous.get("attempt", 1) - 1), 3):
             with self.activity_lock:
                 self.activity[key] = {
                     "directory": key,
@@ -169,7 +175,12 @@ class Workflow:
                     "reservation_mb": 0 if cpu else reserve,
                 }
             self.progress()
-            if cpu:
+            if adopted:
+                gpu = adopted["gpu"]
+                with self.activity_lock:
+                    self.activity[key].update(pid=adopted["pid"], gpu=gpu, phase="running", adopted=True)
+                self.progress()
+            elif cpu:
                 self.cpu_slots.acquire()
                 gpu = None
             else:
@@ -183,6 +194,10 @@ class Workflow:
                 self.progress()
 
             try:
+                if adopted:
+                    from .handoff import wait_for_stage
+
+                    return wait_for_stage(adopted, args, self.verify_stage, self.cfg["job_timeout_seconds"])
                 return launch(
                     ROOT,
                     directory,
@@ -212,6 +227,11 @@ class Workflow:
                 with self.activity_lock:
                     self.activity.pop(key, None)
                 self.progress()
+                if adopted:
+                    from .handoff import retire_parent
+
+                    retire_parent(self.output, self.handoff_plan)
+                    adopted = None
 
     def validate(self, identifier, bundle):
         folder = self.store.candidates / identifier

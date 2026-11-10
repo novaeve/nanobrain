@@ -1,6 +1,6 @@
 # Cajal v1 + ReAct：合并组件库，单 seed，开放训练参数
 
-2026-11-06 修订。已获用户授权启动 30 代、每代 10 候选、10 并发；实际进度以 research-runs/cajal-react/status.json 为准。
+2026-11-06 修订。已获用户授权启动 30 代、每代 10 候选、12 并发；实际进度以 research-runs/cajal-react/status.json 为准。
 配置见 `configs/cajal_react.json`，完整范围由 `cajal_research/contracts.py` 和候选 schema 定义。
 
 ## 种子架构与数据
@@ -112,7 +112,7 @@ Schema、参数和源码检查后，bwrap CPU 沙箱做合成五目标梯度、�
 不限制插件/文件数量。初始候选不启用替换，参数/前向与原 Cajal 一致。
 
 单 seed 晋级使用预先声明的 0.005 工程改善/退化门槛和 joint-frontier 排序，不作显著性推断。
-六项指标必须完整且有限；资源不足单独记录，不用零补成绩。最多 10 个并行候选，GPU 0–4 每卡最多 2 个 worker。训练任务预留 32GiB，评估任务预留 8GiB，另留每卡 4GiB 余量；预留与实际显存占用共同决定准入，资源不足自动排队。同代父代池冻结，晋级决定按候选序号应用；恢复复用已完成的提案和结果。恢复核对代码、配置、输入、教师和结果，不重复已完成工作。
+六项指标必须完整且有限；资源不足单独记录，不用零补成绩。最多 12 个调度 worker，GPU 0–4 每卡最多 3 个 worker；每代仍为 10 个候选，实际还受候选数量与显存限制。训练任务预留 32GiB，评估任务预留 8GiB，另留每卡 4GiB 余量；预留与实际显存占用共同决定准入，资源不足自动排队。同代父代池冻结，晋级决定按候选序号应用；恢复复用已完成的提案和结果。恢复核对代码、配置、输入、教师和结果，不重复已完成工作。
 
 ## 查看与验证
 
@@ -125,3 +125,5 @@ CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q 
 `preparation/verification.json` 与 `component_library/verification.json`。未来明确启动/恢复才执行
 `.venv/bin/python -B scripts/cajal_react.py --execute`；本次没有执行。结果在 research-runs/cajal-react/，
 完成后不自动扩量、不更新上游 Cajal 配方或网站。
+
+2026-11-10：按用户要求只保留本演化，将调度上限从 10 提至 12。通过 scheduler-handoff.json 接管正在训练的沙箱，完成后退休旧控制器；已完成候选和提案复用。训练数据、30 代、每代 10 候选、seed=0、1 万步预算、指标与晋级规则保持不变。

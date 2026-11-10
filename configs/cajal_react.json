@@ -28,7 +28,7 @@
     3,
     4
   ],
-  "max_workers": 10,
+  "max_workers": 12,
   "minimum_free_gpu_mb": 32768,
   "job_timeout_seconds": 86400,
   "scaling_enabled": false,
@@ -40,7 +40,7 @@
     }
   },
   "reference_evaluation": "reuse_existing_cajal_v1_10000",
-  "per_gpu_workers": 2,
+  "per_gpu_workers": 3,
   "cpu_probe_workers": 2,
   "resources": {
     "evaluation_reservation_mb": 8192,
