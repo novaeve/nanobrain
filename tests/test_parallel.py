@@ -16,16 +16,16 @@ from cajal_research.resources import ResourcePool
 from cajal_research.store import Store
 
 
-def test_fourteen_training_leases_stay_on_seven_cards():
+def test_ten_training_leases_stay_on_five_cards():
     cfg = C.load_config()
     pool = ResourcePool(cfg["gpu_ids"], cfg["per_gpu_workers"], cfg["resources"])
     pool.snapshot = {g: {"free_mib": 100000} for g in cfg["gpu_ids"]}
     pool.snapshot_at = time.monotonic()
-    with ThreadPoolExecutor(max_workers=14) as executor:
-        cards = list(executor.map(lambda i: pool.acquire(str(i), 32768, 0), range(14)))
-    assert Counter(cards) == dict.fromkeys(range(7), 2)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        cards = list(executor.map(lambda i: pool.acquire(str(i), 32768, 0), range(10)))
+    assert Counter(cards) == dict.fromkeys(range(5), 2)
     assert pool.choose(32768, 0) is None
-    for i in range(14):
+    for i in range(10):
         pool.release(str(i))
     assert pool.leases == {}
 
@@ -59,7 +59,7 @@ def test_refresh_ignores_unauthorized_gpus_and_counts_own_descendants(monkeypatc
     monkeypatch.setattr(resources.subprocess, "check_output", query)
     monkeypatch.setattr(resources, "parent_pid", lambda pid: 100 if pid == 101 else 0)
     pool.refresh()
-    assert set(pool.snapshot) == set(range(7))
+    assert set(pool.snapshot) == set(range(5))
     assert pool.leases["own"]["observed_mib"] == 27000
 
 

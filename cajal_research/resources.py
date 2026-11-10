@@ -16,8 +16,8 @@ def parent_pid(pid):
 
 class ResourcePool:
     def __init__(self, gpus, per_gpu, options):
-        if not gpus or set(gpus) - set(range(7)):
-            raise ValueError("only GPUs 0..6 are authorized")
+        if not gpus or set(gpus) - set(range(5)):
+            raise ValueError("only GPUs 0..4 are authorized")
         self.gpus, self.per_gpu, self.options = list(gpus), per_gpu, options
         self.condition = threading.Condition()
         self.leases, self.snapshot, self.snapshot_at = {}, {}, 0.0

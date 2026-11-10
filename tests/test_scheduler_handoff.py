@@ -41,7 +41,7 @@ def stage_plan(tmp_path):
 def test_sixteen_slot_config_preserves_existing_scientific_settings(tmp_path):
     cfg = C.load_config()
     assert cfg["max_workers"] == 16 and cfg["per_gpu_workers"] == 3
-    assert cfg["gpu_ids"] == list(range(7))
+    assert cfg["gpu_ids"] == list(range(5))
     assert cfg["cpu_probe_workers"] == 4 and cfg["task_evaluation_workers"] == 2
     assert cfg["generations"] == 30 and cfg["candidates_per_generation"] == 10
     assert cfg["stop_at"] == 10000 and cfg["seeds"] == [0]
@@ -49,7 +49,7 @@ def test_sixteen_slot_config_preserves_existing_scientific_settings(tmp_path):
     for key, value in [
         ("max_workers", 17),
         ("per_gpu_workers", 4),
-        ("gpu_ids", [7]),
+        ("gpu_ids", [5]),
         ("cpu_probe_workers", 9),
         ("task_evaluation_workers", 5),
     ]:
@@ -101,11 +101,12 @@ def test_handoff_cannot_mount_other_campaign_jobs(tmp_path, monkeypatch):
         Workflow(C.load_config(), tmp_path)
 
 
-def test_a_live_worker_on_gpu7_cannot_be_adopted(tmp_path):
+@pytest.mark.parametrize("gpu", [5, 6, 7])
+def test_a_live_worker_on_a_disallowed_gpu_cannot_be_adopted(tmp_path, gpu):
     stage_plan(tmp_path)
     path = tmp_path / "scheduler-handoff.json"
     plan = json.loads(path.read_text())
-    plan["stages"][0]["gpu"] = 7
+    plan["stages"][0]["gpu"] = gpu
     C.save(path, plan)
     with pytest.raises(ValueError, match="GPU is not authorized"):
         Workflow(C.load_config(), tmp_path)
