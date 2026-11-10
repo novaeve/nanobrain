@@ -3,11 +3,14 @@
 import json
 import os
 import signal
+import threading
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 
 from .contracts import save, sha
+
+_RETIRE_LOCK = threading.Lock()
 
 
 def process_start(pid):
@@ -33,8 +36,12 @@ def load_handoff(output, pool):
         reservations[str(directory)] = row
     for row in plan.get("stages", []):
         directory = Path(row["directory"]).resolve()
-        if not directory.is_relative_to((Path(output) / "jobs").resolve()) or row["mode"] != "train":
-            raise ValueError("only an existing campaign training stage can be adopted")
+        if not directory.is_relative_to((Path(output) / "jobs").resolve()) or row["mode"] not in {
+            "train",
+            "predict",
+            "score",
+        }:
+            raise ValueError("only an existing campaign GPU stage can be adopted")
         if (directory / "receipt.json").exists():
             continue
         if row["gpu"] not in pool.gpus:
@@ -48,7 +55,7 @@ def load_handoff(output, pool):
         pool.leases[key] = {
             "gpu": row["gpu"],
             "reserve_mib": row["reservation_mb"],
-            "host_reserve_mib": 8192,
+            "host_reserve_mib": 8192 if row["mode"] == "train" else 4096,
             "observed_mib": 0,
             "pid": row["pid"],
         }
@@ -69,7 +76,12 @@ def wait_for_stage(stage, args, verify_stage, timeout):
 
 
 def retire_parent(output, plan):
-    if not plan:
+    with _RETIRE_LOCK:
+        _retire_parent(output, plan)
+
+
+def _retire_parent(output, plan):
+    if not plan or plan.get("parent_retired_at"):
         return
     for stage in plan["stages"]:
         if (

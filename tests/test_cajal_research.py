@@ -420,6 +420,8 @@ def build(parameters, lr, weight_decay):
 def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monkeypatch):
     """Exercise train/predict/score orchestration with file-producing fakes, no GPU/API."""
     import csv
+    import threading
+    import time
 
     from cajal_research.workflow import Workflow
 
@@ -428,6 +430,8 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
     workflow.store = Store(tmp_path / "lineage")
     identifier = workflow.store.stage(candidate(lr=0.0005))
     calls = []
+    lock = threading.Lock()
+    predictions = {"active": 0, "peak": 0}
 
     def fake_worker(directory, args, inputs, cpu=False):
         directory.mkdir(parents=True, exist_ok=True)
@@ -447,9 +451,15 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
                 "artifact_hashes": {"train/latest.pt": C.sha(path)},
             }
         elif args[0] == "predict":
+            with lock:
+                predictions["active"] += 1
+                predictions["peak"] = max(predictions["peak"], predictions["active"])
+            time.sleep(0.05)
             path = directory / "prediction.npz"
             path.write_bytes(b"mock predictions")
             result = {"status": "complete", "artifact_hashes": {"prediction.npz": C.sha(path)}}
+            with lock:
+                predictions["active"] -= 1
         else:
             path = directory / "scores/summary.csv"
             path.parent.mkdir()
@@ -466,6 +476,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
     assert result["joint_model_count"] == 1 and set(result["metrics"]) == set(C.METRICS)
     assert sum(c[0] == "train" for c in calls) == 1
     assert len({c[c.index("--checkpoint") + 1] for c in calls if c[0] == "predict"}) == 1
+    assert predictions["peak"] == cfg["task_evaluation_workers"] == 2
     before = len(calls)
     workflow.evaluate_seed(identifier, cfg["seeds"][0])
     assert len(calls) == before

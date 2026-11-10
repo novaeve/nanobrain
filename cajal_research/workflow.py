@@ -51,6 +51,8 @@ def plan(cfg):
         "gpu_ids": cfg["gpu_ids"],
         "max_workers": cfg["max_workers"],
         "per_gpu_workers": cfg["per_gpu_workers"],
+        "cpu_probe_workers": cfg.get("cpu_probe_workers", 1),
+        "task_evaluation_workers": cfg.get("task_evaluation_workers", 1),
         "model": cfg["model"],
         "reasoning_effort": cfg["reasoning_effort"],
         "generation_policy": "parallel cohort, ordered champion decisions",
@@ -126,6 +128,11 @@ class Workflow:
         from .handoff import load_handoff
 
         self.adopted_stages, self.stage_reservations, self.handoff_plan = load_handoff(self.output, self.resources)
+        if len(self.adopted_stages) > cfg["max_workers"]:
+            raise ValueError("live adopted stages exceed the global concurrency cap")
+        self.worker_slots = threading.Semaphore(cfg["max_workers"])
+        for _ in self.adopted_stages:
+            self.worker_slots.acquire()
 
     def progress(self, **fields):
         with self.activity_lock:
@@ -136,6 +143,8 @@ class Workflow:
                 maximum_workers=self.cfg["max_workers"],
                 gpu_ids=self.cfg["gpu_ids"],
                 per_gpu_workers=self.cfg["per_gpu_workers"],
+                cpu_probe_workers=self.cfg.get("cpu_probe_workers", 1),
+                task_evaluation_workers=self.cfg.get("task_evaluation_workers", 1),
             )
             save(self.output / "status.json", self.status)
 
@@ -152,6 +161,15 @@ class Workflow:
         return value
 
     def worker(self, directory, args, inputs, cpu=False):
+        # Live adopted stages already occupy one global slot and a GPU lease.
+        if str(directory) not in self.adopted_stages:
+            self.worker_slots.acquire()
+        try:
+            return self._run_stage(directory, args, inputs, cpu)
+        finally:
+            self.worker_slots.release()
+
+    def _run_stage(self, directory, args, inputs, cpu=False):
         from .sandbox import launch
 
         key = str(directory)
@@ -286,8 +304,8 @@ class Workflow:
         validate_identity(receipt, bundle, self.cfg, seed)
         checkpoint = train_dir / "train/latest.pt"
         artifacts = {str(checkpoint): sha(checkpoint), str(train_receipt): sha(train_receipt)}
-        metrics = {}
-        for task in ("annotation", "integration", "genes", "spatial"):
+
+        def evaluate_task(task):
             data_key = "annotation" if task == "genes" else task
             pred_dir, score_dir = folder / (task + "-predict"), folder / (task + "-score")
             pred = pred_dir / "prediction.npz"
@@ -315,9 +333,19 @@ class Workflow:
                 "genes": METRICS[4:5],
                 "spatial": METRICS[5:],
             }[task]
-            metrics.update({key: float(row[key]) for key in wanted})
+            task_metrics = {key: float(row[key]) for key in wanted}
+            task_artifacts = {}
             for p in (pred, pred_dir / "receipt.json", score_dir / "receipt.json", summary):
-                artifacts[str(p)] = sha(p)
+                task_artifacts[str(p)] = sha(p)
+            return task_metrics, task_artifacts
+
+        metrics = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.cfg.get("task_evaluation_workers", 1)) as pool:
+            for task_metrics, task_artifacts in pool.map(
+                evaluate_task, ("annotation", "integration", "genes", "spatial")
+            ):
+                metrics.update(task_metrics)
+                artifacts.update(task_artifacts)
         result = {
             "status": "complete",
             "seed": seed,

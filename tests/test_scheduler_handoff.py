@@ -38,14 +38,21 @@ def stage_plan(tmp_path):
     return stage, args
 
 
-def test_twelve_slot_config_preserves_existing_scientific_settings(tmp_path):
+def test_sixteen_slot_config_preserves_existing_scientific_settings(tmp_path):
     cfg = C.load_config()
-    assert cfg["max_workers"] == 12 and cfg["per_gpu_workers"] == 3
-    assert cfg["gpu_ids"] == [0, 1, 2, 3, 4]
+    assert cfg["max_workers"] == 16 and cfg["per_gpu_workers"] == 3
+    assert cfg["gpu_ids"] == list(range(8))
+    assert cfg["cpu_probe_workers"] == 4 and cfg["task_evaluation_workers"] == 2
     assert cfg["generations"] == 30 and cfg["candidates_per_generation"] == 10
     assert cfg["stop_at"] == 10000 and cfg["seeds"] == [0]
     path = tmp_path / "config.json"
-    for key, value in [("max_workers", 13), ("per_gpu_workers", 4), ("gpu_ids", [5])]:
+    for key, value in [
+        ("max_workers", 17),
+        ("per_gpu_workers", 4),
+        ("gpu_ids", [8]),
+        ("cpu_probe_workers", 9),
+        ("task_evaluation_workers", 5),
+    ]:
         invalid = dict(cfg, **{key: value})
         C.save(path, invalid)
         with pytest.raises(ValueError):
