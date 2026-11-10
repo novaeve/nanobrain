@@ -64,7 +64,7 @@ def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
     doc = json.loads(capsys.readouterr().out)
     assert doc["status"] == "prepared_not_started"
     assert not doc["llm_called"] and not doc["real_training_started"]
-    assert doc["joint_trainings_per_generation"] == 6
+    assert doc["joint_trainings_per_generation"] == 10
     assert doc["maximum_joint_trainings"] == 300
     assert doc["reference_trainings"] == 0
     assert doc["seeds"] == [0] and doc["seed_count"] == 1
@@ -333,7 +333,7 @@ def test_mock_react_uses_tools_no_real_llm(tmp_path):
 
 @pytest.mark.parametrize(
     "variant",
-    ["reference", "module", "module_loss_optimizer", "component_hybrid", "legacy_prototype", "teacher_budget"],
+    ["reference", "module", "module_loss_optimizer", "component_hybrid", "legacy_prototype", "regularizer_budget"],
 )
 def test_linux_sandbox_five_joint_gradients_update_and_reload(tmp_path, variant):
     from cajal_research.sandbox import clean_environment, command, launch
@@ -362,12 +362,11 @@ def test_linux_sandbox_five_joint_gradients_update_and_reload(tmp_path, variant)
                 ("neighborhood", "legacy.spatial.stagate_gat"),
             ]
         ]
-    if variant == "teacher_budget":
+    if variant == "regularizer_budget":
         b["train"]["objectives"] = [
             {
-                "name": "teacher_gram",
+                "name": "sigreg",
                 "weight": 1.0,
-                "teacher": "cell_type_30k",
                 "start": 100,
                 "budget": {"cell_type": 1.0},
                 "dual_lr": 0.01,
@@ -415,12 +414,14 @@ def build(parameters, lr, weight_decay):
     assert set(result["tasks"]) == set(C.TASKS)
     assert not result["benchmark_data_mounted"] and not result["gpu_used"]
     assert {"cell_type:0", "anatomy:0", "reconstruction", "spatial"} <= set(result["checkpoint_prediction_fields"])
-    assert result["teacher_probe_uses_synthetic_weights"] == (variant == "teacher_budget")
+    assert result["external_weight_dependencies"] == []
 
 
 def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monkeypatch):
     """Exercise train/predict/score orchestration with file-producing fakes, no GPU/API."""
     import csv
+    import threading
+    import time
 
     from cajal_research.workflow import Workflow
 
@@ -429,23 +430,36 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
     workflow.store = Store(tmp_path / "lineage")
     identifier = workflow.store.stage(candidate(lr=0.0005))
     calls = []
+    lock = threading.Lock()
+    predictions = {"active": 0, "peak": 0}
 
     def fake_worker(directory, args, inputs, cpu=False):
         directory.mkdir(parents=True, exist_ok=True)
         calls.append(args)
         if args[0] == "train":
+            from cajal_research.training_policy import identity_for
+
             path = directory / "train/latest.pt"
             path.parent.mkdir()
             path.write_bytes(b"one jointly trained model (mock)")
             result = {
                 "status": "complete",
                 "seed": int(args[args.index("--seed") + 1]),
+                "weight_policy": cfg["weight_policy"],
+                "external_weight_dependencies": [],
+                "training_identity": identity_for(workflow.store.bundle(identifier), cfg, 0),
                 "artifact_hashes": {"train/latest.pt": C.sha(path)},
             }
         elif args[0] == "predict":
+            with lock:
+                predictions["active"] += 1
+                predictions["peak"] = max(predictions["peak"], predictions["active"])
+            time.sleep(0.05)
             path = directory / "prediction.npz"
             path.write_bytes(b"mock predictions")
             result = {"status": "complete", "artifact_hashes": {"prediction.npz": C.sha(path)}}
+            with lock:
+                predictions["active"] -= 1
         else:
             path = directory / "scores/summary.csv"
             path.parent.mkdir()
@@ -462,6 +476,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
     assert result["joint_model_count"] == 1 and set(result["metrics"]) == set(C.METRICS)
     assert sum(c[0] == "train" for c in calls) == 1
     assert len({c[c.index("--checkpoint") + 1] for c in calls if c[0] == "predict"}) == 1
+    assert predictions["peak"] == cfg["task_evaluation_workers"] == 2
     before = len(calls)
     workflow.evaluate_seed(identifier, cfg["seeds"][0])
     assert len(calls) == before
@@ -605,12 +620,12 @@ def test_optimizer_and_balancer_parameters_reach_actual_implementations():
         C.validate_bundle(b)
 
 
-def test_named_teacher_only_and_bundle_stays_immutable():
+def test_historical_teacher_is_outside_the_candidate_contract():
     b = candidate(objectives=[{"name": "teacher_gram", "weight": 1.0, "teacher": "cell_type_30k"}])
     before = C.digest(b)
-    doc = C.resolved_document(b, C.load_config(), 0)
+    with pytest.raises(ValueError):
+        C.resolved_document(b, C.load_config(), 0)
     assert C.digest(b) == before
-    assert doc["train"]["objectives"][0]["checkpoint"] == C.load_config()["trusted_teachers"]["cell_type_30k"]["path"]
     b["train"]["objectives"][0]["checkpoint"] = "/tmp/foreign.pt"
     with pytest.raises(ValueError):
         C.validate_bundle(b)
@@ -693,3 +708,22 @@ def test_available_components_preserve_masked_spatial_causality():
             a = model.neighborhood(z, rel, masked, pad)
             b = model.neighborhood(changed, rel, masked, pad)
         assert torch.allclose(a[:, 0], b[:, 0]), row["id"]
+
+
+def test_sandbox_username_allows_torch_compile_initialization(tmp_path):
+    import subprocess
+
+    from cajal_research.sandbox import clean_environment, command
+
+    args = command(C.ROOT, tmp_path / "worker", [])
+    separator = args.index("--")
+    python = args[separator + 1]
+    code = (
+        "import getpass, torch; "
+        "assert getpass.getuser() == 'cajal-worker'; "
+        "torch.compile(torch.nn.Linear(2, 2)); "
+        "print('sandbox compile initialization passed')"
+    )
+    args[separator:] = ["--", python, "-B", "-c", code]
+    result = subprocess.run(args, env=clean_environment(), capture_output=True, text=True, timeout=120, check=True)
+    assert "sandbox compile initialization passed" in result.stdout

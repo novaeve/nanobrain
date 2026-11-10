@@ -1,9 +1,9 @@
 {
-  "source_commit": "df8976caf24e993c1b33407f45d956b9843d5cdd",
+  "source_commit": "3891dc162cd9be5aa25876b948e02372ac86318e",
   "source_path": "/mnt/aliyunsb/zim_rider/nanobrain/try/cajal-react-joint-20261106",
   "main_base_commit": "cdf4b197ed52b3c58bf357fbe701ffec0bdef455",
-  "source_tracked_files": 751,
-  "verified_unchanged_source_files": 743,
+  "source_tracked_files": 759,
+  "verified_unchanged_source_files": 751,
   "rewritten_documentation": [
     "README.md",
     "README_zh-CN.md"
@@ -23,5 +23,5 @@
     "component_library/legacy/reference_methods/scFiT/src/scfit.egg-info/top_level.txt",
     "component_library/legacy/reference_methods/scUniFlow/results/README.md"
   ],
-  "published_source_files": 745
+  "published_source_files": 753
 }

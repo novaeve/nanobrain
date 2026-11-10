@@ -1,6 +1,6 @@
 # Cajal v1 + ReAct：合并组件库，单 seed，开放训练参数
 
-2026-11-06 修订。当前为 **prepared_not_started**：没有启动演化、LLM 请求或真实数据训练。
+2026-11-10 独立训练修订。30 代、每代 10 候选、最多 16 个并行阶段，使用 GPU 0–7；实际进度以 research-runs/cajal-react-self-contained-20261110/status.json 为准。
 配置见 `configs/cajal_react.json`，完整范围由 `cajal_research/contracts.py` 和候选 schema 定义。
 
 ## 种子架构与数据
@@ -28,7 +28,7 @@ cell_fraction 固定 1。Cajal 本身从 V4 train+validation 分片构造预训�
 ## 单 seed 与预算
 
 按本次用户要求移除三 seed：使用 Cajal 原本的 **seed=0**，评估抽样 seed 也固定 0。
-50 代、每代 6 候选，每代 6 次联合训练，初始参考直接复用已有结果，最多 300 次新训练。没有末尾三 seed 确认。
+30 代、每代 10 候选，每代 10 次联合训练，初始参考直接复用已有结果，最多 300 次新训练。没有末尾三 seed 确认。
 结果中 seed_count=1、标准差为 null，不声称统计显著性。
 
 比较预算仍为 30,000 步学习率日程，在 10,000 步停止，评估固定结束 checkpoint。
@@ -59,11 +59,13 @@ Cajal 的 batch 由表达细胞数量和空间组数量构成，每空间组含�
 
 支持 initial / grad_equal / FAMO 及其实际生效参数。优化器支持 grouped Muon + AdamW、AdamW、
 Adam、SGD、自定义 Optimizer，开放 Adam betas/epsilon、Muon momentum/NS steps、SGD momentum。
-字段必须适用于选中算法，不静默忽略。额外目标支持 HSIC、SIGReg、batch swap、batch adversary、
-teacher Gram，以及 Cajal 已有的 start / budget / dual_lr 机制。
+字段必须适用于选中算法，不静默忽略。额外目标支持 HSIC、SIGReg、batch swap、batch adversary，
+以及 Cajal 已有的 start / budget / dual_lr 机制。
 
-教师 Gram 使用名为 cell_type_30k 的既有 Cajal 训练集教师，路径和 SHA-256 由可信配置固定。
-候选不能指定任意文件。CPU gate 用合成冻结教师检查接口；正式训练才读取固定教师权重。
+候选首次训练必须随机初始化。父代只传递架构、源码和超参数，不传递权重、预测或教师表征。
+禁止历史模型或额外预训练模型参与初始化、蒸馏、拼接；组件复用实现代码。只允许同一候选、同一
+seed、同一协议和训练配置恢复自己的断点，训练入口核对 training-identity.json 后才允许 --resume。
+自监督目标、损失、优化器和训练日程仍可搜索，但必须在既定预算内、仅凭声明的训练数据独立复现。
 
 ## 合并后的组件库
 
@@ -84,7 +86,8 @@ teacher Gram，以及 Cajal 已有的 start / budget / dual_lr 机制。
   目标 latent 先被遮掉，图只在原 Cajal 空间组内构建，不读取目标表达。
 
 另把 Cajal MoE、循环编码、N-BEATS、层级头、NB likelihood、MoG prior、梯度均衡/FAMO、KL
-capacity、预算权重、教师 Gram、对抗目标、分组 Muon 等登记到统一目录和配置接口。
+capacity、预算权重、对抗目标、分组 Muon 等登记到统一目录和配置接口。
+教师 Gram 源码仅作为历史实现保留，组件目录标为不可用，不进入搜索。
 当前五任务不用的发育 flow/endpoint 等仍保留源码与不适用原因。缺依赖或未通过检查的条目不能进入
 搜索，没有同名替代实现。新增依赖安装在项目自己的 `.component_deps/`，不修改共享 `.venv`；
 版本与 Torch/CUDA ABI 记录在 `component_library/dependencies.json`。
@@ -112,8 +115,7 @@ Schema、参数和源码检查后，bwrap CPU 沙箱做合成五目标梯度、�
 不限制插件/文件数量。初始候选不启用替换，参数/前向与原 Cajal 一致。
 
 单 seed 晋级使用预先声明的 0.005 工程改善/退化门槛和 joint-frontier 排序，不作显著性推断。
-六项指标必须完整且有限；资源不足单独记录，不用零补成绩。最多一个活动 Cajal worker，GPU 0–4，
-至少 64GiB 空闲显存才准入。恢复核对代码、配置、输入、教师和结果，不重复已完成工作。
+六项指标必须完整且有限；资源不足单独记录，不用零补成绩。最多 16 个并行阶段，GPU 0–7 每卡最多 3 个 worker；每代仍为 10 个候选，实际还受候选数量与显存限制。训练任务预留 32GiB，评估任务预留 8GiB，另留每卡 4GiB 余量；预留与实际显存占用共同决定准入，资源不足自动排队。同代父代池冻结，晋级决定按候选序号应用；恢复复用已完成的提案和结果。恢复核对代码、配置、输入、候选身份和结果，不重复已完成工作。
 
 ## 查看与验证
 
@@ -123,6 +125,12 @@ CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q 
 ```
 
 默认只打印计划，不读取 API 凭据、不创建 campaign、不调用 LLM 或真实训练。核验记录在
-`preparation/verification.json` 与 `component_library/verification.json`。未来明确启动/恢复才执行
-`.venv/bin/python -B scripts/cajal_react.py --execute`；本次没有执行。结果在 research-runs/cajal-react/，
+`preparation/verification.json` 与 `component_library/verification.json`。明确启动/恢复时执行
+`.venv/bin/python -B scripts/cajal_react.py --execute`。结果在 research-runs/cajal-react-self-contained-20261110/，
 完成后不自动扩量、不更新上游 Cajal 配方或网站。
+
+2026-11-10：按用户要求只保留本演化，将调度上限从 10 提至 12。通过 scheduler-handoff.json 接管正在训练的沙箱，完成后退休旧控制器；已完成候选和提案复用。训练数据、30 代、每代 10 候选、seed=0、1 万步预算、指标与晋级规则保持不变。
+
+2026-11-10 独立训练修订：关闭历史教师依赖的提示、schema、组件目录和训练挂载入口。旧 research-runs/cajal-react/ 保留为教师辅助协议的历史档案，不作为新协议父池或候选性能。前15代150个启动失败和第16代蒸馏分支不计入新协议有效代数；独立协议从第1代计数，仍为30代、每代10候选、seed=0、固定1万步、12并发、GPU 0–4。无教师的旧候选仅迁移结构和参数并重新通过CPU校验，不迁移权重。最终 frozen-champion.json 同时导出完整候选源码、解析后的模型/训练配置和空的外部权重依赖清单。
+
+2026-11-10 全卡调度修订：用户解除显卡限制，允许 GPU 0–7。总阶段上限由12调至16，CPU合成验收由2调至4，每候选最多2条独立的任务预测/评分流水线并行。全局阶段信号量包含已接管的运行进程，并由每卡3任务上限、空闲显存和主存共同限制。每代仍10候选，最多10个候选同时推进；各任务复用同一训练checkpoint，按固定任务顺序合并原始指标，不改变训练、评分或晋级规则。旧控制器停在交接点，已运行的训练/预测/评分进程保留，结果和断点不重跑。

@@ -106,10 +106,6 @@ def probe(bundle):
     for spec in train_cfg.objectives:
         params = {k: v for k, v in spec.items() if k not in ("name", "weight", "start", "budget", "dual_lr")}
         obj = OBJECTIVES.build(spec["name"], **params)
-        if spec["name"] == "teacher_gram":
-            # No real checkpoint/data is mounted in the CPU gate. Validate its tensor
-            # contract with a frozen synthetic teacher; formal jobs use the pinned asset.
-            obj._teacher = copy.deepcopy(model).eval().requires_grad_(False)
         extras[spec["name"]] = obj
     losses, _ = compute_losses(model, b, out, panels, maps, train_cfg.kl_weight, extras)
     if not set(TASKS) <= set(losses) or not all(torch.isfinite(v) for v in losses.values()):
@@ -170,7 +166,7 @@ def probe(bundle):
         "gpu_used": False,
         "requested_data_parameters": document["data"],
         "components": bundle["components"],
-        "teacher_probe_uses_synthetic_weights": "teacher_gram" in extras,
+        "external_weight_dependencies": [],
         "code_fingerprint": record.fingerprint(),
     }
 
@@ -207,7 +203,9 @@ def main():
             for k, v in values.items()
             if not (section == "train" and k == "out_dir")
         ]
-        resume = ["--resume"] if Path("/work/train/latest.pt").is_file() else []
+        from .training_policy import prepare_training
+
+        resume = prepare_training(Path("/work"), bundle, cfg, args.seed)
         train.main(["--out", "/work/train", *resume, "--set", *overrides])
         receipt = json.loads(Path("/work/train/record.json").read_text())
         if (
@@ -223,7 +221,15 @@ def main():
             "record": receipt,
             "checkpoint": "train/latest.pt",
             "shared_model_count": 1,
-            "artifact_hashes": {"train/latest.pt": sha("/work/train/latest.pt")},
+            "weight_policy": cfg["weight_policy"],
+            "external_weight_dependencies": [],
+            "initialization": "random_at_first_start",
+            "resumed_own_checkpoint": bool(resume),
+            "training_identity": json.loads(Path("/work/training-identity.json").read_text()),
+            "artifact_hashes": {
+                "train/latest.pt": sha("/work/train/latest.pt"),
+                "training-identity.json": sha("/work/training-identity.json"),
+            },
         }
     elif args.mode == "predict":
         cfg = load_config(args.config)

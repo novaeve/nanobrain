@@ -12,7 +12,7 @@ from .workflow import Workflow, plan
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", type=Path, default=ROOT / "configs/cajal_react.json")
-    ap.add_argument("--output", type=Path, default=ROOT / "research-runs/cajal-react")
+    ap.add_argument("--output", type=Path, default=ROOT / "research-runs/cajal-react-self-contained-20261110")
     ap.add_argument("--execute", action="store_true", help="explicitly start/resume real ReAct evolution")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)

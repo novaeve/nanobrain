@@ -1,12 +1,16 @@
 # Cajal ReAct 联合演化变体
 
-本目录发布 Cajal v1 共享模型上的 ReAct 研究变体。源提交为 `df8976caf24e993c1b33407f45d956b9843d5cdd`，源目录为服务器上的 `cajal-react-joint-20261106`。发布时的配置状态为 `prepared_not_started`。
+本目录发布 Cajal v1 共享模型上的 ReAct 研究变体。源提交为 `3891dc162cd9be5aa25876b948e02372ac86318e`，源目录为服务器上的 `cajal-react-joint-20261106`，源码同步于 2026-11-10。服务器已启动独立训练协议，实时进度记录在部署目录的 `research-runs/cajal-react-self-contained-20261110/status.json`。配置中的 `status` 字段保留源码模板值 `prepared_not_started`。
 
 ## 与原 nanoBrain 路线的区别
 
 一份共享模型联合优化 gene、integration、cell_type、anatomy、spatial 五个目标，同一 checkpoint 输出六项报告指标。输入是约 101 万健康人脑细胞、65,918 基因词表、原始 count 与逐细胞测量面板。评估使用 Cajal 既有的三个研究评估集。
 
-演化按 50 代、每代 6 个候选、seed=0 配置。每候选采用 30,000 步学习率日程，在 10,000 步固定停止。参考模型为已有的 `cajal_v1@10000`，候选从架构随机初始化。候选搜索同时覆盖架构组件、损失均衡、优化器和训练采样参数。
+演化按 30 代、每代 10 个候选、seed=0 配置。每候选采用 30,000 步学习率日程，在 10,000 步固定停止。参考模型为已有的 `cajal_v1@10000`，候选从架构随机初始化。候选搜索同时覆盖架构组件、损失均衡、优化器和训练采样参数。
+
+当前协议为 `CAJAL-V1-JOINT-REACT-SELF-CONTAINED-20261110`，采用 `random_init_self_contained`。父代传递架构、源码和超参数。断点恢复核对候选、seed、协议及训练配置的身份，只复用自身 checkpoint。教师 Gram 组件已关闭，最终冠军导出包含完整候选源码、解析配置和空的外部权重依赖清单。
+
+调度允许 GPU 0–7，全局最多 16 个并行阶段，每卡最多 3 个 worker。CPU 合成验收上限为 4，每候选最多并行 2 条任务预测与评分流水线。每代最多 10 个候选同时推进，实际并发还受显存和主存约束。控制器交接会接管已运行的阶段，恢复时复用已完成提案、结果和自身断点。
 
 ## 环境与计划检查
 
@@ -66,11 +70,11 @@ python -m brainwm_unified.train \
 
 - 数据集挂载到 `/data/brainwm/unified_1m`、`/data/brainwm/eval_10k`、`/data/brainwm/eval_integration_10k` 和 `/data/brainwm/eval_spatial`，并通过已有指纹检查。下载器也支持 `--destination /data/brainwm`。
 - `reference/existing_cajal_v1_10k.json` 声明的原参考 checkpoint、原配方和回执文件。其工件路径和 SHA-256 会逐项校验。
-- `configs/cajal_react.json` 中固定的 cell-type 教师 checkpoint，以及整合评估使用的已有 HVG/scaler/PCA 缓存。
-- 与组件环境记录匹配的项目依赖、Linux bwrap、可见 GPU，以及源协议要求的至少 64 GiB 空闲显存。
+- 整合评估使用的已有 HVG/scaler/PCA 缓存。
+- 与组件环境记录匹配的项目依赖、Linux bwrap 和可见 GPU。训练阶段初始预留 32 GiB 显存，评估阶段预留 8 GiB，每卡另留 4 GiB 余量。控制器还要求至少 32 GiB 可用主存，OOM 重试会提高任务预留。
 - 控制器进程的 API 环境变量。配置中的 `api_env_file` 保留了来源路径，可通过已有 `NANOBRAIN_API_KEY`、`NANOBRAIN_API_BASE_URL` 等进程环境变量提供凭据。
 
-本次公开数据包包含四个细胞数据集。参考 checkpoint、教师权重、GPU 扩展二进制和运行目录由完整演化部署环境提供。`reference/` 中保留了核验所需的既有性能快照与协议定义。
+本次公开数据包包含四个细胞数据集。参考 checkpoint、GPU 扩展二进制和运行目录由完整演化部署环境提供。`reference/` 中保留了核验所需的既有性能快照与协议定义。
 
 依赖和路径准备齐全后，正式入口为 `python scripts/cajal_react.py --execute`。它将调用 LLM 并开始真实训练。
 
@@ -86,7 +90,7 @@ python -m brainwm_unified.train \
 
 三个研究评估集与预训练细胞无重叠，演化会反复读取其结果。单 seed 采用 `seed_count=1` 和 null 标准差。源协议保留完整 DAG、父系、失败分支、所有候选源码与训练回执。
 
-`reference/opponents.json` 保存 13 个既有整方法基线，`reference/current_method_scores.json` 保存来源项目 63 个方法/实验的 checkpoint 轨迹。它们属于冻结参考数据。新变体的训练成绩需要由后续正式运行产生。
+`reference/opponents.json` 保存 13 个既有整方法基线，`reference/current_method_scores.json` 保存来源项目 63 个方法/实验的 checkpoint 轨迹。它们属于冻结参考数据。独立训练协议从第 1 代计数，旧教师辅助协议的结果作为历史档案保留在服务器。新协议的训练成绩由当前实验产生并保存在部署环境。
 
 ## 目录与来源
 

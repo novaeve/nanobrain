@@ -431,12 +431,12 @@
     }
   },
   {
-    "available": true,
+    "available": false,
     "id": "cajal.teacher_gram",
-    "note": "Existing Cajal implementation; empty candidate selections preserve the seed architecture.",
+    "note": "Excluded from self-contained evolution: depends on a historical pretrained teacher checkpoint.",
     "parameter_ranges": {},
     "role": "component",
-    "search_field": "train.objectives + named frozen teacher",
+    "search_field": "",
     "slots": [],
     "source": "brainwm_unified.regularizers.TeacherGram",
     "source_family": "Cajal",

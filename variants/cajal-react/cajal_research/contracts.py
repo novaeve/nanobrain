@@ -105,6 +105,8 @@ def save(path, value):
 
 def load_config(path=None):
     cfg = json.loads(Path(path or ROOT / "configs/cajal_react.json").read_text())
+    if cfg.get("weight_policy") != "random_init_self_contained" or cfg.get("trusted_teachers"):
+        raise ValueError("candidates must train independently without historical or pretrained teacher weights")
     if cfg["reference_recipe"] != "configs/experiments/cajal_v1.toml":
         raise ValueError("reference must be the frozen existing Cajal v1 recipe")
     if cfg["reference_evaluation"] != "reuse_existing_cajal_v1_10000":
@@ -115,10 +117,18 @@ def load_config(path=None):
         raise ValueError("this revision uses the existing Cajal seed 0 only")
     if cfg["checkpoint_selection"] != "fixed_stop" or cfg["scaling_enabled"]:
         raise ValueError("fixed-stop Cajal evaluation; no automatic scaling in this protocol")
-    if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(5) for g in cfg["gpu_ids"]):
-        raise ValueError("GPU whitelist is 0..4")
-    if cfg["max_workers"] != 1:
-        raise ValueError("prepared scheduler has one active Cajal worker; edit protocol implementation before widening")
+    if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(8) for g in cfg["gpu_ids"]):
+        raise ValueError("GPU whitelist is 0..7")
+    if len(set(cfg["gpu_ids"])) != len(cfg["gpu_ids"]):
+        raise ValueError("GPU IDs must be unique")
+    if type(cfg["max_workers"]) is not int or not 1 <= cfg["max_workers"] <= 16:
+        raise ValueError("stage concurrency must be between 1 and 16")
+    if cfg["per_gpu_workers"] not in (1, 2, 3) or cfg["max_workers"] > len(cfg["gpu_ids"]) * cfg["per_gpu_workers"]:
+        raise ValueError("candidate concurrency exceeds the authorized per-GPU slots")
+    for key, limit in (("cpu_probe_workers", 8), ("task_evaluation_workers", 4)):
+        value = cfg.get(key, 1)
+        if type(value) is not int or not 1 <= value <= limit:
+            raise ValueError(f"{key} must be between 1 and {limit}")
     return cfg
 
 
@@ -214,7 +224,7 @@ def candidate_schema():
                     "additionalProperties": False,
                     "required": ["name", "weight"],
                     "properties": {
-                        "name": {"enum": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary", "teacher_gram"]},
+                        "name": {"enum": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary"]},
                         "weight": {"type": "number", "minimum": 0.0, "maximum": 20.0},
                         "coeff": {"type": "number"},
                         "label": {"enum": ["cell_type", "anatomy"]},
@@ -222,7 +232,6 @@ def candidate_schema():
                         "n_proj": {"type": "integer", "minimum": 16, "maximum": 512},
                         "t_max": {"type": "number", "minimum": 1.0, "maximum": 10.0},
                         "n_t": {"type": "integer", "minimum": 5, "maximum": 65},
-                        "teacher": {"enum": ["cell_type_30k"]},
                         "start": {"type": "integer", "minimum": 0, "maximum": 5000},
                         "dual_lr": {"type": "number", "minimum": 0.0001, "maximum": 0.1},
                         "budget": {
@@ -368,13 +377,12 @@ def validate_bundle(bundle, parent_ids=None):
                     "n_proj",
                     "t_max",
                     "n_t",
-                    "teacher",
                     "start",
                     "budget",
                     "dual_lr",
                 }:
                     raise ValueError("only existing tensor-only regularizers are searchable")
-                if entry.get("name") not in ("cond_hsic", "sigreg", "batch_swap", "batch_adversary", "teacher_gram"):
+                if entry.get("name") not in ("cond_hsic", "sigreg", "batch_swap", "batch_adversary"):
                     raise ValueError("external teacher/data paths are outside the candidate contract")
                 if entry["name"] in seen:
                     raise ValueError("duplicate objective")
@@ -385,11 +393,6 @@ def validate_bundle(bundle, parent_ids=None):
                         "budgeted objective requires nonempty positive budgets and an initial positive weight"
                     )
                 params = {k: v for k, v in entry.items() if k not in ("name", "weight", "start", "budget", "dual_lr")}
-                if entry["name"] == "teacher_gram":
-                    teacher = load_config()["trusted_teachers"].get(params.pop("teacher", ""))
-                    if not teacher:
-                        raise ValueError("teacher must be a named, frozen Cajal artifact")
-                    params["checkpoint"] = teacher["path"]
                 OBJECTIVES.build(entry["name"], **params)
         else:
             raise ValueError(f"train.{key} is immutable or unsupported")
@@ -495,6 +498,8 @@ def semantic_id(bundle):
 
 def resolved_document(bundle, cfg, seed):
     validate_bundle(bundle)
+    if cfg.get("weight_policy") != "random_init_self_contained" or cfg.get("trusted_teachers"):
+        raise ValueError("historical weight dependencies are outside this research protocol")
     base = reference_document(cfg)
     payload = {"plugins": bundle["plugins"], "files": bundle["files"]} if bundle["plugins"] else {}
     model = {**base["ModelConfig"], **bundle["model"], "research_plugins": payload}
@@ -513,9 +518,5 @@ def resolved_document(bundle, cfg, seed):
     if bundle["train"].get("balancer", base["TrainConfig"]["balancer"]) != base["TrainConfig"]["balancer"]:
         train["balancer_params"] = bundle["train"].get("balancer_params", {})
     train["objectives"] = copy.deepcopy(train["objectives"])
-    for entry in train["objectives"]:
-        if entry["name"] == "teacher_gram":
-            teacher = entry.pop("teacher")
-            entry["checkpoint"] = cfg["trusted_teachers"][teacher]["path"]
     data = {**base["DataConfig"], **bundle["data"], "root": cfg["data"]["pretrain"], "seed": seed}
     return {"model": model, "train": train, "data": data}

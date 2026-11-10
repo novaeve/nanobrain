@@ -1,6 +1,7 @@
 """Adapted from nanoBrain ReAct: inspect → write → sandbox-validate → submit."""
 
 import json
+from contextlib import nullcontext
 
 from .contracts import (
     BALANCER_RANGES,
@@ -19,7 +20,8 @@ from .contracts import (
 )
 
 SYSTEM = """Evolve the existing Cajal v1 shared encoder and its FIVE JOINT pretraining objectives.
-Start from the actual frozen Cajal v1, not a nanoBrain graph or independent task models.
+Start from the actual frozen Cajal v1 architecture/configuration, not its trained weights,
+a nanoBrain graph or independent task models. Every new candidate trains from random initialization.
 Each candidate has ONE set of weights per seed. You may change allowed Cajal architecture/training
 fields and add tensor-only PyTorch token modules, gene/classification losses or an optimizer.
 Candidate model/train/data/components values are complete overrides relative to the frozen Cajal v1, not patches
@@ -35,8 +37,15 @@ different implementation for an unavailable source. Whole-method baseline scores
 automatically to a component hybrid. Do not use legacy nanoBrain experiment scores as evidence or
 comparison thresholds: those experiments used different data and evaluation protocols. Reuse legacy
 component implementations, but use only Cajal-compatible performance results in the LLM context.
-Reuse existing Cajal baseline scores and the saved cajal_v1@10000 reference; never refit or rescore historical methods. A named frozen Cajal teacher is available for teacher_gram;
-arbitrary checkpoint/file paths remain forbidden. Retain all desired ancestral changes explicitly.
+Reuse existing Cajal baseline scores and the saved cajal_v1@10000 comparison reference; never refit
+or rescore historical methods. Those artifacts are comparison evidence only. Ancestry transfers
+architecture, source and hyperparameters, NEVER trained weights, predictions or teacher features.
+No historical or externally pretrained checkpoint may initialize, supervise or be combined with
+a candidate. Historical teacher_gram distillation is unavailable. Only a candidate's own interrupted
+training may resume its same-seed checkpoint. The deliverable is a self-contained architecture and
+fully specified training recipe reproducible from the declared training data and random seed.
+Self-supervised losses and training schedules remain searchable within the fixed training budget;
+they must not depend on a separately trained model. Retain desired ancestral changes explicitly.
 The complete DAG includes every failed/unselected branch and every parent edge. Read details
 with paginated tools. Parent recommendations are a mixture of quality, Pareto and novelty;
 any fully evaluated valid ancestor can be a parent. This is not UCT/MCTS. No arbitrary shell,
@@ -133,9 +142,10 @@ TOOLS = [
 
 
 class ToolSession:
-    def __init__(self, store, baseline, validator, parents, seen, origin, submission):
+    def __init__(self, store, baseline, validator, parents, seen, origin, submission, seen_lock=None):
         self.store, self.baseline, self.validator = store, baseline, validator
-        self.parents, self.seen, self.origin = parents, set(seen), origin
+        self.parents, self.seen, self.origin = parents, set(seen) if seen_lock is None else seen, origin
+        self.seen_lock = seen_lock
         self.submission = submission
         self.staged, self.validated = set(), set()
         self.submitted, self.validation_attempts = None, 0
@@ -160,6 +170,7 @@ class ToolSession:
                 },
                 "source_budget": {"per_file_bytes": 32768, "total_bytes": 131072, "full_parameters": 200000000},
                 "protocol": "all five joint objectives; fixed 10k checkpoint on 30k schedule; single Cajal seed 0; Cajal unified_1m data",
+                "weight_policy": "random initialization; resume only this candidate's own same-seed checkpoint; no historical/pretrained teachers",
             }
         if name == "list_components":
             from .components import catalog
@@ -181,7 +192,7 @@ class ToolSession:
                 "balancer_parameter_ranges": BALANCER_RANGES,
                 "balancer": ["initial", "grad_equal", "famo"],
                 "optimizer": ["grouped_muon", "adamw", "adam", "sgd", "custom"],
-                "regularizers": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary", "teacher_gram"],
+                "regularizers": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary"],
                 "reference": "configs/experiments/cajal_v1.toml",
                 "five_objectives_mandatory": True,
             }
@@ -208,9 +219,12 @@ class ToolSession:
             return {"node": self.store.node(identifier), "parent_ids": self.store.bundle(identifier)["parent_ids"]}
         if name == "write_candidate":
             validate_bundle(args["bundle"], self.parents)
-            if semantic_id(args["bundle"]) in self.seen:
-                raise ValueError("semantic duplicate; metadata/comments are not mutations")
-            identifier = self.store.stage(args["bundle"], self.parents, self.origin)
+            with self.seen_lock or nullcontext():
+                semantic = semantic_id(args["bundle"])
+                if semantic in self.seen:
+                    raise ValueError("semantic duplicate; metadata/comments are not mutations")
+                identifier = self.store.stage(args["bundle"], self.parents, self.origin)
+                self.seen.add(semantic)
             self.staged.add(identifier)
             return {"candidate_id": identifier}
         identifier = args["candidate_id"]
