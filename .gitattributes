@@ -1,4 +1,2 @@
-* text=auto eol=lf
-*.sh text eol=lf
-*.npy binary
-*.parquet binary
+# Frozen source and component hashes require the original file bytes on checkout.
+* -text
