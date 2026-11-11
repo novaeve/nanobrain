@@ -153,8 +153,15 @@ def prepare_component_views(splits, genome):
             key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
             root = Path(os.environ.get("NANOBRAIN_COMPONENT_CACHE",
                 str(Path(__file__).resolve().parents[2] / "runtime" / "integration_components")))
-            root.mkdir(parents=True, exist_ok=True)
             path = root / f"{name}-{key}.npy"
+            if os.environ.get("NANOBRAIN_COMPONENT_CACHE_READONLY") == "1":
+                receipt=json.loads(path.with_suffix(".json").read_text())
+                values=np.load(path,mmap_mode="r",allow_pickle=False)
+                if values.shape!=x.shape or _digest(values)!=receipt["output_sha256"]:
+                    raise ValueError("trusted input cache integrity failed")
+                dataset.metadata[PREFIX+name]=values
+                receipts.append({**receipt,"cache_path":str(path)});continue
+            root.mkdir(parents=True, exist_ok=True)
             import fcntl
             with (root / f"{name}-{key}.lock").open("a") as lock:
                 fcntl.flock(lock, fcntl.LOCK_EX)

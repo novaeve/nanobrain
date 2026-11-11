@@ -1,4 +1,13 @@
+> 本目录是 **V3 ReAct 代码演化准备分支**，尚未启动正式训练。请先阅读 [新策略说明](REACT_EVOLUTION_V3.md)。以下内容继承自原 V3。
+
 # nanoBrain
+
+本分支当前采用四任务指标协议 V3，定义、文献依据与运行入口见 [METRICS_V3.md](METRICS_V3.md)。
+最新 50 代演化入口见 [EVOLUTION_V3_20261103.md](EVOLUTION_V3_20261103.md)：每代 6 架构、3 seeds，验证集选权重、测试集反馈选择架构。
+正式结果报告注释 Macro-F1、整合的官方 scIB 标准单项指标、真实邻域细胞组成 MAE、发育分布 W₂。
+2026-11-03 起将项目综合分独立标为内部选权重/搜索评分，不再作为正式整合总分。
+空间任务使用独立派生数据 `assets/nanobrain_v3_100k_niche_v3`；原有 60k/20k/20k 划分和中心细胞不变。
+每个任务独立训练，按预先声明的验证集目标保存最佳权重。以下发布数据和成绩含历史协议，不能与 V3 直接横比。
 
 <p align="center">
   <strong>A readable, modifiable, reproducible entry point for virtual-cell experiments</strong>
@@ -120,16 +129,16 @@ flowchart LR
     G --> H["Leaderboard"]
 ```
 
-Single-task diagnostics can use an independent model and optimizer. Evolution candidates default to `--task joint`: one model and optimizer jointly optimize annotation, integration, development, and spatial niche, and promotion uses all four primary metrics. Normal training opens train and validation only. Every run records the task, manifest, seed, step budget, validation results, checkpoint, and stability checks so experiments can be reproduced and compared on internal servers.
+The current V3 evolution trains four independent models: each has a backbone, a task head, and its own optimizer. Validation selects the best checkpoint with the declared selection objective, and architecture promotion uses all four tasks. Integration uses a clearly labeled project utility for selection; formal results report the standard component metrics separately. Training opens train and validation only. Every run records its task, manifest, seed, step budget, checkpoint, and stability checks. The legacy joint trainer is retained for historical datasets; composition data requires independent task training.
 
 ## Four benchmark tasks
 
 | Task | Question | Primary metrics | Guide |
 |---|---|---|---|
-| **Integration** | Preserve biological expression signal while reducing batch signal | Integration composite, biology conservation, batch removal | [Guide](docs/tasks/integration.md) |
-| **Annotation** | Predict cell-type labels observed in training | Macro F1, accuracy | [Guide](docs/tasks/annotation.md) |
-| **Development** | Predict a target population from a source population and condition | Population MSE, gene Spearman, MMD | [Guide](docs/tasks/development.md) |
-| **Spatial niche** | Predict anatomy-derived niche labels using expression and verified spatial context | ARI, NMI, spatial metrics | [Guide](docs/tasks/spatial-niche.md) |
+| **Integration** | Preserve biological expression signal while reducing batch signal | Label/isolated-label ASW, NMI, ARI; batch ASW, iLISI, graph connectivity ↑ | [Guide](docs/tasks/integration.md) |
+| **Annotation** | Predict cell-type labels observed in training | Macro-F1 ↑ | [Guide](docs/tasks/annotation.md) |
+| **Development** | Predict a target population from a source population and condition | Empirical W₂ ↓ | [Guide](docs/tasks/development.md) |
+| **Spatial niche** | Predict neighborhood cell-type proportions from center-cell expression | Composition MAE ↓ | [Guide](docs/tasks/spatial-niche.md) |
 
 The tasks share the data contract, component registry, trainer, and evaluator, while using independent objectives, heads, and optimizers.
 
@@ -171,7 +180,7 @@ See the [dataset contract](docs/data.md) and [data folder notes](assets/README.m
 
 ## Leaderboard
 
-The current leaderboard is generated from a frozen unified evaluation table:
+The linked leaderboard and numbers below are historical upstream results, predating V3. They include an anatomy-proxy spatial task and cannot measure the current neighborhood-composition task. No formal V3 leaderboard has been produced yet.
 
 - [Leaderboard](benchmarks/nanobrain_v3_100k/LEADERBOARD.md)
 - [Machine-readable metrics](benchmarks/nanobrain_v3_100k/overall_metrics.csv)

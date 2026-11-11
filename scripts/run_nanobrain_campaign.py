@@ -137,10 +137,10 @@ def _evaluation_summary(paths: list[Path]) -> dict[str, dict[str, Any]]:
 
     metric_allowlist = {
         "annotation": {"accuracy", "balanced_accuracy", "f1_macro"},
-        "integration": {"integration_composite", "biology_conservation", "batch_removal"},
-        "spatial_niche": {"ari", "nmi", "celltype_asw"},
+        "integration": {"scib_composite", "biology_conservation", "batch_removal"},
+        "spatial_niche": {"composition_mae", "composition_mse", "composition_jsd", "density_mae", "density_r2"},
         "spatial_completion": {"rmse", "heldout_rmse", "heldout_pearson"},
-        "development": {"population_mse", "row_mse", "row_mae"},
+        "development": {"wasserstein2", "sinkhorn_divergence", "population_mse", "variance_error", "mmd_rbf"},
     }
     summaries: dict[str, dict[str, Any]] = {}
     for path in paths:

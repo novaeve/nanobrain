@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-import copy
 import json
 import random
 import time
@@ -19,6 +18,7 @@ from .data import DatasetSplits, NanoDataset
 from .genome import CandidateGenome
 from .model import NanoBrainModel, NanoBrainModelConfig
 from .task_training import TASKS, configure_task, row_task_loss, evaluate_task
+from brainwm_benchmark.protocol import METRIC_PROTOCOL_ID, PRIMARY_METRICS, metric_protocol
 from brainwm.multitask_objective import MultiObjectiveBalancer
 from brainwm.training_observability import (
     append_jsonl,
@@ -49,11 +49,12 @@ class TrainConfig:
     integration_logit_clip: float = 20.0
     stability_max_loss: float = 1.0e8
     stability_max_gradient_norm: float = 1.0e6
+    optimizer_spec: dict | None = None
 
     def __post_init__(self):
         if self.task not in ("joint", *TASKS):
             raise ValueError(f"unsupported training task: {self.task}")
-        if self.checkpoint_policy not in {"all", "final_weights"}:
+        if self.checkpoint_policy not in {"all", "final_weights", "best_weights"}:
             raise ValueError("unsupported checkpoint_policy")
         if int(self.integration_adversarial_warmup_steps) < 1:
             raise ValueError("integration_adversarial_warmup_steps must be positive")
@@ -160,6 +161,16 @@ def _evaluate(
 
 
 def _quality(validation: dict[str, float]) -> float:
+    primary = [(f"{task}.{metric}", direction) for task, metric, direction in PRIMARY_METRICS
+               if f"{task}.{metric}" in validation]
+    if primary:
+        utilities = []
+        for key, direction in primary:
+            value = float(validation[key])
+            if not np.isfinite(value):
+                raise ValueError(f"nonfinite validation primary metric: {key}")
+            utilities.append(value if direction == "max" else -value)
+        return float(np.mean(utilities))
     values: list[float] = []
     for name in ("annotation_accuracy", "niche_accuracy"):
         value = validation.get(name, float("nan"))
@@ -185,6 +196,12 @@ def train_candidate(
 ) -> dict[str, Any]:
     """Train one candidate and return an immutable, JSON-safe receipt."""
     genome.validate()
+    if splits.train.labels["niche"].ndim == 3 and train_config.task == "joint":
+        raise ValueError("niche composition protocol requires independent task training")
+    if train_config.task == "spatial_niche" and model_config.niche_mode == "composition":
+        for split in (splits.train, splits.validation):
+            if not bool(split.masks["niche"].any(0).all()):
+                raise ValueError("niche training/validation requires targets at every fixed radius")
     from .integration_components import prepare_component_views, selected_components
     if train_config.task == "spatial_completion" and selected_components(genome):
         raise ValueError("dataset-level input components are unavailable for masked completion")
@@ -198,11 +215,12 @@ def train_candidate(
     if task == "development" and (splits.development_train is None or splits.development_validation is None):
         raise ValueError("independent development requires train/validation population pairs")
     trainable_names = configure_task(model, task)
-    optimizer = torch.optim.AdamW(
-        (p for p in model.parameters() if p.requires_grad),
-        lr=float(genome.learning_rate),
-        weight_decay=float(train_config.weight_decay),
-    )
+    parameters = [p for p in model.parameters() if p.requires_grad]
+    if train_config.optimizer_spec is None:
+        optimizer = torch.optim.AdamW(parameters, lr=float(genome.learning_rate), weight_decay=float(train_config.weight_decay))
+    else:
+        from .research.optimizers import build_optimizer
+        optimizer = build_optimizer(parameters, genome.learning_rate, train_config.optimizer_spec)
     balancer = MultiObjectiveBalancer(
         tuple(genome.loss_weights) if task == "joint" else (task,),
         mode=train_config.loss_balance_mode if task == "joint" else "fixed",
@@ -226,6 +244,9 @@ def train_candidate(
     best_validation: dict[str, float] | None = None
     best_step = 0
     completed_steps = 0
+    row_samples_seen = 0
+    population_source_cells_seen = 0
+    effective_targets_seen = 0
     stability_failures: list[dict[str, Any]] = []
     use_amp = device.type == "cuda" and train_config.precision == "bf16"
     target = Path(output_dir) if output_dir is not None else None
@@ -252,6 +273,7 @@ def train_candidate(
         *, step: int, validation: dict[str, float], include_optimizer: bool
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
+            "metric_protocol": metric_protocol(),
             "model": model.state_dict(),
             "genome": genome.to_dict(),
             "config": asdict(model_config),
@@ -278,6 +300,10 @@ def train_candidate(
                 iterator = iter(splits.train.iter_batches(train_config.batch_size, shuffle=True, seed=genome.seed + step))
                 batch = next(iterator)
             batch = batch.to(device)
+        if train_config.optimizer_spec is not None:
+            from .research.optimizers import learning_rate_at
+            for group in optimizer.param_groups:
+                group["lr"] = learning_rate_at(genome.learning_rate, step, train_config.steps, train_config.optimizer_spec)
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=use_amp):
             flow_diagnostics: dict[str, torch.Tensor] = {}
@@ -357,6 +383,15 @@ def train_candidate(
             nn.utils.clip_grad_norm_(model.parameters(), float(train_config.grad_clip))
         optimizer.step()
         completed_steps = step + 1
+        if task == "development":
+            population_source_cells_seen += population.cells
+        else:
+            row_samples_seen += batch.batch_size
+            label = {"annotation":"annotation", "spatial_niche":"niche", "integration":"integration"}.get(task)
+            if label is not None:
+                mask=batch.label_masks[label]
+                if mask.ndim>1:mask=mask.reshape(len(mask),-1).any(1)
+                effective_targets_seen += int(mask.sum())
         if step == 0 and tracked_parameter is not None:
             # Clone after the update so the receipt proves an actual optimizer
             # step occurred, rather than only a successful backward pass.
@@ -403,7 +438,8 @@ def train_candidate(
             improved = current_quality > best_quality
             if improved:
                 best_quality = current_quality
-                best_state = copy.deepcopy(model.state_dict()) if train_config.checkpoint_policy == "all" else None
+                best_state = ({name: value.detach().cpu().clone() for name, value in model.state_dict().items()}
+                              if train_config.checkpoint_policy in {"all", "best_weights"} else None)
                 best_validation = dict(validation)
                 best_step = step + 1
             if target is not None:
@@ -417,7 +453,7 @@ def train_candidate(
                 if train_config.checkpoint_policy == "all":
                     atomic_torch_save(version_path, payload)
                     atomic_torch_save(latest_path, payload)
-                if improved and train_config.checkpoint_policy == "all":
+                if improved and train_config.checkpoint_policy in {"all", "best_weights"}:
                     atomic_torch_save(
                         target / f"candidate-{genome.genome_id}-best.pt",
                         {
@@ -470,7 +506,8 @@ def train_candidate(
         quality = _quality(validation)
         if quality > best_quality:
             best_quality = quality
-            best_state = copy.deepcopy(model.state_dict()) if train_config.checkpoint_policy == "all" else None
+            best_state = ({name: value.detach().cpu().clone() for name, value in model.state_dict().items()}
+                          if train_config.checkpoint_policy in {"all", "best_weights"} else None)
             best_validation = dict(validation)
             best_step = int(train_config.steps)
         validation_history.append({"step": float(train_config.steps), "quality": quality, **validation})
@@ -489,7 +526,7 @@ def train_candidate(
                 include_optimizer=train_config.checkpoint_policy == "all",
             ),
         )
-        if train_config.checkpoint_policy == "all":
+        if train_config.checkpoint_policy in {"all", "best_weights"}:
             best_checkpoint_path = target / f"candidate-{genome.genome_id}-best.pt"
             atomic_torch_save(
                 best_checkpoint_path,
@@ -523,6 +560,8 @@ def train_candidate(
     manifest_test_rows = subset_manifest.get("splits", {}).get("test", {}).get("rows", 0)
     test_rows = splits.test.size if splits.test is not None else int(manifest_test_rows)
     receipt: dict[str, Any] = {
+        "metric_protocol_id": METRIC_PROTOCOL_ID,
+        "metric_protocol": metric_protocol(),
         "format": "nanobrain_experiment_receipt_v1",
         "candidate_id": genome.genome_id,
         "genome": genome.to_dict(),
@@ -554,6 +593,10 @@ def train_candidate(
         "test_opened": test_opened,
         "steps": int(train_config.steps),
         "completed_steps": int(completed_steps),
+        "row_samples_seen": row_samples_seen,
+        "effective_targets_seen": effective_targets_seen,
+        "population_source_cells_seen": population_source_cells_seen,
+        "population_target_cells_seen": population_source_cells_seen,
         "train_steps": step_records,
         "validation_history": validation_history,
         "gradient_finite_parameters": int(gradient_finite_parameters),
@@ -566,6 +609,7 @@ def train_candidate(
         "validation": validation,
         "quality": finite_float(quality),
         "best_validation_quality": finite_float(best_quality),
+        "best_step": int(best_step),
         "loss_balance": {
             "mode": balancer.mode,
             "decay": balancer.decay,

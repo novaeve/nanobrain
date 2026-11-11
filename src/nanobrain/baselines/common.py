@@ -61,6 +61,9 @@ def panel_pseudocounts(dataset: NanoDataset, data_root: Path) -> np.ndarray:
 
 
 def package_version(distribution: str) -> str:
+    if distribution == "xgboost":
+        try:return metadata.version("xgboost-cpu")
+        except metadata.PackageNotFoundError:pass
     try:
         return metadata.version(distribution)
     except metadata.PackageNotFoundError:

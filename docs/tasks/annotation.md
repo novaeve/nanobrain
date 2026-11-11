@@ -17,6 +17,6 @@ Use the short run to verify data loading and the training loop. For GPU training
 
 ## Data and evaluation
 
-The `annotation` label and eligibility mask are provided for each split. Unknown or train-unseen labels are not treated as ordinary training classes. Review accuracy together with macro F1 because class counts are imbalanced; the benchmark reports both alongside the remaining standard classification metrics.
+The `annotation` label and eligibility mask are provided for each split. Unknown or train-unseen labels are not treated as ordinary training classes. Under [V3](../../METRICS_V3.md), Macro-F1 is the primary metric for both validation-best weight selection and final scoring: each ground-truth-supported evaluation class receives equal weight. Accuracy, Balanced Accuracy, and MCC remain diagnostics. This is a closed-set task, without a new unknown-type rejection benchmark.
 
 Training output includes a JSON receipt with the seed, task, data manifest, validation diagnostics, checkpoint, and elapsed time. New runs should compare validation results only. Published test scores are historical descriptive results.

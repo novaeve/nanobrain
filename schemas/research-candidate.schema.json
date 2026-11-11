@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "additionalProperties": {
+        "maxLength": 32768,
+        "minLength": 1,
+        "type": "string"
+      },
+      "propertyNames": {
+        "pattern": "^(modules|losses|optimizers)/[a-z][a-z0-9_]{0,63}\\.py$"
+      },
+      "type": "object"
+    },
+    "genome": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "type": "object"
+        },
+        "learning_rate": {
+          "maximum": 0.01,
+          "minimum": 1e-06,
+          "type": "number"
+        }
+      },
+      "required": [
+        "architecture",
+        "learning_rate"
+      ],
+      "type": "object"
+    },
+    "hypothesis": {
+      "maxLength": 1600,
+      "minLength": 8,
+      "type": "string"
+    },
+    "optimizer": {
+      "additionalProperties": false,
+      "properties": {
+        "grad_clip": {
+          "maximum": 10,
+          "minimum": 0.1,
+          "type": "number"
+        },
+        "name": {
+          "maxLength": 64,
+          "type": "string"
+        },
+        "params": {
+          "type": "object"
+        },
+        "schedule": {
+          "additionalProperties": false,
+          "properties": {
+            "min_lr_ratio": {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            "name": {
+              "enum": [
+                "constant",
+                "cosine",
+                "linear"
+              ]
+            },
+            "warmup_steps": {
+              "maximum": 2000,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "name",
+            "warmup_steps",
+            "min_lr_ratio"
+          ],
+          "type": "object"
+        },
+        "weight_decay": {
+          "maximum": 0.2,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "params",
+        "weight_decay",
+        "grad_clip",
+        "schedule"
+      ],
+      "type": "object"
+    },
+    "parent_ids": {
+      "items": {
+        "pattern": "^[a-f0-9]{64}$",
+        "type": "string"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "plugins": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "entrypoint": {
+            "enum": [
+              "build",
+              "compute"
+            ]
+          },
+          "file": {
+            "pattern": "^(modules|losses|optimizers)/[a-z][a-z0-9_]{0,63}\\.py$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "encoder",
+              "attention",
+              "operation",
+              "head",
+              "flow",
+              "regression_loss",
+              "classification_loss",
+              "niche_loss",
+              "optimizer"
+            ]
+          },
+          "name": {
+            "pattern": "^custom_[a-z][a-z0-9_]{1,47}$",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "default": {
+                  "type": [
+                    "number",
+                    "integer",
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "enum": {
+                  "items": {
+                    "type": [
+                      "number",
+                      "integer",
+                      "boolean",
+                      "string"
+                    ]
+                  },
+                  "maxItems": 32,
+                  "type": "array"
+                },
+                "maximum": {
+                  "type": "number"
+                },
+                "minimum": {
+                  "type": "number"
+                },
+                "type": {
+                  "enum": [
+                    "number",
+                    "integer",
+                    "boolean",
+                    "string"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "default"
+              ],
+              "type": "object"
+            },
+            "maxProperties": 12,
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": {
+              "type": [
+                "number",
+                "integer",
+                "boolean",
+                "string"
+              ]
+            },
+            "maxProperties": 12,
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "file",
+          "entrypoint",
+          "parameters",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "nanobrain.research.candidate.v1"
+    },
+    "target_tasks": {
+      "items": {
+        "enum": [
+          "annotation",
+          "integration",
+          "spatial_niche",
+          "development"
+        ]
+      },
+      "maxItems": 4,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "parent_ids",
+    "target_tasks",
+    "hypothesis",
+    "genome",
+    "optimizer",
+    "plugins",
+    "files"
+  ],
+  "type": "object"
+}

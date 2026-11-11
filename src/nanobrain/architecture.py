@@ -67,6 +67,9 @@ def checked_parameters(kind, name, params, automatic):
     for k, v in result.items():
         if isinstance(v, float) and not math.isfinite(v):
             raise ValueError(f"nonfinite parameter {k}")
+        if name.startswith("custom_") and k not in {"hidden_dim", "input_dim", "output_dim"}:
+            # Research manifests own custom knob types/bounds; do not coerce e.g. integer expansion to float.
+            continue
         if k in {"hidden_dim", "input_dim", "output_dim", "depth", "heads", "iterations"}:
             limit = {"depth": 8, "heads": 16, "iterations": 100}.get(k, 65536)
             _integer(v, 1, limit, k)

@@ -27,6 +27,8 @@ class GraphSTAdapter(BaselineAdapter):
     tasks = ("spatial_niche",)
 
     def availability(self, context: AdapterContext) -> Availability:
+        if context.validation.labels["niche"].ndim == 3:
+            return Availability("task_contract_incompatible", "native GraphST spatial-domain clustering does not implement the matched center-expression-only composition task")
         return Availability("ready") if importlib.util.find_spec("GraphST") else Availability("dependency_missing", "install GraphST")
 
     def metadata(self) -> dict[str, Any]:

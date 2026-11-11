@@ -1,0 +1,71 @@
+{
+  "run": {
+    "pid": 3760652,
+    "started_at": "2026-11-05T03:05:09.465518+00:00",
+    "status": "baseline",
+    "log": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/runtime/research-20261105T030509Z.log",
+    "config": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/configs/research_v3_react.json",
+    "output": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/results/research-v3-react",
+    "generations": 50,
+    "gpus": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "workers_per_gpu": 8,
+    "max_workers": 40,
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "max",
+    "phase_order": [
+      "complete_baselines",
+      "react_evolution_50_generations",
+      "freeze_champion",
+      "dataset_scaling"
+    ],
+    "dataset_sizes": [
+      100000,
+      1000000,
+      5000000,
+      10000000,
+      20000000,
+      "full_train"
+    ],
+    "command": [
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/.venv/bin/python",
+      "-u",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/scripts/nanobrain_research.py",
+      "--config",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/configs/research_v3_react.json",
+      "--output",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/results/research-v3-react",
+      "--execute"
+    ],
+    "verified_at": "2026-11-05T03:09:18.458255+00:00",
+    "baseline_job_count": 264,
+    "source_contract": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/results/research-v3-react/run-contract.json"
+  },
+  "verification": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/REVISION_20261105_VERIFICATION.json",
+  "latest_status": {
+    "active_jobs": [],
+    "active_processes": 0,
+    "completed_generations": 0,
+    "dataset": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103/assets/nanobrain_v3_100k_niche_v3",
+    "generations": 50,
+    "gpu_ids": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "maximum_workers": 40,
+    "model": "gpt-6.1-sol",
+    "pid": 3760652,
+    "queue_phase": "prepare_integration_views",
+    "reasoning_effort": "max",
+    "status": "baseline",
+    "updated_at": "2026-11-05T03:09:09.261827+00:00"
+  }
+}

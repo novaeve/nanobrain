@@ -17,4 +17,8 @@ The smoke run checks the task path. The fixed benchmark used three nanoBrain see
 
 ## Read the result
 
-Compare the integration composite with biology-conservation and batch-removal component metrics in `overall_metrics.csv`. A single integrated score can hide a trade-off between mixing batches and preserving cell biology. Method budgets differ, so retain each run's configuration and seed when comparing a new architecture.
+The current [V3 protocol](../../METRICS_V3.md) reports seven established metrics using official `scib-metrics==0.6.0` implementations: Label ASW, Isolated-label ASW, KMeans NMI, KMeans ARI, within-type Batch ASW, iLISI, and Graph Connectivity. They appear individually in `standard_metrics.csv` and `STANDARD_METRICS.md`. BRAS and cell-type-conditional iLISI remain additional diagnostics. Sampling and seeds are fixed across candidates.
+
+Validation-best checkpoint selection uses a predeclared project utility, retained under the compatibility key `scib_composite`: 60% biology and 40% batch removal over the selected subset. This is labeled `selection_only` and exported separately to `selection_scores.csv`; it is not an official scIB total or the scientific headline metric. The complete `benchmark_table.csv` identifies each metric's role. Formal leaderboards rank the standard metrics individually.
+
+A single score can hide a trade-off between batch mixing and biological structure. Compare the component metrics and diagnostics, and retain each method's training budget and seed. The linked leaderboard is historical and cannot be compared directly with V3 scores.

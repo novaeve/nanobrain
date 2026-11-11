@@ -71,7 +71,7 @@ class CandidateGenome:
         if self.architecture is not None:
             from .architecture import validate_architecture
             validate_architecture(self.architecture)
-            if self.learning_rate not in SEARCH_SPACE["learning_rate"]:
+            if isinstance(self.learning_rate, bool) or not isinstance(self.learning_rate, (int, float)) or not 1e-6 <= self.learning_rate <= .01:
                 raise ValueError("unsupported learning_rate")
             self.hidden_dim = self.architecture["width"]
             self.rollout_steps = self.architecture["solver"]["steps"]
@@ -94,7 +94,7 @@ class CandidateGenome:
             raise ValueError("hidden_dim must be divisible by attention_heads")
         if float(self.dropout) not in SEARCH_SPACE["dropout"]:
             raise ValueError(f"unsupported dropout: {self.dropout}")
-        if float(self.learning_rate) not in SEARCH_SPACE["learning_rate"]:
+        if isinstance(self.learning_rate, bool) or not 1e-6 <= float(self.learning_rate) <= .01:
             raise ValueError(f"unsupported learning_rate: {self.learning_rate}")
         for key in (
             "sinkhorn_epsilon", "flow_endpoint_weight", "flow_expression_weight",

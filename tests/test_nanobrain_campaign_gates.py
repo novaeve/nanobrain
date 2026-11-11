@@ -1,3 +1,4 @@
+from brainwm_benchmark.protocol import METRIC_PROTOCOL_ID
 from nanobrain.campaign import (
     PRIMARY_METRICS,
     baseline_regression_gate,
@@ -20,6 +21,7 @@ def test_baseline_gate_is_fail_closed_and_direction_aware():
     rows = []
     for (task, metric, direction), value in zip(PRIMARY_METRICS, _metrics().values()):
         rows.append({
+            "metric_protocol_id": METRIC_PROTOCOL_ID,
             "task": task,
             "metric": metric,
             "method": f"baseline_{task}",
@@ -34,10 +36,10 @@ def test_baseline_gate_is_fail_closed_and_direction_aware():
     assert baseline_regression_gate(_metrics(offset=0.1), baselines)["passed"] is True
     assert baseline_regression_gate(_metrics(offset=-0.1), baselines)["passed"] is False
     incomplete = dict(baselines)
-    incomplete.pop(("development", "population_mse"))
+    incomplete.pop(("development", "wasserstein2"))
     gate = baseline_regression_gate(_metrics(offset=0.1), incomplete)
     assert gate["passed"] is False
-    assert "baseline_missing:development.population_mse" in gate["reasons"]
+    assert "baseline_missing:development.wasserstein2" in gate["reasons"]
 
 
 def test_task_metric_vector_drives_pareto_selection():
@@ -51,6 +53,7 @@ def test_task_metric_vector_drives_pareto_selection():
 def test_overall_metrics_ignore_strata_and_extract_complete_rows():
     rows = [
         {
+            "metric_protocol_id": METRIC_PROTOCOL_ID,
             "method": "candidate",
             "task": "annotation",
             "metric": "accuracy",
@@ -60,6 +63,7 @@ def test_overall_metrics_ignore_strata_and_extract_complete_rows():
             "stratum_value": "overall",
         },
         {
+            "metric_protocol_id": METRIC_PROTOCOL_ID,
             "method": "candidate",
             "task": "annotation",
             "metric": "accuracy",

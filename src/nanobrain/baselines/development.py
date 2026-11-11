@@ -20,6 +20,7 @@ import torch.nn.functional as F
 from .base import AdapterContext, Availability, BaselineAdapter, TaskPrediction
 from .common import array
 from .registry import register
+from brainwm_benchmark.protocol import DEVELOPMENT_EVAL_CELLS, EVALUATION_SEED
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -134,7 +135,7 @@ def _population_prediction(
     prediction: list[np.ndarray] = []
     pointer = [0]
     for group_index in range(len(development)):
-        batch = development.batch(group_index)
+        batch = development.batch(group_index, max_cells=DEVELOPMENT_EVAL_CELLS, seed=EVALUATION_SEED)
         predicted = predictor(batch, group_index)
         expected_shape = batch.target.features.shape
         if tuple(predicted.shape) != tuple(expected_shape):

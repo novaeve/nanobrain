@@ -119,7 +119,10 @@ class OpenAICompatibleClient:
         for message in messages:
             if not isinstance(message, Mapping) or "role" not in message or "content" not in message:
                 raise ValueError("each message must contain role and content")
-            normalized.append({"role": str(message["role"]), "content": str(message["content"])})
+            item = {"role": str(message["role"]), "content": message["content"]}
+            for key in ("tool_calls", "tool_call_id", "name"):
+                if key in message: item[key] = message[key]
+            normalized.append(item)
         if not normalized:
             raise ValueError("messages must not be empty")
         payload: dict[str, Any] = {"model": self.config.model, "messages": normalized}

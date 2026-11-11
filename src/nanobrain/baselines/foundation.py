@@ -16,11 +16,11 @@ from .common import array, labels, package_version, panel_pseudocounts
 from .registry import register
 
 
-def _catalog(data_root: Path) -> tuple[list[str], list[str]]:
+def _catalog(data_root: Path, catalog_path=None) -> tuple[list[str], list[str]]:
     import pandas as pd
 
     panel = np.load(data_root / "panel_gene_index.npy", allow_pickle=False)
-    table = pd.read_parquet(data_root.parent / "human_v3_genes.parquet").set_index("gene_index")
+    table = pd.read_parquet(catalog_path or data_root.parent / "human_v3_genes.parquet").set_index("gene_index")
     ensembl = [str(table.loc[int(index), "ensembl_id"]).split(".", 1)[0] for index in panel]
     symbols = [str(table.loc[int(index), "gene_symbol"]) for index in panel]
     return ensembl, symbols
@@ -51,19 +51,26 @@ def _linear_probe_predictions(
         int(max(train_annotation[train_annotation_valid].max(), validation_annotation[validation_annotation_valid].max())) + 1,
         dtype=np.int64,
     )
-    scaler = StandardScaler().fit(train_embedding[train_annotation_valid])
-    train_x = scaler.transform(train_embedding[train_annotation_valid])
+    import joblib
+    checkpoint = context.options.get("foundation_probe_checkpoint")
+    if checkpoint:
+        frozen = joblib.load(checkpoint);scaler,classifier = frozen["scaler"],frozen["classifier"]
+    else:
+        scaler = StandardScaler().fit(train_embedding[train_annotation_valid])
+        train_x = scaler.transform(train_embedding[train_annotation_valid])
+        classifier = SGDClassifier(
+            loss="log_loss",
+            alpha=1.0e-4,
+            max_iter=int(context.options.get("foundation_probe_epochs", 100)),
+            tol=1.0e-4,
+            class_weight="balanced",
+            n_jobs=max(1, int(context.threads)),
+            random_state=int(context.seed),
+        )
+        classifier.fit(train_x, train_annotation[train_annotation_valid].astype(np.int64))
+        context.output_root.mkdir(parents=True, exist_ok=True)
+        joblib.dump(dict(scaler=scaler,classifier=classifier),context.output_root / "foundation-probe.joblib")
     validation_x = scaler.transform(validation_embedding[validation_annotation_valid])
-    classifier = SGDClassifier(
-        loss="log_loss",
-        alpha=1.0e-4,
-        max_iter=int(context.options.get("foundation_probe_epochs", 100)),
-        tol=1.0e-4,
-        class_weight="balanced",
-        n_jobs=max(1, int(context.threads)),
-        random_state=int(context.seed),
-    )
-    classifier.fit(train_x, train_annotation[train_annotation_valid].astype(np.int64))
     local_probability = np.asarray(classifier.predict_proba(validation_x), dtype=np.float32)
     probability = np.zeros((len(validation_x), len(classes)), dtype=np.float32)
     probability[:, np.asarray(classifier.classes_, dtype=np.int64)] = local_probability
@@ -155,7 +162,7 @@ class GeneformerV110MAdapter(BaselineAdapter):
             token_dictionary = pickle.load(handle)
         with (dictionary_root / "gene_median_dictionary_gc30M.pkl").open("rb") as handle:
             median_dictionary = pickle.load(handle)
-        ensembl, _ = _catalog(context.data_root)
+        ensembl, _ = _catalog(context.data_root,context.options.get("gene_catalog"))
         mapped = [
             (index, int(token_dictionary[gene]), float(median_dictionary[gene]))
             for index, gene in enumerate(ensembl)
@@ -228,7 +235,7 @@ class _ScGPTAdapter(BaselineAdapter):
     def availability(self, context: AdapterContext) -> Availability:
         root = self._root(context)
         required = [root / "args.json", root / "vocab.json", root / "best_model.pt"]
-        reference = context.data_root.parents[1] / "reference_methods/scBrain/src/models/scGPT/scGPT_annotation.py"
+        reference = Path(context.options.get("scgpt_reference_root",context.data_root.parents[1] / "reference_methods/scBrain")) / "src/models/scGPT/scGPT_annotation.py"
         missing = [str(path) for path in [*required, reference] if not path.is_file()]
         return Availability("external_asset_required", "; ".join(missing)) if missing else Availability("ready")
 
@@ -238,7 +245,7 @@ class _ScGPTAdapter(BaselineAdapter):
     def run(self, context: AdapterContext) -> list[TaskPrediction]:
         import torch
 
-        reference_root = context.data_root.parents[1] / "reference_methods/scBrain"
+        reference_root = Path(context.options.get("scgpt_reference_root",context.data_root.parents[1] / "reference_methods/scBrain"))
         sys.path.insert(0, str(reference_root))
         try:
             from src.models.scGPT.scGPT_annotation import scGPTForAnnotation
@@ -248,7 +255,7 @@ class _ScGPTAdapter(BaselineAdapter):
 
         checkpoint = self._root(context)
         vocab = json.loads((checkpoint / "vocab.json").read_text(encoding="utf-8"))
-        _, symbols = _catalog(context.data_root)
+        _, symbols = _catalog(context.data_root,context.options.get("gene_catalog"))
         mapped = [(index, int(vocab[symbol])) for index, symbol in enumerate(symbols) if symbol in vocab]
         if not mapped:
             raise RuntimeError("no panel genes map to the scGPT vocabulary")

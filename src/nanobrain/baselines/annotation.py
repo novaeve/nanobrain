@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+from importlib import metadata
 from pathlib import Path
 from typing import Any
 
@@ -56,11 +57,11 @@ def _task_prediction(
     )
 
 
-def _panel_gene_symbols(data_root: Path) -> list[str]:
+def _panel_gene_symbols(data_root: Path, catalog_path=None) -> list[str]:
     import pandas as pd
 
     panel = np.load(data_root / "panel_gene_index.npy", allow_pickle=False)
-    catalog = pd.read_parquet(data_root.parent / "human_v3_genes.parquet")
+    catalog = pd.read_parquet(catalog_path or data_root.parent / "human_v3_genes.parquet")
     indexed = catalog.set_index("gene_index")
     symbols: list[str] = []
     seen: dict[str, int] = {}
@@ -110,7 +111,10 @@ class XGBoostAdapter(_ImportChecked):
         learned_classes = np.unique(train_y)
         encode = {int(value): index for index, value in enumerate(learned_classes)}
         encoded_y = np.asarray([encode[int(value)] for value in train_y], dtype=np.int64)
-        device = context.device if context.device.startswith("cuda") else "cpu"
+        device = context.options.get("xgboost_device", context.device if context.device.startswith("cuda") else "cpu")
+        try:
+            metadata.version("xgboost-cpu");device="cpu"
+        except metadata.PackageNotFoundError:pass
         model = XGBClassifier(
             objective="multi:softprob",
             num_class=len(learned_classes),
@@ -127,13 +131,21 @@ class XGBoostAdapter(_ImportChecked):
             random_state=int(context.seed),
             eval_metric="mlogloss",
         )
-        model.fit(train_x, encoded_y, verbose=False)
+        checkpoint = context.options.get("xgboost_checkpoint")
+        import joblib
+        if checkpoint:
+            frozen = joblib.load(checkpoint)
+            model, learned_classes = frozen["model"], frozen["classes"]
+        else:
+            model.fit(train_x, encoded_y, verbose=False)
+            context.output_root.mkdir(parents=True, exist_ok=True)
+            joblib.dump(dict(model=model, classes=learned_classes), context.output_root / "xgboost.joblib")
         learned_probability = np.asarray(model.predict_proba(validation_x), dtype=np.float32)
         probability = np.zeros((len(validation_x), len(classes)), dtype=np.float32)
         probability[:, learned_classes] = learned_probability
         prediction = classes[np.argmax(probability, axis=1)]
         notes = (
-            f"xgboost {package_version('xgboost')}; GPU histogram trees; {model.n_estimators} estimators; "
+            f"xgboost {package_version('xgboost')}; {device} histogram trees; {model.n_estimators} estimators; "
             "train rows only"
         )
         return [_task_prediction(
@@ -160,23 +172,29 @@ class CellTypistAdapter(_ImportChecked):
         import celltypist
 
         train_y, _, train_valid, validation_valid, classes = _annotation_data(context)
-        genes = _panel_gene_symbols(context.data_root)
+        genes = _panel_gene_symbols(context.data_root,context.options.get("gene_catalog"))
         train_x = _celltypist_expression(context, context.train)[train_valid]
         validation_x = _celltypist_expression(context, context.validation)[validation_valid]
         text_labels = np.char.add("class_", train_y.astype(str))
-        model = celltypist.train(
-            X=train_x,
-            labels=text_labels,
-            genes=genes,
-            check_expression=False,
-            use_SGD=True,
-            mini_batch=True,
-            batch_size=int(context.options.get("celltypist_batch_size", 4096)),
-            epochs=int(context.options.get("celltypist_epochs", 30)),
-            balance_cell_type=True,
-            n_jobs=max(1, int(context.threads)),
-            random_state=int(context.seed),
-        )
+        checkpoint = context.options.get("celltypist_checkpoint")
+        if checkpoint:
+            model = celltypist.models.Model.load(model=str(checkpoint))
+        else:
+            model = celltypist.train(
+                X=train_x,
+                labels=text_labels,
+                genes=genes,
+                check_expression=False,
+                use_SGD=True,
+                mini_batch=True,
+                batch_size=int(context.options.get("celltypist_batch_size", 4096)),
+                epochs=int(context.options.get("celltypist_epochs", 30)),
+                balance_cell_type=True,
+                n_jobs=max(1, int(context.threads)),
+                random_state=int(context.seed),
+            )
+            context.output_root.mkdir(parents=True, exist_ok=True)
+            model.write(str(context.output_root / "celltypist.pkl"))
         validation = ad.AnnData(X=validation_x)
         validation.var_names = genes
         result = celltypist.annotate(validation, model=model, majority_voting=False)

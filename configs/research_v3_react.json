@@ -1,0 +1,520 @@
+{
+  "protocol_id": "NANOBRAIN-V3-REACT-CODE-20261105",
+  "status": "configured_for_launch_20261105",
+  "data": "assets/nanobrain_v3_100k_niche_v3",
+  "generations": 50,
+  "candidates_per_generation": 6,
+  "seeds": [
+    202609180,
+    202609181,
+    202609182
+  ],
+  "gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "per_gpu_workers": 4,
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "max",
+  "checkpoint_selection": "validation",
+  "architecture_selection": "test",
+  "job_timeout_seconds": 604800,
+  "reference_genome": {
+    "architecture": {
+      "backbone": {
+        "nodes": [
+          {
+            "id": "node_0",
+            "inputs": [
+              "features"
+            ],
+            "kind": "encoder",
+            "name": "panel_patches",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_1",
+            "inputs": [
+              "node_0"
+            ],
+            "kind": "operation",
+            "name": "layer_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_2",
+            "inputs": [
+              "node_1"
+            ],
+            "kind": "operation",
+            "name": "scfit_attention",
+            "params": {
+              "dropout": 0.05,
+              "heads": 8,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_3",
+            "inputs": [
+              "node_0",
+              "node_2"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_4",
+            "inputs": [
+              "node_3"
+            ],
+            "kind": "operation",
+            "name": "rms_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_5",
+            "inputs": [
+              "node_4"
+            ],
+            "kind": "operation",
+            "name": "scbrain_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 2.67,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_6",
+            "inputs": [
+              "node_3",
+              "node_5"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_7",
+            "inputs": [
+              "node_6"
+            ],
+            "kind": "operation",
+            "name": "mean_pool",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_8",
+            "inputs": [
+              "node_7"
+            ],
+            "kind": "spatial",
+            "name": "neighbor_mean",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_9",
+            "inputs": [
+              "node_8"
+            ],
+            "kind": "operation",
+            "name": "scfit_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 2.0,
+              "hidden_dim": 96
+            },
+            "repeat": 2
+          },
+          {
+            "id": "node_10",
+            "inputs": [
+              "node_8",
+              "node_9"
+            ],
+            "kind": "operation",
+            "name": "subtract",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_11",
+            "inputs": [
+              "node_10"
+            ],
+            "kind": "operation",
+            "name": "scbrain_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 2.67,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_12",
+            "inputs": [
+              "node_8",
+              "node_11"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          }
+        ],
+        "output": "node_12"
+      },
+      "flow": {
+        "nodes": [
+          {
+            "id": "node_0",
+            "inputs": [
+              "time"
+            ],
+            "kind": "operation",
+            "name": "scfit_time",
+            "params": {
+              "dropout": 0.05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_1",
+            "inputs": [
+              "context",
+              "node_0"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_2",
+            "inputs": [
+              "state",
+              "context"
+            ],
+            "kind": "operation",
+            "name": "stack",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_3",
+            "inputs": [
+              "node_2"
+            ],
+            "kind": "operation",
+            "name": "rms_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_4",
+            "inputs": [
+              "node_3",
+              "node_1"
+            ],
+            "kind": "operation",
+            "name": "film",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_5",
+            "inputs": [
+              "node_4"
+            ],
+            "kind": "operation",
+            "name": "scfit_attention",
+            "params": {
+              "dropout": 0.05,
+              "heads": 4,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_6",
+            "inputs": [
+              "node_2",
+              "node_5"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_7",
+            "inputs": [
+              "node_6"
+            ],
+            "kind": "operation",
+            "name": "rms_norm",
+            "params": {
+              "eps": 1e-05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_8",
+            "inputs": [
+              "node_7"
+            ],
+            "kind": "operation",
+            "name": "scfit_ffn",
+            "params": {
+              "dropout": 0.05,
+              "expansion": 4.0,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_9",
+            "inputs": [
+              "node_6",
+              "node_8"
+            ],
+            "kind": "operation",
+            "name": "add",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_10",
+            "inputs": [
+              "node_9"
+            ],
+            "kind": "operation",
+            "name": "first_pool",
+            "params": {},
+            "repeat": 1
+          },
+          {
+            "id": "node_11",
+            "inputs": [
+              "node_10"
+            ],
+            "kind": "operation",
+            "name": "linear",
+            "params": {
+              "bias": true,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          }
+        ],
+        "output": "node_11"
+      },
+      "heads": {
+        "annotation": {
+          "name": "scbrain",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "completion": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "development": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "integration": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.1
+          }
+        },
+        "integration_reconstruction": {
+          "name": "scfit",
+          "params": {
+            "dropout": 0.05
+          }
+        },
+        "niche": {
+          "name": "scbrain",
+          "params": {
+            "dropout": 0.05
+          }
+        }
+      },
+      "input_dim": 256,
+      "objectives": {
+        "annotation": {
+          "name": "classification",
+          "params": {
+            "label_smoothing": 0.05
+          }
+        },
+        "development": {
+          "name": "conditional_flow_matching",
+          "params": {
+            "endpoint_regression": "mse",
+            "endpoint_weight": 1.0,
+            "expression_regression": "smooth_l1",
+            "expression_weight": 1.0,
+            "velocity_regression": "mse",
+            "velocity_weight": 1.0
+          }
+        },
+        "integration": {
+          "name": "adversarial_reconstruction",
+          "params": {
+            "adversarial_strength": 0.25,
+            "batch_weight": 1.0,
+            "reconstruction_weight": 1.0,
+            "regression": "mse"
+          }
+        },
+        "spatial_completion": {
+          "name": "masked_regression",
+          "params": {
+            "regression": "mse"
+          }
+        },
+        "spatial_niche": {
+          "name": "niche_composition",
+          "params": {
+            "density_weight": 0.1
+          }
+        }
+      },
+      "pairing": {
+        "name": "sinkhorn",
+        "params": {
+          "epsilon": 0.03,
+          "iterations": 50
+        }
+      },
+      "solver": {
+        "name": "heun",
+        "steps": 12
+      },
+      "version": 2,
+      "width": 96
+    },
+    "learning_rate": 0.0002
+  },
+  "train": {
+    "steps": 10000,
+    "batch_size": 256,
+    "validation_batch_size": 512,
+    "development_cells": 64,
+    "validation_development_groups": 0,
+    "eval_interval": 1000,
+    "precision": "bf16",
+    "loss_balance_mode": "fixed",
+    "device": "cuda:0"
+  },
+  "native_options": {
+    "scfit_steps": 10000,
+    "scnode_steps": 10000,
+    "trajectorynet_steps": 10000,
+    "scfit_cells": 32,
+    "scnode_cells": 32,
+    "trajectorynet_cells": 32,
+    "scvi_epochs": 400,
+    "scanvi_epochs": 20,
+    "xgboost_estimators": 200,
+    "celltypist_epochs": 30,
+    "foundation_probe_epochs": 100,
+    "xgboost_device": "cpu",
+    "native_max_steps": 10000000,
+    "native_patience": 30,
+    "geneformer_finetune_epochs": 3,
+    "geneformer_finetune_batch_size": 16,
+    "scgpt_finetune_epochs": 10,
+    "scgpt_finetune_batch_size": 32,
+    "scbrain_epochs": 500,
+    "scbrain_batch_size": 512,
+    "spagcn_steps": 5000,
+    "spatial_pretrain_batch": 512,
+    "niche_readout_steps": 10000,
+    "scuniflow_width": 512,
+    "scuniflow_layers": 8,
+    "scuniflow_batch_size": 25,
+    "scuniflow_pretrain_epochs": 80,
+    "graphst_epochs": 600,
+    "stagate_epochs": 1000
+  },
+  "scaling": {
+    "epochs": 10,
+    "sampling_seed": 20261103,
+    "source": "/mnt/aliyunsb/zim_rider/Brain-Word-Model/brainwm_training_benchmark/assets/v3_numpy_shards",
+    "contract": "/mnt/aliyunsb/zim_rider/nanobrain/brain/contracts/healthy_global_benchmark_v3",
+    "niche_cache": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/niche_full_sections_v3",
+    "fixed_holdout": "original 20k validation + 20k test; test was used during architecture search",
+    "native_development_epochs": 10,
+    "dataset_sizes": [
+      100000,
+      1000000,
+      5000000,
+      10000000,
+      20000000,
+      "full_train"
+    ],
+    "size_basis": "total cells including fixed original 20k validation + 20k test; initial 100k has 60k train"
+  },
+  "resources": {
+    "gpu_memory_margin_mib": 4096,
+    "candidate_reservation_mib": 4096,
+    "native_reservation_mib": 8192,
+    "foundation_reservation_mib": 12288,
+    "minimum_host_available_mib": 32768,
+    "job_retries": 3
+  },
+  "proposal_attempts": 4,
+  "scaling_job_timeout_seconds": 7776000,
+  "transfer": {
+    "hidden": 128,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "batch_size": 256,
+    "steps": 10000,
+    "eval_interval": 500,
+    "development_steps": 10000,
+    "development_cells": 32,
+    "rollout_steps": 10
+  }
+}

@@ -23,6 +23,7 @@ class ObjectiveAPI:
 
 
 OBJECTIVES: dict[str, ObjectiveAPI] = {}
+COMPOSITION_OBJECTIVES = {"niche_composition"}
 
 
 def register_objective(name, *, tasks, compute, defaults, population=False):
@@ -59,7 +60,7 @@ def validate_objectives(spec):
             raise ValueError(f"objective {task} parameter keys mismatch")
         for k, v in item["params"].items():
             if "regression" in k:
-                if v not in {"mse", "smooth_l1", "l1"}:
+                if v not in REGRESSION_LOSSES:
                     raise ValueError("unknown regression loss")
             elif isinstance(v, bool) or not isinstance(v, (float, int)) or not math.isfinite(v):
                 raise ValueError("objective parameters must be finite numbers")
@@ -99,6 +100,23 @@ def classification_objective(model, batch, embedding, params, task):
     label = "annotation" if task == "annotation" else "niche"
     head = model.annotation_head if task == "annotation" else model.niche_head
     return masked_classification(head(embedding), batch.labels[label], batch.label_masks.get(label), **params), {}
+
+
+def niche_composition_objective(model, batch, embedding, params, task):
+    composition, density = model.predict_niche(embedding)
+    target = batch.labels["niche"]
+    mask = batch.label_masks["niche"]
+    if target.ndim != 3 or composition.shape != target.shape:
+        raise ValueError("niche task requires valid full-neighborhood composition targets")
+    scale_losses = [F.mse_loss(composition[mask[:, s], s], target[mask[:, s], s].float())
+                    for s in range(target.shape[1]) if bool(mask[:, s].any())]
+    composition_loss = torch.stack(scale_losses).mean() if scale_losses else composition.sum() * 0.
+    loss = composition_loss
+    density_mask = batch.label_masks.get("niche_density", mask)
+    if bool(density_mask.any()):
+        loss = loss + params["density_weight"] * F.mse_loss(
+            density[density_mask].log1p(), batch.labels["niche_density"][density_mask].float().log1p())
+    return loss, {"niche_composition_mse": composition_loss.detach()}
 
 
 def completion_objective(model, batch, embedding, params, task):
@@ -190,3 +208,6 @@ for _task, _function, _population in (
     _spec = default_objectives()[_task]
     register_objective(_spec["name"], tasks=("annotation", "spatial_niche") if _task == "annotation" else (_task,),
                        compute=_function, defaults=_spec["params"], population=_population)
+
+register_objective("niche_composition", tasks=("spatial_niche",), compute=niche_composition_objective,
+                   defaults={"density_weight": .1})

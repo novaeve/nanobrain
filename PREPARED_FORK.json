@@ -1,0 +1,11 @@
+{
+  "data_manifest_sha256": "e0e03d5f972a97f183a38b4e6e04f1e60c939fa1e52c09005a29b90ef094926a",
+  "evolution_started": false,
+  "formal_training_started": false,
+  "preparation_verification": "PREPARATION_VERIFICATION.json",
+  "source": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102",
+  "source_head": "b5e6bbf01f8b9f14ec63de873f1fa950c079738c",
+  "status": "prepared_not_started",
+  "strategy_document": "REACT_EVOLUTION_V3.md",
+  "working_tree_overlay_files": 273
+}

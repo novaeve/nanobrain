@@ -62,7 +62,7 @@ def test_independent_training_updates_only_task_path_and_evaluates_only_that_tas
     if task == "integration":
         assert "integration_reconstruction" in receipt["train_steps"][-1]
     rows = _run_nanobrain(splits, Path(receipt["checkpoint"]), tmp_path / "evaluation",
-                         "cpu", 12, evaluation_seed=5)
+                         "cpu", 12, evaluation_seed=20260915)
     assert rows and {row["task"] for row in rows} == {task}
     assert {row["training_regime"] for row in rows} == {"independent_task_from_scratch"}
     assert not any(row["status"] in {"error", "failed"} for row in rows), rows
@@ -70,7 +70,7 @@ def test_independent_training_updates_only_task_path_and_evaluates_only_that_tas
         bundle = tmp_path / "task_checkpoints.json"
         bundle.write_text(json.dumps(dict(format="nanobrain_task_checkpoints_v1", genome=genome.to_dict(),
             tasks={task: dict(path=receipt["checkpoint"], sha256=hashlib.sha256(Path(receipt["checkpoint"]).read_bytes()).hexdigest())})))
-        bundled = _run_nanobrain(splits, bundle, tmp_path / "bundle_evaluation", "cpu", 12, evaluation_seed=5)
+        bundled = _run_nanobrain(splits, bundle, tmp_path / "bundle_evaluation", "cpu", 12, evaluation_seed=20260915)
         assert {(r["task"], r["metric"]) for r in bundled} == {(r["task"], r["metric"]) for r in rows}
         Path(receipt["checkpoint"]).write_bytes(b"corrupt checkpoint")
         with pytest.raises(ValueError, match="checksum mismatch"):

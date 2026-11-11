@@ -26,6 +26,7 @@ from nanobrain.data import (  # noqa: E402
     infer_label_cardinalities,
     load_v3_subset,
     verify_subset_manifest,
+    niche_model_options,
 )
 from nanobrain.genome import CandidateGenome, default_genome  # noqa: E402
 from nanobrain.model import NanoBrainModelConfig  # noqa: E402
@@ -58,7 +59,8 @@ def main() -> None:
     parser.add_argument("--validation-development-groups", type=int, default=32)
     parser.add_argument("--eval-interval", type=int, default=0)
     parser.add_argument("--precision", choices=("fp32", "bf16"), default="bf16")
-    parser.add_argument("--checkpoint-policy", choices=("all", "final_weights"), default="all")
+    parser.add_argument("--checkpoint-policy", choices=("all", "final_weights", "best_weights"), default="best_weights")
+    parser.add_argument("--optimizer-json", type=Path, help="validated research optimizer/schedule specification")
     parser.add_argument(
         "--loss-balance",
         choices=("ema_equal", "detached_max_equal", "fixed"),
@@ -116,6 +118,7 @@ def main() -> None:
         integration_classes=cardinalities["integration"],
         development_dim=development_dim,
         development_condition_dim=condition_dim,
+        **niche_model_options(splits),
     )
     if args.genome_json is None:
         genome = default_genome(seed=args.seed)
@@ -130,7 +133,11 @@ def main() -> None:
             genome = CandidateGenome.from_dict(genome_payload)
         except (TypeError, ValueError) as exc:
             parser.error(f"invalid candidate genome: {exc}")
+    optimizer_spec = json.loads(args.optimizer_json.read_text()) if args.optimizer_json else None
     train_config = TrainConfig(
+        optimizer_spec=optimizer_spec,
+        grad_clip=optimizer_spec["grad_clip"] if optimizer_spec else 1.0,
+        weight_decay=optimizer_spec["weight_decay"] if optimizer_spec else 1e-4,
         steps=args.steps,
         batch_size=args.batch_size,
         validation_batch_size=args.validation_batch_size,

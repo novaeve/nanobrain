@@ -1,0 +1,258 @@
+{
+  "status": "running",
+  "verified_at": "2026-11-03T04:02:09.387162+00:00",
+  "allowed_gpus": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "workers_per_gpu": 8,
+  "max_workers": 40,
+  "controller": {
+    "pid": 589872,
+    "started_at": "2026-11-03T04:00:31.884882+00:00",
+    "config": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/configs/nanobrain_graph_v2/metrics_v3_test_driven_50g_20261103.json",
+    "output": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103",
+    "log": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/v3-test-driven-20261103/evolution.log",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "max",
+    "workers_per_gpu": 8,
+    "max_workers": 40,
+    "gpus": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "adopt_workers": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/v3-test-driven-20261103/gpu-restrictions/20261103T035903Z/adopted-workers.json",
+    "selection_evaluation_split": "test",
+    "checkpoint_selection": "validation_primary_metric",
+    "command": [
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/.venv/bin/python",
+      "-u",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/v3-test-driven-20261103/adopt_bootstrap.py",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/scripts/run_nanobrain_evolution.py",
+      "--config",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/configs/nanobrain_graph_v2/metrics_v3_test_driven_50g_20261103.json",
+      "--output",
+      "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103",
+      "--gpus",
+      "0,1,2,3,4",
+      "--adaptive-queue",
+      "--workers-per-gpu",
+      "8",
+      "--max-workers",
+      "40",
+      "--allow-shared-gpus",
+      "--resume"
+    ]
+  },
+  "live_workers": [
+    {
+      "pid": 400368,
+      "gpu": 2,
+      "task": "annotation",
+      "phase": "training"
+    },
+    {
+      "pid": 400389,
+      "gpu": 4,
+      "task": "annotation",
+      "phase": "training"
+    },
+    {
+      "pid": 400391,
+      "gpu": 3,
+      "task": "integration",
+      "phase": "training"
+    },
+    {
+      "pid": 400393,
+      "gpu": 1,
+      "task": "integration",
+      "phase": "training"
+    },
+    {
+      "pid": 400403,
+      "gpu": 2,
+      "task": "spatial_niche",
+      "phase": "training"
+    },
+    {
+      "pid": 400412,
+      "gpu": 4,
+      "task": "development",
+      "phase": "training"
+    },
+    {
+      "pid": 400415,
+      "gpu": 3,
+      "task": "development",
+      "phase": "training"
+    },
+    {
+      "pid": 400420,
+      "gpu": 1,
+      "task": "development",
+      "phase": "training"
+    },
+    {
+      "pid": 593149,
+      "gpu": 1,
+      "task": "annotation",
+      "phase": "training"
+    },
+    {
+      "pid": 593181,
+      "gpu": 0,
+      "task": "spatial_niche",
+      "phase": "training"
+    }
+  ],
+  "physical_cuda_placements": [
+    {
+      "pid": 593181,
+      "gpu": 0
+    },
+    {
+      "pid": 400393,
+      "gpu": 1
+    },
+    {
+      "pid": 400420,
+      "gpu": 1
+    },
+    {
+      "pid": 593149,
+      "gpu": 1
+    },
+    {
+      "pid": 400403,
+      "gpu": 2
+    },
+    {
+      "pid": 400368,
+      "gpu": 2
+    },
+    {
+      "pid": 400391,
+      "gpu": 3
+    },
+    {
+      "pid": 400415,
+      "gpu": 3
+    },
+    {
+      "pid": 400389,
+      "gpu": 4
+    },
+    {
+      "pid": 400412,
+      "gpu": 4
+    }
+  ],
+  "adopted_training_jobs": 8,
+  "completed_results_reused": 2,
+  "requeued_from_scratch": 2,
+  "migration": {
+    "timestamp": "2026-11-03T04:00:10.927200+00:00",
+    "reason": "user restricts V3 to physical GPUs 0-4",
+    "previous_controller_pid": 399751,
+    "previous_gpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "allowed_gpus": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "workers_per_gpu": 8,
+    "max_workers": 40,
+    "adopted_workers": [
+      {
+        "pid": 400368,
+        "gpu": 2,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/annotation/candidate_00",
+        "phase": "training"
+      },
+      {
+        "pid": 400389,
+        "gpu": 4,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/annotation/candidate_02",
+        "phase": "training"
+      },
+      {
+        "pid": 400391,
+        "gpu": 3,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/integration/candidate_00",
+        "phase": "training"
+      },
+      {
+        "pid": 400393,
+        "gpu": 1,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/integration/candidate_01",
+        "phase": "training"
+      },
+      {
+        "pid": 400403,
+        "gpu": 2,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/spatial_niche/candidate_01",
+        "phase": "training"
+      },
+      {
+        "pid": 400412,
+        "gpu": 4,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/development/candidate_00",
+        "phase": "training"
+      },
+      {
+        "pid": 400415,
+        "gpu": 3,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/development/candidate_01",
+        "phase": "training"
+      },
+      {
+        "pid": 400420,
+        "gpu": 1,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/development/candidate_02",
+        "phase": "training"
+      }
+    ],
+    "requeued_workers": [
+      {
+        "pid": 400374,
+        "gpu": 6,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/annotation/candidate_01",
+        "phase": "training",
+        "archived_partial_directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/v3-test-driven-20261103/gpu-restrictions/20261103T035903Z/requeued-partial-training/reference_single_stage/annotation/candidate_01",
+        "restart_from_step": 0
+      },
+      {
+        "pid": 400410,
+        "gpu": 6,
+        "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/nanobrain/metrics-v3-test-driven-50g-20261103/reference_single_stage/spatial_niche/candidate_02",
+        "phase": "training",
+        "archived_partial_directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/v3-test-driven-20261103/gpu-restrictions/20261103T035903Z/requeued-partial-training/reference_single_stage/spatial_niche/candidate_02",
+        "restart_from_step": 0
+      }
+    ],
+    "stopped_nontraining_workers": [],
+    "source_or_budget_changed": false
+  },
+  "scientific_protocol_unchanged": true,
+  "source_fingerprint_unchanged": true,
+  "protocol_sha256": "a1858d7b6cb007f3a04e1a1259a712d72ee7cdbc1e0a51d8c63e96347f8d2734",
+  "old_experiments_modified": false
+}

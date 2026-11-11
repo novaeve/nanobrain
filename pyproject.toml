@@ -17,15 +17,18 @@ dependencies = [
   "POT>=0.9.5",
   "PyYAML>=6.0.2",
   "jsonpatch>=1.33,<2",
+  "geomloss==0.3.1",
+  "jsonschema>=4.23,<5",
 ]
 
 [project.optional-dependencies]
+research = ["xgboost-cpu==3.0.5", "matplotlib>=3.9,<4"]
 cpu = ["torch>=2.10,<2.11"]
 dev = ["pytest>=8.3", "ruff>=0.11"]
 benchmark = [
   "anndata>=0.11",
   "scanpy>=1.11",
-  "scib-metrics>=0.5",
+  "scib-metrics==0.6.0",
 ]
 
 [project.scripts]

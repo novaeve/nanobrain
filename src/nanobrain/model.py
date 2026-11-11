@@ -34,6 +34,8 @@ class NanoBrainModelConfig:
     integration_classes: int
     development_dim: int | None = None
     development_condition_dim: int = 1
+    niche_mode: str = "classification"
+    niche_scales: int = 1
 
     def __post_init__(self) -> None:
         for name in ("input_dim", "annotation_classes", "niche_classes", "integration_classes"):
@@ -43,6 +45,8 @@ class NanoBrainModelConfig:
             raise ValueError("development_dim must be positive")
         if int(self.development_condition_dim) < 1:
             raise ValueError("development_condition_dim must be positive")
+        if self.niche_mode not in {"classification", "composition"} or self.niche_scales < 1:
+            raise ValueError("invalid niche task contract")
 
 
 class NanoBrainModel(nn.Module):
@@ -64,7 +68,7 @@ class NanoBrainModel(nn.Module):
             pair = spec["pairing"]
             self.pairing = registry("pairing").create(pair["name"], **checked_parameters("pairing", pair["name"], pair["params"], {}))
             for name, output_dim in {"annotation": config.annotation_classes, "integration": config.integration_classes,
-                                     "niche": config.niche_classes, "development": config.input_dim,
+                                     "niche": config.niche_classes * config.niche_scales, "development": config.input_dim,
                                      "integration_reconstruction": config.input_dim,
                                      "completion": config.input_dim}.items():
                 head = spec["heads"][name]
@@ -74,6 +78,15 @@ class NanoBrainModel(nn.Module):
                                         lambda head=head, params=params: registry("head").create(head["name"], **params)))
                 setattr(self, name + "_head", module)
             self.objective_specs = spec["objectives"]
+            if config.niche_mode == "composition":
+                head = spec["heads"]["niche"]
+                self.niche_density_head = (GraphHead(head, spec["width"], config.niche_scales, genome.seed, "niche_density")
+                    if "pre" in head else seeded_module(genome.seed, "head/niche_density", lambda:
+                        registry("head").create(head["name"], **head_parameters(head, spec["width"], config.niche_scales))))
+                from .objectives import COMPOSITION_OBJECTIVES
+                if self.objective_specs["spatial_niche"]["name"] not in COMPOSITION_OBJECTIVES:
+                    self.objective_specs = {**self.objective_specs, "spatial_niche": {
+                        "name": "niche_composition", "params": {"density_weight": .1}}}
             return
         common = {
             "hidden_dim": genome.hidden_dim,
@@ -106,8 +119,12 @@ class NanoBrainModel(nn.Module):
         )
         self.niche_head = heads.create(
             genome.classification_head, hidden_dim=genome.hidden_dim,
-            output_dim=config.niche_classes, dropout=genome.dropout,
+            output_dim=config.niche_classes * config.niche_scales, dropout=genome.dropout,
         )
+        if config.niche_mode == "composition":
+            self.niche_density_head = heads.create(genome.regression_head, hidden_dim=genome.hidden_dim,
+                                                  output_dim=config.niche_scales, dropout=genome.dropout)
+            self.objective_specs["spatial_niche"] = {"name": "niche_composition", "params": {"density_weight": .1}}
         self.integration_head = heads.create(
             genome.classification_head, hidden_dim=genome.hidden_dim,
             output_dim=config.integration_classes, dropout=genome.dropout,
@@ -258,6 +275,14 @@ class NanoBrainModel(nn.Module):
             completion_prediction=self.completion_head(embedding),
             auxiliary={"development_velocity": velocity},
         )
+
+    def predict_niche(self, embedding):
+        if self.config.niche_mode != "composition":
+            raise ValueError("niche composition requires a composition checkpoint")
+        logits = self.niche_head(embedding).reshape(-1, self.config.niche_scales, self.config.niche_classes)
+        # Density is an auxiliary probe; its much larger count scale must not
+        # dominate the composition representation through backbone gradients.
+        return logits.float().softmax(-1), F.softplus(self.niche_density_head(embedding.detach()).float())
 
     @staticmethod
     def _masked_cross_entropy(logits: Tensor, target: Tensor, mask: Tensor | None) -> Tensor:

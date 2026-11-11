@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from brainwm_benchmark.protocol import METRIC_PROTOCOL_ID
 from nanobrain.evolution import architecture_id, joint_score, improvement_gate, confirm_replicates, validate_proposals
 from nanobrain.genome import CandidateGenome, SEARCH_SPACE
 from scripts.run_nanobrain_campaign import _parse_gpus, _launch_evaluations
@@ -19,7 +20,7 @@ POLICY = dict(minimum_joint_gain=0.002, max_score_drop=0.02, max_error_relative_
 
 def test_hundred_generation_prompt_history_is_bounded_without_changing_archive():
     history = [dict(generation=i, candidates=[dict(architecture_id=f"c{i}", score=i / 100,
-        metrics={"annotation.accuracy": i / 100}, diagnostics={"large_unused_detail": list(range(500))})])
+        metrics={"annotation.f1_macro": i / 100}, diagnostics={"large_unused_detail": list(range(500))})])
         for i in range(100)]
     old = copy.deepcopy(history)
     summary = proposal_history(history, recent_generations=5, best_candidates=12)
@@ -28,34 +29,34 @@ def test_hundred_generation_prompt_history_is_bounded_without_changing_archive()
     assert len(summary["best_observed_candidates"]) == 12
     assert summary["best_observed_candidates"][0]["architecture_id"] == "c99"
     assert history == old and "large_unused_detail" not in json.dumps(summary)
-REFERENCE = {"annotation.accuracy": 0.4, "integration.integration_composite": 0.5,
-             "spatial_niche.ari": 0.1, "spatial_completion.heldout_rmse": 1.0,
-             "development.population_mse": 0.3}
+REFERENCE = {"annotation.f1_macro": 0.4, "integration.scib_composite": 0.5,
+             "spatial_niche.composition_mae": 0.1, "spatial_completion.heldout_rmse": 1.0,
+             "development.wasserstein2": 0.3}
 
 
 def test_gate_accepts_joint_gain_with_small_tradeoff_but_rejects_task_collapse():
-    better = {**REFERENCE, "annotation.accuracy": 0.5, "integration.integration_composite": 0.49}
+    better = {**REFERENCE, "annotation.f1_macro": 0.5, "integration.scib_composite": 0.49}
     assert improvement_gate(better, REFERENCE, POLICY)["passed"]
     assert not improvement_gate(REFERENCE, REFERENCE, POLICY)["passed"]
-    worse = {**better, "development.population_mse": 0.6}
+    worse = {**better, "development.wasserstein2": 0.6}
     assert not improvement_gate(worse, REFERENCE, POLICY)["passed"]
-    assert not improvement_gate({**better, "spatial_niche.ari": float('nan')}, REFERENCE, POLICY)["passed"]
+    assert not improvement_gate({**better, "spatial_niche.composition_mae": float('nan')}, REFERENCE, POLICY)["passed"]
     missing = dict(better)
-    del missing["development.population_mse"]
+    del missing["development.wasserstein2"]
     assert not improvement_gate(missing, REFERENCE, POLICY)["passed"]
 
 
 def test_fixed_score_is_independent_of_mapping_order_and_uses_correct_directions():
     assert joint_score(REFERENCE) == joint_score(dict(reversed(list(REFERENCE.items()))))
-    assert joint_score({**REFERENCE, "development.population_mse": 0.1}) > joint_score(REFERENCE)
+    assert joint_score({**REFERENCE, "development.wasserstein2": 0.1}) > joint_score(REFERENCE)
 
 
 def test_confirmation_requires_matched_seeds_and_reproducible_gains():
     refs = [dict(genome=CandidateGenome(seed=s).to_dict(), metrics=REFERENCE) for s in (10, 11, 12)]
     candidates = [dict(genome=CandidateGenome(seed=s, hidden_dim=128).to_dict(),
-                       metrics={**REFERENCE, "annotation.accuracy": 0.5}) for s in (12, 10, 11)]
+                       metrics={**REFERENCE, "annotation.f1_macro": 0.5}) for s in (12, 10, 11)]
     assert confirm_replicates(candidates, refs, POLICY)["passed"]
-    candidates[0]["metrics"] = {**REFERENCE, "development.population_mse": 0.9}
+    candidates[0]["metrics"] = {**REFERENCE, "development.wasserstein2": 0.9}
     assert not confirm_replicates(candidates, refs, POLICY)["passed"]
     candidates[0]["genome"]["seed"] = 11
     with pytest.raises(ValueError, match="same independent seeds"):
@@ -124,11 +125,11 @@ def test_multigeneration_driver_propagates_confirmed_parents_and_freezes_before_
     def write_table(path, item):
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["method", "task", "metric", "value", "status", "stratum_type", "stratum_value"])
+            w = csv.DictWriter(f, fieldnames=["metric_protocol_id", "method", "task", "metric", "value", "status", "stratum_type", "stratum_value"])
             w.writeheader()
             for key, value in item["metrics"].items():
                 task, metric = key.split(".")
-                w.writerow(dict(method="nanobrain_candidate-" + item["candidate_id"], task=task,
+                w.writerow(dict(metric_protocol_id=METRIC_PROTOCOL_ID, method="nanobrain_candidate-" + item["candidate_id"], task=task,
                                 metric=metric, value=value, status="complete",
                                 stratum_type="overall", stratum_value="overall"))
 
@@ -140,7 +141,7 @@ def test_multigeneration_driver_propagates_confirmed_parents_and_freezes_before_
             target.mkdir(parents=True, exist_ok=True)
             checkpoint = target / "checkpoint.pt"
             checkpoint.write_bytes(b"fixture")
-            metrics = {**REFERENCE, "annotation.accuracy": 0.4 + (genome.hidden_dim - 64) / 800.0}
+            metrics = {**REFERENCE, "annotation.f1_macro": 0.4 + (genome.hidden_dim - 64) / 800.0}
             row = dict(spec, genome=genome.to_dict(), architecture_id=architecture_id(genome.to_dict()),
                        candidate_id=genome.genome_id, metrics=metrics, score=joint_score(metrics),
                        runtime_seconds=1.0, parameter_count=100, steps=steps, index=i,
@@ -169,7 +170,7 @@ def test_multigeneration_driver_propagates_confirmed_parents_and_freezes_before_
         assert experiment.state["selected"] is not None
         test_calls.append(True)
         for row in kwargs["candidates"]:
-            test_row = {**row, "metrics": {**row["metrics"], "annotation.accuracy": 0.25}}
+            test_row = {**row, "metrics": {**row["metrics"], "annotation.f1_macro": 0.25}}
             write_table(Path(row["directory"]) / "test_reevaluation/benchmark_table.csv", test_row)
         return []
 
@@ -192,19 +193,19 @@ def test_multigeneration_driver_propagates_confirmed_parents_and_freezes_before_
         for row in runs:
             assert row["evaluation_split"] == "test"
             assert row["evaluation_sha256"] == hashlib.sha256(Path(row["evaluation"]).read_bytes()).hexdigest()
-            assert row["metrics"]["annotation.accuracy"] == 0.25
-            assert row["diagnostics"]["annotation.accuracy"] == 0.25
+            assert row["metrics"]["annotation.f1_macro"] == 0.25
+            assert row["diagnostics"]["annotation.f1_macro"] == 0.25
             assert row["score"] == joint_score(row["metrics"])
-    assert experiment.state["confirmation_reference"][0]["metrics"]["annotation.accuracy"] == 0.4
+    assert experiment.state["confirmation_reference"][0]["metrics"]["annotation.f1_macro"] == 0.4
 
 
 def test_four_task_score_does_not_require_completion_and_enforces_all_four_guards():
     tasks = ["annotation", "integration", "spatial_niche", "development"]
     ref = {k: v for k, v in REFERENCE.items() if not k.startswith("spatial_completion.")}
-    better = {**ref, "annotation.accuracy": 0.5}
+    better = {**ref, "annotation.f1_macro": 0.5}
     assert joint_score(better, tasks) > joint_score(ref, tasks)
     assert improvement_gate(better, ref, {**POLICY, "tasks": tasks})["passed"]
-    assert not improvement_gate({**better, "development.population_mse": 0.9}, ref, {**POLICY, "tasks": tasks})["passed"]
+    assert not improvement_gate({**better, "development.wasserstein2": 0.9}, ref, {**POLICY, "tasks": tasks})["passed"]
 
 
 def test_real_proposal_builder_describes_independent_tasks_and_exposes_metric_feedback(tmp_path, monkeypatch):

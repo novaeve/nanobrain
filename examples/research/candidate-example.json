@@ -1,0 +1,252 @@
+{
+  "files": {
+    "losses/robust.py": "import torch\n\ndef compute(prediction, target, delta=1.0):\n    error = prediction - target\n    return (delta * delta * (torch.sqrt(1.0 + (error / delta).square()) - 1.0)).mean()\n",
+    "modules/gated.py": "import torch\nfrom torch import nn\n\nclass GatedResidual(nn.Module):\n    def __init__(self, hidden_dim, expansion=2):\n        super().__init__()\n        self.up = nn.Linear(hidden_dim, hidden_dim * expansion)\n        self.down = nn.Linear(hidden_dim * expansion, hidden_dim)\n        self.gate = nn.Linear(hidden_dim, hidden_dim)\n\n    def forward(self, state):\n        correction = self.down(torch.nn.functional.silu(self.up(state)))\n        return state + torch.sigmoid(self.gate(state)) * correction\n\n\ndef build(hidden_dim, expansion=2):\n    return GatedResidual(hidden_dim, expansion)\n",
+    "optimizers/normalized.py": "import torch\nfrom torch.optim import Optimizer\n\nclass NormalizedSGD(Optimizer):\n    def __init__(self, parameters, lr, weight_decay, epsilon=0.0001):\n        super().__init__(parameters, dict(lr=lr, weight_decay=weight_decay, epsilon=epsilon))\n\n    @torch.no_grad()\n    def step(self, closure=None):\n        if closure is not None:\n            raise ValueError('closure is unsupported')\n        for group in self.param_groups:\n            for parameter in group['params']:\n                if parameter.grad is not None:\n                    gradient = parameter.grad\n                    scale = gradient.square().mean().sqrt() + group['epsilon']\n                    parameter.mul_(1.0 - group['lr'] * group['weight_decay'])\n                    parameter.add_(gradient / scale, alpha=-group['lr'])\n\n\ndef build(parameters, lr, weight_decay, epsilon=0.0001):\n    return NormalizedSGD(parameters, lr, weight_decay, epsilon)\n"
+  },
+  "genome": {
+    "architecture": {
+      "backbone": {
+        "nodes": [
+          {
+            "id": "node_0",
+            "inputs": [
+              "features"
+            ],
+            "kind": "encoder",
+            "name": "mlp",
+            "params": {
+              "depth": 2,
+              "dropout": 0.05,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_1",
+            "inputs": [
+              "node_0"
+            ],
+            "kind": "attention",
+            "name": "differential_linear",
+            "params": {
+              "correction_init": 0.2,
+              "heads": 4,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_2",
+            "inputs": [
+              "node_1"
+            ],
+            "kind": "spatial",
+            "name": "neighbor_mean",
+            "params": {
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "node_3",
+            "inputs": [
+              "node_2"
+            ],
+            "kind": "residual",
+            "name": "nbeats",
+            "params": {
+              "expansion": 2.0,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          },
+          {
+            "id": "gate",
+            "inputs": [
+              "node_3"
+            ],
+            "kind": "operation",
+            "name": "custom_gate",
+            "params": {
+              "expansion": 2
+            }
+          }
+        ],
+        "output": "gate"
+      },
+      "flow": {
+        "nodes": [
+          {
+            "id": "node_0",
+            "inputs": [
+              "state",
+              "context",
+              "time"
+            ],
+            "kind": "flow",
+            "name": "scnode_time_mlp",
+            "params": {
+              "depth": 2,
+              "hidden_dim": 96
+            },
+            "repeat": 1
+          }
+        ],
+        "output": "node_0"
+      },
+      "heads": {
+        "annotation": {
+          "name": "classification",
+          "params": {}
+        },
+        "completion": {
+          "name": "regression",
+          "params": {}
+        },
+        "development": {
+          "name": "regression",
+          "params": {}
+        },
+        "integration": {
+          "name": "classification",
+          "params": {}
+        },
+        "integration_reconstruction": {
+          "name": "regression",
+          "params": {}
+        },
+        "niche": {
+          "name": "classification",
+          "params": {}
+        }
+      },
+      "input_dim": 256,
+      "objectives": {
+        "annotation": {
+          "name": "classification",
+          "params": {
+            "label_smoothing": 0.0
+          }
+        },
+        "development": {
+          "name": "conditional_flow_matching",
+          "params": {
+            "endpoint_regression": "mse",
+            "endpoint_weight": 1.0,
+            "expression_regression": "mse",
+            "expression_weight": 0.5,
+            "velocity_regression": "custom_robust",
+            "velocity_weight": 1.0
+          }
+        },
+        "integration": {
+          "name": "adversarial_reconstruction",
+          "params": {
+            "adversarial_strength": 0.5,
+            "batch_weight": 1.0,
+            "reconstruction_weight": 1.0,
+            "regression": "mse"
+          }
+        },
+        "spatial_completion": {
+          "name": "masked_regression",
+          "params": {
+            "regression": "mse"
+          }
+        },
+        "spatial_niche": {
+          "name": "niche_composition",
+          "params": {
+            "density_weight": 0.1
+          }
+        }
+      },
+      "pairing": {
+        "name": "sinkhorn",
+        "params": {
+          "epsilon": 0.05,
+          "iterations": 30
+        }
+      },
+      "solver": {
+        "name": "heun",
+        "steps": 8
+      },
+      "version": 2,
+      "width": 96
+    },
+    "learning_rate": 0.0003
+  },
+  "hypothesis": "Test a gated residual module, robust loss and normalized-gradient optimizer.",
+  "optimizer": {
+    "grad_clip": 1.0,
+    "name": "custom_normalized",
+    "params": {
+      "epsilon": 0.0001
+    },
+    "schedule": {
+      "min_lr_ratio": 0.0,
+      "name": "constant",
+      "warmup_steps": 0
+    },
+    "weight_decay": 0.0001
+  },
+  "parent_ids": [
+    "0000000000000000000000000000000000000000000000000000000000000000"
+  ],
+  "plugins": [
+    {
+      "entrypoint": "build",
+      "file": "modules/gated.py",
+      "kind": "operation",
+      "name": "custom_gate",
+      "parameters": {
+        "expansion": {
+          "default": 2,
+          "maximum": 4,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "settings": {}
+    },
+    {
+      "entrypoint": "compute",
+      "file": "losses/robust.py",
+      "kind": "regression_loss",
+      "name": "custom_robust",
+      "parameters": {
+        "delta": {
+          "default": 1.0,
+          "maximum": 4,
+          "minimum": 0.01,
+          "type": "number"
+        }
+      },
+      "settings": {}
+    },
+    {
+      "entrypoint": "build",
+      "file": "optimizers/normalized.py",
+      "kind": "optimizer",
+      "name": "custom_normalized",
+      "parameters": {
+        "epsilon": {
+          "default": 0.0001,
+          "maximum": 0.1,
+          "minimum": 1e-06,
+          "type": "number"
+        }
+      },
+      "settings": {}
+    }
+  ],
+  "schema_version": "nanobrain.research.candidate.v1",
+  "target_tasks": [
+    "annotation",
+    "integration",
+    "spatial_niche",
+    "development"
+  ]
+}

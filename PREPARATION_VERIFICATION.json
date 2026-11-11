@@ -1,0 +1,119 @@
+{
+  "active_xgboost_build": "official CPU 3.0.5 in this environment only",
+  "baseline_inventory": {
+    "component_controls": 16,
+    "formal_results": null,
+    "native_ready": 12,
+    "not_applicable": {
+      "graphst": "native region clustering does not predict hidden-neighborhood composition",
+      "scuniflow": "native completion/asset interface is not the four-task protocol; field component is benchmarked separately",
+      "spagcn": "native spatial-domain clustering is outside these four V3 targets",
+      "stagate": "native spatial representation/domain task is not center-only niche composition",
+      "uce": "not a current library component; optional external assets/adapter not included in required coverage"
+    }
+  },
+  "branch": "v3-react-code-evolution-20261103",
+  "component_probes": {
+    "accepted": 16,
+    "synthetic_only": true,
+    "total": 16
+  },
+  "config_sha256": "a77df47e1c64b1113461dda6798d754225a0212db4901000a7a4b6ab4d6387e6",
+  "custom_code_os_sandbox": {
+    "status": "accepted",
+    "synthetic_only": true,
+    "tasks": 4
+  },
+  "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/v3-react-code-evolution-20261103",
+  "execution": {
+    "background_controller_started": false,
+    "baseline_100k_training_started": false,
+    "evolution_started": false,
+    "formal_jobs": 0,
+    "llm_calls": 0,
+    "scaling_started": false
+  },
+  "future_configuration": {
+    "architecture_selection": "test",
+    "candidates_per_generation": 6,
+    "checkpoint_selection": "validation",
+    "generations": 50,
+    "gpu_ids": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "model": "gpt-6.1-sol",
+    "per_gpu_workers": 2,
+    "reasoning_effort": "max",
+    "scaling": {
+      "contract": "/mnt/aliyunsb/zim_rider/nanobrain/brain/contracts/healthy_global_benchmark_v3",
+      "epochs": 10,
+      "fixed_holdout": "original 20k validation + 20k test; test was used during architecture search",
+      "native_development_epochs": 10,
+      "niche_cache": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/runtime/niche_full_sections_v3",
+      "sampling_seed": 20261103,
+      "source": "/mnt/aliyunsb/zim_rider/Brain-Word-Model/brainwm_training_benchmark/assets/v3_numpy_shards",
+      "train_sizes": [
+        60000,
+        300000,
+        1000000,
+        3000000,
+        10000000,
+        "full_train"
+      ]
+    },
+    "seeds": [
+      202609180,
+      202609181,
+      202609182
+    ]
+  },
+  "isolation": {
+    "credential_file_hidden": true,
+    "environment_clean": true,
+    "gpu_hidden": true,
+    "isolated_hostname": "nanobrain",
+    "old_env_hidden": true
+  },
+  "original_experiments_modified": false,
+  "parent_100k_manifest_sha256": "e0e03d5f972a97f183a38b4e6e04f1e60c939fa1e52c09005a29b90ef094926a",
+  "parent_100k_manifest_unchanged": true,
+  "post_change_scaling_regression": {
+    "errors": 0,
+    "failures": 0,
+    "file": "preparation_checks/scaling-final.xml",
+    "skipped": 0,
+    "tests": 1
+  },
+  "prepared_at": "2026-11-03T05:01:27.906999+00:00",
+  "read_only_heldout_mount": {
+    "data_readonly": true,
+    "test_rows": 20000,
+    "validation_rows": 20000
+  },
+  "runtime_versions": {
+    "POT": "0.9.7.post1",
+    "geomloss": "0.3.1",
+    "jsonschema": "4.26.0",
+    "matplotlib": "3.11.1",
+    "numpy": "2.2.6",
+    "scib-metrics": "0.6.0",
+    "scikit-learn": "1.9.0",
+    "scipy": "1.18.1",
+    "torch": "2.10.0",
+    "xgboost": "3.4.1",
+    "xgboost-cpu": "3.0.5"
+  },
+  "source_fingerprint_sha256": "ff11fd3141135da66c1d6922d664487a8dc082630014125bbd452cfeadf80f5f",
+  "status": "prepared_not_started",
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "file": "preparation_checks/pytest-final.xml",
+    "skipped": 0,
+    "tests": 162
+  }
+}
