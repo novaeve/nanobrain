@@ -54,13 +54,17 @@ class NanoBrainModel(nn.Module):
         self.objective_specs = default_objectives(genome.flow_endpoint_weight, genome.flow_expression_weight,
                                                  genome.integration_adversarial_strength)
         if genome.architecture is not None:
-            from .architecture import ModuleGraph, FlowGraph, GraphHead, Shape, checked_parameters, seeded_module, head_parameters
+            from .architecture import ModuleGraph, FlowGraph, GraphHead, Shape, checked_parameters, seeded_module, head_parameters, backbone_inputs
             spec = genome.to_dict()["architecture"]
             if config.input_dim != spec["input_dim"]:
                 raise ValueError("architecture input_dim differs from dataset")
-            self.backbone = ModuleGraph(spec["backbone"], {"features": Shape(config.input_dim)}, allow_spatial=True,
+            self.backbone = ModuleGraph(spec["backbone"], backbone_inputs(spec), allow_spatial=True,
                                         seed=genome.seed, scope="backbone")
             self.flow = FlowGraph(spec["flow"], spec["width"], seed=genome.seed)
+            if "endpoint" in spec:
+                end = spec["endpoint"]
+                self.endpoint = seeded_module(genome.seed, "endpoint", lambda: registry("endpoint").create(
+                    end["name"], **checked_parameters("endpoint", end["name"], end["params"], {"hidden_dim": spec["width"]})))
             pair = spec["pairing"]
             self.pairing = registry("pairing").create(pair["name"], **checked_parameters("pairing", pair["name"], pair["params"], {}))
             for name, output_dim in {"annotation": config.annotation_classes, "integration": config.integration_classes,
@@ -181,7 +185,26 @@ class NanoBrainModel(nn.Module):
             views = {name: torch.as_tensor(batch.metadata[PREFIX + name][:len(features)],
                          device=features.device, dtype=features.dtype)
                      for name in METHODS if PREFIX + name in batch.metadata}
-            return self.backbone({"features": features}, neighbors=neighbors, neighbor_mask=neighbor_mask,
+            values = {"features": features}
+            if self.genome.architecture["version"] >= 3:
+                ids = batch.metadata.get("technical_batch_ids")
+                if ids is None:
+                    if len(features) != batch.batch_size and "batch_id" in self.backbone.used_inputs:
+                        raise ValueError("conditional context requires technical batch IDs for neighbor rows")
+                    ids = (batch.labels["integration"].masked_fill(~batch.label_masks["integration"], -1)
+                           if "integration" in batch.labels and len(features) == batch.batch_size
+                           else features.new_full((len(features),), -1))
+                values["batch_id"] = torch.as_tensor(ids, device=features.device).reshape(-1, 1)[:len(features)]
+                if "nonnegative_features" in self.backbone.used_inputs:
+                    norm = batch.metadata.get("feature_normalization")
+                    if norm is None:
+                        raise ValueError("nonnegative_features requires frozen train-fitted normalization metadata")
+                    mean = torch.as_tensor(norm["mean"], device=features.device, dtype=features.dtype)
+                    std = torch.as_tensor(norm["std"], device=features.device, dtype=features.dtype)
+                    values["nonnegative_features"] = (features * std + mean).clamp_min(0)
+                else:
+                    values["nonnegative_features"] = torch.zeros_like(features)
+            return self.backbone(values, neighbors=neighbors, neighbor_mask=neighbor_mask,
                                  coordinates=batch.coordinates, integration_views=views)[:batch.batch_size]
         state = self.encoder(features)
         if state.ndim not in (2, 3) or state.shape[0] != len(features) or state.shape[-1] != self.genome.hidden_dim:
@@ -366,6 +389,13 @@ class NanoBrainModel(nn.Module):
         if target_time_days <= source_time_days:
             raise ValueError("development rollout requires target_time > source_time")
         context = self.encode(source_batch)
+        if hasattr(self, "endpoint"):
+            time = self._time_features(len(context), context.new_ones((len(context), 1)),
+                                       source_time_days, target_time_days)
+            state = self.endpoint(context, context, time)
+            if not torch.isfinite(state).all():
+                raise FloatingPointError("development endpoint produced non-finite state")
+            return self.population_decoder(state), state
         state = context
         step_size = 1.0 / steps
         for index in range(steps):

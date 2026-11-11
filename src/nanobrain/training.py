@@ -53,7 +53,7 @@ class TrainConfig:
     def __post_init__(self):
         if self.task not in ("joint", *TASKS):
             raise ValueError(f"unsupported training task: {self.task}")
-        if self.checkpoint_policy not in {"all", "final_weights"}:
+        if self.checkpoint_policy not in {"all", "final_weights", "best_weights"}:
             raise ValueError("unsupported checkpoint_policy")
         if int(self.integration_adversarial_warmup_steps) < 1:
             raise ValueError("integration_adversarial_warmup_steps must be positive")
@@ -188,6 +188,9 @@ def train_candidate(
     from .integration_components import prepare_component_views, selected_components
     if train_config.task == "spatial_completion" and selected_components(genome):
         raise ValueError("dataset-level input components are unavailable for masked completion")
+    if (train_config.task == "spatial_completion" and genome.architecture is not None
+            and any(n["name"] == "scprint_value" for n in genome.architecture["backbone"]["nodes"])):
+        raise ValueError("scPRINT nonnegative expression input is not enabled for masked completion")
     component_receipts = prepare_component_views(splits, genome)
     _seed_everything(int(genome.seed) if genome.seed is not None else int(train_config.seed))
     device = resolve_device(train_config.device)
@@ -222,6 +225,7 @@ def train_candidate(
     development_order = None
     development_position = 0
     best_quality = float("-inf")
+    retain_best = train_config.checkpoint_policy in {"all", "best_weights"}
     best_state = None
     best_validation: dict[str, float] | None = None
     best_step = 0
@@ -403,7 +407,7 @@ def train_candidate(
             improved = current_quality > best_quality
             if improved:
                 best_quality = current_quality
-                best_state = copy.deepcopy(model.state_dict()) if train_config.checkpoint_policy == "all" else None
+                best_state = copy.deepcopy(model.state_dict()) if retain_best else None
                 best_validation = dict(validation)
                 best_step = step + 1
             if target is not None:
@@ -417,7 +421,7 @@ def train_candidate(
                 if train_config.checkpoint_policy == "all":
                     atomic_torch_save(version_path, payload)
                     atomic_torch_save(latest_path, payload)
-                if improved and train_config.checkpoint_policy == "all":
+                if improved and retain_best:
                     atomic_torch_save(
                         target / f"candidate-{genome.genome_id}-best.pt",
                         {
@@ -470,7 +474,7 @@ def train_candidate(
         quality = _quality(validation)
         if quality > best_quality:
             best_quality = quality
-            best_state = copy.deepcopy(model.state_dict()) if train_config.checkpoint_policy == "all" else None
+            best_state = copy.deepcopy(model.state_dict()) if retain_best else None
             best_validation = dict(validation)
             best_step = int(train_config.steps)
         validation_history.append({"step": float(train_config.steps), "quality": quality, **validation})
@@ -489,7 +493,7 @@ def train_candidate(
                 include_optimizer=train_config.checkpoint_policy == "all",
             ),
         )
-        if train_config.checkpoint_policy == "all":
+        if retain_best:
             best_checkpoint_path = target / f"candidate-{genome.genome_id}-best.pt"
             atomic_torch_save(
                 best_checkpoint_path,
@@ -538,7 +542,7 @@ def train_candidate(
         "effective_flow_depth": (None if genome.architecture is not None else
                                  max(2, genome.flow_depth + genome.flow_depth % 2)
                                  if genome.flow == "fmt" else genome.flow_depth),
-        "architecture_version": 2 if genome.architecture is not None else 1,
+        "architecture_version": genome.architecture["version"] if genome.architecture is not None else 1,
         "module_manifest": ([dict(graph=part, id=n["id"], kind=n["kind"], name=n["name"],
                                   params=n["params"], repeat=n["repeat"],
                                   output_rank=n["shape"].rank, output_width=n["shape"].width,
@@ -566,6 +570,8 @@ def train_candidate(
         "validation": validation,
         "quality": finite_float(quality),
         "best_validation_quality": finite_float(best_quality),
+        "best_step": best_step,
+        "best_validation": best_validation,
         "loss_balance": {
             "mode": balancer.mode,
             "decay": balancer.decay,

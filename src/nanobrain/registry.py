@@ -107,7 +107,7 @@ class ModuleRegistry:
 REGISTRIES = {
     kind: ModuleRegistry(kind)
     for kind in (
-        "encoder", "attention", "spatial", "residual", "pairing", "flow", "head", "operation"
+        "encoder", "attention", "spatial", "residual", "pairing", "flow", "head", "operation", "endpoint"
     )
 }
 

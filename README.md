@@ -1,352 +1,58 @@
-# nanoBrain
+# Graph V3 测试驱动演化：验证集选择最佳权重
 
-<p align="center">
-  <strong>A readable, modifiable, reproducible entry point for virtual-cell experiments</strong>
-</p>
+创建日期：2026-10-29。目录：`/mnt/aliyunsb/zim_rider/nanobrain/try/test-driven-val-best-20261029`。
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#four-benchmark-tasks">Tasks</a> ·
-  <a href="#data-and-scale">Data</a> ·
-  <a href="#leaderboard">Leaderboard</a> ·
-  <a href="#custom-models">Custom Models</a> ·
-  <a href="#contributing">Contributing</a>
-</p>
+从 `brain-test-evolution-20261027` 复制源码、配置和测试，独立保存新结果；数据、参考组件、API 配置复用原目录的链接；Python 环境与新增组件实现复用 Graph V3 组件库。
 
-**Language:** English · [简体中文](README_zh-CN.md)
+## 当前流程
 
-![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
-![Package manager](https://img.shields.io/badge/package%20manager-uv-6E56CF)
-![Dataset](https://img.shields.io/badge/frozen%20benchmark-100k%20cells-2da44e)
-![Tasks](https://img.shields.io/badge/benchmark-4%20tasks-0969da)
-![Scope](https://img.shields.io/badge/scope-internal%20open%20source-8250df)
+1. 沿用同一份数据及其固定 60,000 / 20,000 / 20,000 train / validation / test 划分。
+2. 初始基线及每个候选结构，均对四个任务独立从头训练；每任务使用三个配对种子 `202609190/191/192`，每次完整训练 10,000 steps。
+3. 每 500 steps 在 validation 上评估。按训练器已有 validation quality 选择每任务、每 seed 的最佳权重；分数相同保留较早的权重。具体标准为：annotation accuracy 最大、niche accuracy 最大、integration objective 最小、development population mean-expression MSE 最小。
+4. 训练器只加载 train/validation；训练完成后，canonical evaluator 才对选好的 `*-best.pt` 权重计算 test 指标。这些 test 指标是该结构、该 seed 的最终成绩。
+5. 将三个 seed 的逐任务 test 指标取平均，计算四任务等权综合分；沿用原有综合提升和逐任务退化门槛，与初始基线及当前父代比较。LLM 根据这些 test 反馈提出下一代。每代 12 个候选，共 50 代，无额外短预算筛选和末尾确认。
 
-nanoBrain is a compact virtual-cell research, teaching, and prototyping project. Inspired by the readability of nanoGPT and the iteration loop of automated research frameworks, it keeps data loading, model definition, training, validation, and comparison in one understandable experiment path.
+测试集持续参与候选结构选择；这里的修改只把训练权重的选择改成依赖 validation。
 
-nanoBrain is a fast experimentation entry point for Brain World Model, not a smaller deployment of Brain World Model. New architectures, objectives, sampling strategies, and tasks can be tested on a manageable dataset before the useful ideas move to larger cell datasets and model campaigns.
+## 保存与失败处理
 
-> [!IMPORTANT]
-> This repository contains a frozen and verified 100,000-cell (100k) metadata-v2 dataset: 60,000 train / 20,000 validation / 20,000 test.
+- 每任务每 seed 保留最佳 validation 权重和最终 step 权重，不保存每次评估的优化器快照。
+- 训练回执记录 `best_step`、`best_validation`、`best_validation_quality`；任务结果和 checkpoint bundle 记录实际选择的权重及其哈希。
+- 任一 seed 的训练失败或缺少主指标，则整个候选不晋级，保留失败原因，继续处理其他候选；初始基线失败则明确退出。
+- 运行状态见 runtime/active_run.json 和正式结果目录的 campaign.json；未复制旧版运行结果。
 
-> [!WARNING]
-> The fixed test labels and historical results have already been opened. Use train/validation for new model selection; test leaderboard scores are descriptive historical results, not a new blind holdout.
-
-## Quick Start
-
-### 1. Set up the environment
-
-The supported quick-start environment is Linux x86_64, Python 3.12, and [uv](https://docs.astral.sh/uv/):
+## 运行
 
 ```bash
-git clone https://github.com/novaeve/nanobrain.git
-cd nanobrain
-
-# Download the dataset (100k cells, ~70MB)
-wget https://github.com/novaeve/nanobrain/releases/download/v1.0.0-data/nanobrain-v3-100k-metadata-v2.zip
-unzip nanobrain-v3-100k-metadata-v2.zip -d assets/
-
-# Install CPU PyTorch, development tools, and prepare the dataset
-cp .env.example .env
-bash scripts/bootstrap.sh
+cd /mnt/aliyunsb/zim_rider/nanobrain/try/test-driven-val-best-20261029
+bash scripts/run_val_best_evolution.sh --gpus 0,1,2,3,4,5,6,7
 ```
 
-For a step-by-step setup:
+配置：`configs/nanobrain_graph_v2/test_driven_val_best_50g_20261029.json`。
+正式结果：`results/nanobrain/test-driven-val-best-20261029`。
+同一份代码、数据与配置继续执行时，在上述命令后增加 `--resume`。
 
-```
-uv sync --extra cpu --extra dev
-uv run nanobrain-data prepare
-```
 
-### 2. Run a minimal experiment
+## 本次 50 代实验
 
-```
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --task annotation \
-  --steps 20 \
-  --batch-size 16 \
-  --device cpu \
-  --precision fp32 \
-  --output results/annotation-smoke
-```
+- 模型固定 gpt-6.1-sol，每次提案请求显式发送 reasoning_effort=max；当前网关连通测试已接受该参数并返回相同模型。
+- 新增 12 个方法的 17 个结构组件已接入 Graph V3 的 registry、张量契约、训练器和 LLM graph catalog；已有 CellTypist/Harmony/Scanorama/BBKNN 保留。
+- 组件来源、逐文件哈希和可搜索条目见 runtime/component_integration_receipt.json；代码和上游源码会随正式实验冻结。
+- 新增方法：scTab、STAGATE、scPoli、MIOFlow、PRESCIENT、scNym、SEDR、SpaGCN、scFoundation、scPRINT、scBERT、CellOT。
+- 相关检查：101 passed。真实数据短流程预检结果见 results/preflight-v3-val-best-20261029-v2。
 
-Twenty steps verify data loading, model construction, backpropagation, validation, and receipt writing. They are a smoke test, not a benchmark-quality budget. The output directory contains checkpoints and a JSON receipt.
+## 2026-10-30 调度优化
 
-### 3. Choose a task
+正式任务已使用 --resume --adaptive-queue 续跑。各任务的训练和评估共用队列，工作完成即补位，不等待整批或整项任务结束。优先选用外部 GPU 显存占用不超过 16 GiB 的卡，每张低负载卡最多并行两个进程；所有卡均有外部重负载时，优先选外部负载较低的卡。
 
-Set --task to one of:
+原有 116 份任务结果保留，第 0 代复用 104 份结果和 3 份已训练权重，并接管原来尚未完成的一个训练进程。模型、数据、训练预算、随机种子、验证选权重与测试评分规则均保持原样。源代码变更仅涉及两个调度文件，旧协议和代码已归档到结果目录的 runtime_migrations。
 
-```text
-integration
-annotation
-development
-spatial_niche
-```
+验证记录：runtime/scheduler_migration_receipt.json。动态队列日志：results/nanobrain/test-driven-val-best-20261029/scheduler_events.jsonl。运行状态见 campaign.json 的 scheduler 和 active_runs。
 
-The development tutorial exposes additional sampling and validation controls:
+## 2026-10-30 并行上限调整
 
-```
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --task development \
-  --steps 20 \
-  --batch-size 16 \
-  --development-cells 64 \
-  --validation-development-groups 8 \
-  --device cpu \
-  --precision fp32 \
-  --output results/development-smoke
-```
+按用户要求，低负载 GPU 的并行上限由 2 调为 5。正式进程和启动脚本均已使用 --workers-per-gpu 5。已保存 155 份任务结果并接管未完成的训练进程；模型、种子、步数、数据划分和评分规则保持原样。验证记录：runtime/parallelism_5_receipt.json。
 
-### 4. Run checks and rebuild the leaderboard
+## 2026-11-02 显存中断恢复
 
-```
-uv run pytest
-uv run python scripts/build_leaderboard.py
-```
-
-CI runs the same tests, lint checks, and leaderboard generation steps in [.github/workflows/ci.yml](.github/workflows/ci.yml).
-
-## Experiment flow
-
-```mermaid
-flowchart LR
-    A["Frozen data manifest"] --> B["Validated data loader"]
-    B --> C["Replaceable expression encoder"]
-    C --> D["Attention / spatial / residual modules"]
-    D --> E["Task heads and objectives"]
-    E --> F["Training and validation receipt"]
-    F --> G["Common evaluator"]
-    G --> H["Leaderboard"]
-```
-
-Single-task diagnostics can use an independent model and optimizer. Evolution candidates default to `--task joint`: one model and optimizer jointly optimize annotation, integration, development, and spatial niche, and promotion uses all four primary metrics. Normal training opens train and validation only. Every run records the task, manifest, seed, step budget, validation results, checkpoint, and stability checks so experiments can be reproduced and compared on internal servers.
-
-## Four benchmark tasks
-
-| Task | Question | Primary metrics | Guide |
-|---|---|---|---|
-| **Integration** | Preserve biological expression signal while reducing batch signal | Integration composite, biology conservation, batch removal | [Guide](docs/tasks/integration.md) |
-| **Annotation** | Predict cell-type labels observed in training | Macro F1, accuracy | [Guide](docs/tasks/annotation.md) |
-| **Development** | Predict a target population from a source population and condition | Population MSE, gene Spearman, MMD | [Guide](docs/tasks/development.md) |
-| **Spatial niche** | Predict anatomy-derived niche labels using expression and verified spatial context | ARI, NMI, spatial metrics | [Guide](docs/tasks/spatial-niche.md) |
-
-The tasks share the data contract, component registry, trainer, and evaluator, while using independent objectives, heads, and optimizers.
-
-## Data and scale
-
-### Reproducible benchmark release
-
-| Property | Current release |
-|---|---|
-| Dataset | nanobrain_v3_100k_metadata_v2 |
-| Total cells | 100,000 |
-| Split | 60,000 train / 20,000 validation / 20,000 test |
-| Split ID | BRAINWM-HUMAN-GLOBAL-6-2-2-V3 |
-| Expression panel | 256 genes |
-| Normalization | Fit on train only |
-| Metadata | metadata-v2 with repaired row identity |
-| Spatial neighbors | Independently verified sections only |
-
-Dataset preparation checks the split ID, exact row counts, metadata version, train-only normalization provenance, and every file hash declared in the manifest. It does not randomly resplit rows and does not open H5AD files in the training loop.
-
-```mermaid
-flowchart LR
-    T["Train 60k"] --> N["Train-only normalization"]
-    V["Validation 20k"] --> S["Checkpoint selection"]
-    E["Test 20k"] --> R["Historical descriptive evaluation"]
-    N --> M["Frozen manifest + receipts"]
-    S --> M
-    R --> M
-```
-
-See the [dataset contract](docs/data.md) and [data folder notes](assets/README.md).
-
-### Data scale overview
-
-| Tier | Intended use | Status |
-|---|---|---|
-| Teaching | Courses, tutorials, and CPU smoke runs | Available through the quick start |
-| Benchmark | Frozen 100k (100,000 cells) data and four tasks | Current release |
-
-## Leaderboard
-
-The current leaderboard is generated from a frozen unified evaluation table:
-
-- [Leaderboard](benchmarks/nanobrain_v3_100k/LEADERBOARD.md)
-- [Machine-readable metrics](benchmarks/nanobrain_v3_100k/overall_metrics.csv)
-- [Benchmark status and protocol](docs/benchmark_status.md)
-
-The nanoBrain reference uses three seeds and 2,000 optimizer steps per seed:
-
-| Task | Metric | Mean | SD | Direction |
-|---|---|---:|---:|---|
-| Annotation | Accuracy | 0.2644 | 0.0101 | Higher is better |
-| Annotation | Macro F1 | 0.0136 | 0.0012 | Higher is better |
-| Integration | Integration composite | 0.3764 | 0.0152 | Higher is better |
-| Spatial niche | ARI | 0.0601 | 0.0282 | Higher is better |
-| Spatial niche | NMI | 0.1027 | 0.0138 | Higher is better |
-| Development | Population MSE | 0.2315 | 0.0076 | Lower is better |
-| Development | Gene Spearman | 0.5859 | 0.0340 | Higher is better |
-
-Training budgets, data coverage, and evaluation counts can differ across methods. Inspect each method protocol before drawing comparisons.
-
-Regenerate the summary with:
-
-```
-uv run python scripts/build_leaderboard.py \
-  --input benchmarks/nanobrain_v3_100k/frozen_test_metrics.csv
-```
-
-## Custom models
-
-nanoBrain uses a component registry so researchers can replace model parts without rewriting the data loader or trainer. The default path includes:
-
-- MLP expression encoder
-- Differential linear attention
-- Bounded neighbor-mean spatial fusion
-- N-BEATS-style residual correction
-- Sinkhorn population matching
-- Flow Matching Transformer
-- Classification, regression, and completion heads
-
-An encoder receives [batch, genes] and returns [batch, hidden] or [batch, tokens, hidden]. Start with [examples/custom_encoder.py](examples/custom_encoder.py):
-
-```
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --plugin examples.custom_encoder \
-  --genome-json examples/custom_genome.json \
-  --task annotation \
-  --steps 20 \
-  --batch-size 16 \
-  --device cpu \
-  --precision fp32 \
-  --output results/custom-annotation
-```
-
-See the [custom model tutorial](docs/custom-model.md). Receipts record plugin module names and source hashes.
-
-## Baselines inside evolution
-
-Baselines can now be recorded as generation-specific references during model evolution. Pass a generation number and a campaign ledger to the baseline CLI; it selects the strongest non-nanoBrain method for each primary metric on validation and appends a resumable JSON snapshot. Candidate promotion can then apply the same baseline regression gate.
-
-```bash
-uv run python scripts/run_nanobrain_baselines.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --generation 0 \
-  --campaign-ledger results/nanobrain/evolution/campaign.json \
-  --output results/nanobrain/evolution/generation-00-baselines
-```
-
-Use `nanobrain.load_generation_baseline` to read a generation snapshot and `nanobrain.baseline_regression_gate` to check a candidate against it. The ledger follows the train/validation protocol; the test split remains outside search and selection. The interface is independent of the LLM or search driver so it can be reused by longer, multi-GPU Brain World Model campaigns.
-
-## Servers and GPUs
-
-The quick start targets Linux CPU and works well for small servers, workstations, and cloud instances. For GPU training, install a PyTorch wheel matching the server CUDA runtime using the [PyTorch selector](https://pytorch.org/get-started/locally/), then use:
-
-```
---device cuda
-```
-
-nanoBrain currently provides experiment CLIs, receipts, and common evaluation. It does not present the experiment CLI as a production inference service.
-
-## Reproducibility and fair comparison
-
-Record at least:
-
-- data manifest and split ID
-- task, seed, step budget, and batch size
-- validation split and evaluation settings
-- model genome and plugin source hash
-- checkpoint policy and stability thresholds
-
-Iterate on train/validation before moving a design to a larger campaign. Do not tune against the already opened test leaderboard.
-
-## Repository layout
-
-```text
-src/nanobrain/       nanoBrain models, data contracts, objectives, and training
-src/brainwm*/        Shared model, data, and benchmark components
-scripts/              Environment, data, training, evaluation, and leaderboard commands
-docs/tasks/           Task-by-task tutorials
-benchmarks/           Frozen 100k leaderboard and source metrics
-configs/              Public model configurations
-examples/             Custom encoder and genome examples
-tests/                Contract, data, training, evaluation, and leaderboard tests
-assets/               Dataset notes; the actual bundle is not tracked
-```
-
-## Who this is for
-
-| User | What nanoBrain enables |
-|---|---|
-| Research scientists | Compare architectures, objectives, samplers, and task heads quickly |
-| Bioinformatics practitioners and students | Learn cell representations, training, and evaluation from readable code |
-| Database and agent builders | Add local cell representation, annotation, and retrieval capabilities |
-| Internal platform teams | Run bounded experiments, preserve receipts, and aggregate leaderboard results |
-
-## Roadmap
-
-- [x] Frozen 100k metadata-v2 data contract
-- [x] Integration, annotation, development, and spatial niche tasks
-- [x] CPU quick start, receipts, and common leaderboard
-- [x] Replaceable component registry and custom encoder example
-- [ ] More complete GPU, cloud, and server templates
-- [ ] Automated experiment search, budget control, and result retention
-- [ ] Local inference interfaces for bioinformatics databases and research agents
-
-## Contributing
-
-This is an internal open-source research foundation. A useful contribution loop is:
-
-1. Reproduce the current baseline on the frozen 100k data and four tasks.
-2. Add focused tests for new components, tasks, or data transforms.
-3. Preserve the data manifest, seed, step budget, and validation receipt.
-4. Update the relevant tutorial, benchmark protocol, or leaderboard generator.
-5. Open a pull request with hardware, runtime, and reproducible commands.
-
-Read the [component guide](docs/components.md), [dataset contract](docs/data.md), and [third-party notes](docs/third_party.md) before contributing.
-
-<details>
-<summary>FAQ</summary>
-
-### How do I download the dataset?
-
-Download the `nanobrain-v3-100k-metadata-v2.zip` file from the [GitHub Releases](https://github.com/novaeve/nanobrain/releases) page, extract it to `assets/nanobrain_v3_100k_metadata_v2/`, and run the data preparation command. The dataset contains 100,000 cells (100k) split into 60k train / 20k validation / 20k test.
-
-### Does a 20-step run produce a final result?
-
-No. It verifies the pipeline. The fixed nanoBrain reference uses 2,000 optimizer steps per seed.
-
-### Can I tune on test?
-
-No. Test labels are already open. Use train/validation for new model selection.
-
-### Is there an online API?
-
-The repository provides training and evaluation CLIs, not a production online service. An inference interface is part of the deployment roadmap.
-
-</details>
-
-<details>
-<summary>Related documentation</summary>
-
-- [简体中文 README](README_zh-CN.md)
-- [Component guide](docs/components.md)
-- [Dataset contract](docs/data.md)
-- [Benchmark status](docs/benchmark_status.md)
-- [Custom model tutorial](docs/custom-model.md)
-- [Task tutorials](docs/tasks/)
-- [Third-party notes](docs/third_party.md)
-
-</details>
-
-
-## Current evolution protocol: Graph V2
-
-Graph V2 is the canonical nanoBrain evolution protocol. Candidates are explicit backbone and flow computation graphs proposed as validated full genomes or constrained JSON Patches. Each candidate is trained independently for annotation, integration, spatial niche, and development, then screened on validation, reproduced with three paired seeds, and confirmed with a longer matched budget. The published test split is used only after selection freeze for descriptive reevaluation.
-
-The active component campaign is defined in configs/nanobrain_graph_v2/evolution_components_50g_20261023.json. Its focus is the registered input and task components bbknn, harmony, scanorama, and celltypist_linear. The scoring and promotion rules are implemented in src/nanobrain/evolution.py and scripts/run_nanobrain_evolution.py.
-
-The previous public protocol remains under configs/legacy/ for reproducibility. It is not the default evolution route.
+第 5 代曾于北京时间 2026-11-01 02:32 因候选评估 OOM 导致协调器退出。已保留 638 份任务记录并复用已训练权重恢复。调度器加入训练/评估显存预留、评估失败重试和已完成评估复用；所有卡均被外部任务重度占用时，总并发上限为 5。评估 OOM 不作为模型性能失败，保留权重并等待显存。数值模型、数据、训练预算、种子和评分阈值保持原样。验证：31 passed；原出错权重使用原 batch size=2048 重评成功。记录：runtime/oom_recovery_receipt.json。

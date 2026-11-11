@@ -52,9 +52,12 @@ def configure_task(model, task: str) -> list[str]:
     if model.genome.architecture is not None and task in {"integration", "development"}:
         active.discard("completion_head")
         active.add("integration_reconstruction_head" if task == "integration" else "development_head")
+    if hasattr(model, "endpoint") and task == "development":
+        active.discard("flow")
+        active.add("endpoint")
     names = []
     for name, parameter in model.named_parameters():
-        parameter.requires_grad_(name.split(".")[0] in active)
+        parameter.requires_grad_(name.split(".")[0] in active and not getattr(parameter, "_nanobrain_always_frozen", False))
         if parameter.requires_grad:
             names.append(name)
     return names

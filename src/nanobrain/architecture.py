@@ -19,6 +19,7 @@ from . import modules as _modules
 from . import graph_ops as _graph_ops
 from .registry import registry, backend_catalog
 from .integration_components import METHODS as INTEGRATION_INPUTS
+from .component_extensions import TOKEN_ENCODERS
 
 
 @dataclass(frozen=True)
@@ -67,9 +68,12 @@ def checked_parameters(kind, name, params, automatic):
     for k, v in result.items():
         if isinstance(v, float) and not math.isfinite(v):
             raise ValueError(f"nonfinite parameter {k}")
-        if k in {"hidden_dim", "input_dim", "output_dim", "depth", "heads", "iterations"}:
-            limit = {"depth": 8, "heads": 16, "iterations": 100}.get(k, 65536)
+        if k in {"hidden_dim", "input_dim", "output_dim", "depth", "heads", "iterations", "steps", "bins", "condition_count", "condition_dim"}:
+            limit = {"depth": 8, "heads": 16, "iterations": 100, "steps": 8,
+                     "bins": 128, "condition_count": 4096, "condition_dim": 128}.get(k, 65536)
             _integer(v, 1, limit, k)
+        if k == "momentum" and (isinstance(v, bool) or not isinstance(v, (int, float)) or not 0 <= v < 1):
+            raise ValueError("prototype momentum must be in [0,1)")
         if k in {"dropout", "expansion", "epsilon", "eps", "correction_init"}:
             bounds = {"dropout": (0, .5), "expansion": (1, 8), "epsilon": (1e-4, 1),
                       "eps": (1e-8, .1), "correction_init": (0, 1)}[k]
@@ -121,14 +125,19 @@ def plan_graph(spec, inputs, *, allow_spatial=False):
         width = params.get("hidden_dim", first.width)
         _integer(width, 1, 512, "node width")
         output = Shape(width, first.tokens)
-        multi = kind == "flow" or (kind == "operation" and name in {"add", "subtract", "concat", "stack", "film"})
+        multi = kind == "flow" or name == "scpoli_conditional" or (kind == "operation" and name in {"add", "subtract", "concat", "stack", "film"})
         if not multi and len(refs) != 1:
             raise ValueError(f"{kind}/{name} takes one input")
         if kind == "encoder":
             if first.rank != 2:
                 raise ValueError("encoder expects cell features; use operation/linear or FFN on tokens")
-            output = Shape(width, (first.width + min(16, first.width) - 1) // min(16, first.width)
-                           if name == "panel_patches" else None)
+            if name == "scpoli_conditional" and (not allow_spatial or len(values) != 2 or refs[1] != "batch_id" or values[1] != Shape(1)):
+                raise ValueError("scpoli_conditional requires backbone inputs [features/state, batch_id]")
+            if name == "scprint_value" and refs != ["nonnegative_features"]:
+                raise ValueError("scprint_value must use declared nonnegative_features input")
+            tokens = first.width if name in TOKEN_ENCODERS else (
+                (first.width + min(16, first.width) - 1) // min(16, first.width) if name == "panel_patches" else None)
+            output = Shape(width, tokens)
         elif kind == "spatial" and first.rank != 2:
             raise ValueError("pool tokens before spatial aggregation")
         elif kind == "flow":
@@ -267,12 +276,14 @@ class GraphHead(nn.Module):
 
 def validate_architecture(spec):
     from .objectives import validate_objectives
-    _keys(spec, {"version", "input_dim", "width", "backbone", "flow", "pairing", "heads", "objectives", "solver"})
-    if spec["version"] != 2:
-        raise ValueError("architecture version must be 2")
+    _keys(spec, {"version", "input_dim", "width", "backbone", "flow", "pairing", "heads", "objectives", "solver"}, {"endpoint"})
+    if spec["version"] not in {2, 3}:
+        raise ValueError("architecture version must be 2 or 3")
+    if spec["version"] == 2 and "endpoint" in spec:
+        raise ValueError("endpoint requires architecture version 3")
     _integer(spec["input_dim"], 1, 65536, "input_dim"); _integer(spec["width"], 16, 512, "width")
     width = spec["width"]
-    _, output, _ = plan_graph(spec["backbone"], {"features": Shape(spec["input_dim"])}, allow_spatial=True)
+    _, output, _ = plan_graph(spec["backbone"], backbone_inputs(spec), allow_spatial=True)
     if output != Shape(width):
         raise ValueError("backbone output must be cell states with declared width")
     _, output, used = plan_graph(spec["flow"], {"state": Shape(width), "context": Shape(width), "time": Shape(3)})
@@ -281,8 +292,19 @@ def validate_architecture(spec):
     _keys(spec["pairing"], {"name", "params"})
     checked_parameters("pairing", spec["pairing"]["name"], spec["pairing"]["params"], {})
     _keys(spec["heads"], {"annotation", "integration", "integration_reconstruction", "niche", "development", "completion"})
-    for head in spec["heads"].values():
+    for task, head in spec["heads"].items():
+        if head["name"] == "scpoli_prototype" and (task not in {"annotation", "niche"} or "pre" in head):
+            raise ValueError("prototype heads are annotation/niche only and have no pre graph")
         head_parameters(head, width, 1)
+    if "endpoint" in spec:
+        _keys(spec["endpoint"], {"name", "params"})
+        end_params = checked_parameters("endpoint", spec["endpoint"]["name"], spec["endpoint"]["params"], {"hidden_dim": width})
+        if end_params.get("hidden_dim") != width:
+            raise ValueError("endpoint width must match architecture.width")
+        if spec["objectives"]["development"]["name"] != "endpoint_transport":
+            raise ValueError("endpoint architecture requires the explicit endpoint_transport objective")
+    elif spec["objectives"]["development"]["name"] == "endpoint_transport":
+        raise ValueError("endpoint_transport objective requires architecture.endpoint")
     validate_objectives(spec["objectives"])
     _keys(spec["solver"], {"name", "steps"})
     if spec["solver"]["name"] not in {"euler", "heun"}:
@@ -291,12 +313,22 @@ def validate_architecture(spec):
     return spec
 
 
+def backbone_inputs(spec):
+    inputs = {"features": Shape(spec["input_dim"])}
+    if spec["version"] >= 3:
+        inputs.update(batch_id=Shape(1), nonnegative_features=Shape(spec["input_dim"]))
+    return inputs
+
+
 def architecture_signature(spec):
     """Topology/module signature used for the structural-mutation quota."""
     graphs = {k: spec[k] for k in ("backbone", "flow")}
     graphs.update({"head/" + k: h["pre"] for k, h in spec["heads"].items() if "pre" in h})
-    return {key: [(n["kind"], n["name"], n["inputs"], n.get("repeat", 1)) for n in graph["nodes"]]
-            + [(graph["output"],)] for key, graph in graphs.items()}
+    signature = {key: [(n["kind"], n["name"], n["inputs"], n.get("repeat", 1)) for n in graph["nodes"]]
+                 + [(graph["output"],)] for key, graph in graphs.items()}
+    if "endpoint" in spec:
+        signature["endpoint"] = [(spec["endpoint"]["name"],)]
+    return signature
 
 
 def canonical_graph(spec, inputs, *, allow_spatial=False):
@@ -314,12 +346,15 @@ def canonical_architecture(spec):
     """Normalize defaults and IDs so cosmetic renaming is not a mutation."""
     validate_architecture(spec)
     result = copy.deepcopy(spec)
-    for key, inputs in (("backbone", {"features": Shape(spec["input_dim"])}),
+    for key, inputs in (("backbone", backbone_inputs(spec)),
                         ("flow", {"state": Shape(spec["width"]), "context": Shape(spec["width"]), "time": Shape(3)})):
         result[key] = canonical_graph(spec[key], inputs, allow_spatial=key == "backbone")
     pair = result["pairing"]
     pair["params"] = checked_parameters("pairing", pair["name"], pair["params"], {})
     pair["name"] = registry("pairing").resolve(pair["name"]).contract.name
+    if "endpoint" in result:
+        end = result["endpoint"]
+        end["params"] = checked_parameters("endpoint", end["name"], end["params"], {"hidden_dim": result["width"]})
     for head in result["heads"].values():
         head["params"] = {k: v for k, v in head_parameters(head, result["width"], 1).items()
                           if k not in {"hidden_dim", "output_dim"}}

@@ -1,0 +1,511 @@
+{
+  "date": "2026-10-26",
+  "scope": "nanoBrain Graph V2 新 baseline 结构组件候选；不包含训练策略移植",
+  "status": "registered_and_runtime_validated_in_this_campaign",
+  "method_count": 12,
+  "proposed_component_count": 17,
+  "methods": [
+    {
+      "name": "scTab",
+      "priority": "优先",
+      "tasks": [
+        "annotation",
+        "integration"
+      ],
+      "cost": "中",
+      "license": "MIT",
+      "novelty": "对基因特征做逐步选择的 TabNet，不是再增加一个普通 Transformer。",
+      "paper": "https://doi.org/10.1038/s41467-024-51059-5",
+      "components": [
+        {
+          "proposed_kind": "encoder",
+          "proposed_name": "sctab_tabnet",
+          "source_path": "cellnet/tabnet/tab_network.py",
+          "source_symbol": "TabNetEncoder",
+          "input_output": "features[B,G] -> steps(list of [B,n_d]), mask_loss；适配后求和为 state[B,H]",
+          "adaptation": "n_d 对齐 hidden_dim；按原 TabNet 聚合各 decision step；显式处理辅助返回值，不改变现有 loss。Ghost BatchNorm 要测试小批次。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 39,
+          "source_sha256": "94a951baeb0058129ea7aa8e3cd9d9b791c99f7aab70c23e021b13475a0ca020",
+          "source_url": "https://github.com/theislab/scTab/blob/5ede7f2ba1f9618b86924f2ff587931de18f4ada/cellnet/tabnet/tab_network.py#L39",
+          "source_verified": true
+        },
+        {
+          "proposed_kind": "operation",
+          "proposed_name": "sctab_glu",
+          "source_path": "cellnet/tabnet/tab_network.py",
+          "source_symbol": "GLU_Layer",
+          "input_output": "state[B,H] -> state[B,H]（选择相同输入/输出宽度）",
+          "adaptation": "保留源实现 GLU 和归一化，映射参数名；shared_fc 不允许从 JSON 执行任意对象。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 470,
+          "source_sha256": "94a951baeb0058129ea7aa8e3cd9d9b791c99f7aab70c23e021b13475a0ca020",
+          "source_url": "https://github.com/theislab/scTab/blob/5ede7f2ba1f9618b86924f2ff587931de18f4ada/cellnet/tabnet/tab_network.py#L470",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "numpy",
+        "官方 cellnet.tabnet.sparsemax"
+      ],
+      "notes": "只引用 cellnet/tabnet 核心文件，不必引入 Merlin 全量数据加载栈。复用结构不代表继承论文大规模训练成绩。",
+      "repository": "https://github.com/theislab/scTab",
+      "commit": "5ede7f2ba1f9618b86924f2ff587931de18f4ada",
+      "commit_date": "2024-09-13T12:55:09+02:00"
+    },
+    {
+      "name": "STAGATE",
+      "priority": "优先",
+      "tasks": [
+        "spatial_niche",
+        "annotation"
+      ],
+      "cost": "中",
+      "license": "MIT",
+      "novelty": "以可训练邻居注意力替代当前 neighbor_mean，增加真正不同的空间聚合方式。",
+      "paper": "https://doi.org/10.1038/s41467-022-29439-6",
+      "components": [
+        {
+          "proposed_kind": "spatial",
+          "proposed_name": "stagate_gat",
+          "source_path": "STAGATE_pyG/gat_conv.py",
+          "source_symbol": "GATConv",
+          "input_output": "state[N,H], edge_index[2,E] -> state[N,H]",
+          "adaptation": "由现有一跳 neighbor/mask 构造 edge_index，包含上下文行；先限定 heads=1 并保持宽度；无有效邻居保持原精确 identity 退化。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 17,
+          "source_sha256": "598666cb5ac9e23b292f826c87664311340b9c204e8eee468ecda502e791175a",
+          "source_url": "https://github.com/RucDongLab/STAGATE_pyG/blob/ae1158ca8cf1eb6bb8ee198298552d44c9ac21db/STAGATE_pyG/gat_conv.py#L17",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "torch_geometric",
+        "torch_sparse"
+      ],
+      "notes": "官方自定义 GATConv 不是直接等同于 PyG 同名标准类。源码是旧 PyG 接口，需检查当前 torch/PyG 版本。仅拆一层，不声称完整 STAGATE 多层自编码器已复现。",
+      "repository": "https://github.com/RucDongLab/STAGATE_pyG",
+      "commit": "ae1158ca8cf1eb6bb8ee198298552d44c9ac21db",
+      "commit_date": "2023-11-10T10:49:42+08:00"
+    },
+    {
+      "name": "scPoli",
+      "priority": "优先",
+      "tasks": [
+        "annotation",
+        "integration"
+      ],
+      "cost": "中到高",
+      "license": "BSD-3-Clause",
+      "novelty": "增加技术条件嵌入和原型距离分类，区别于现有普通 FC 编码器/线性头。",
+      "paper": "https://doi.org/10.1038/s41592-023-02035-2",
+      "components": [
+        {
+          "proposed_kind": "encoder",
+          "proposed_name": "scpoli_conditional",
+          "source_path": "scarches/models/scpoli/scpoli.py",
+          "source_symbol": "Encoder",
+          "input_output": "features[B,G], technical_condition[B,K] -> mean[B,H], log_var[B,H]",
+          "adaptation": "条件 nn.Embedding 在 scpoli 主类中，需要把条件嵌入与 Encoder 一同包装；声明用 mean 还是采样。当前有符号标准化输入应走 MSE 兼容分支，不能默认 log1p。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 363,
+          "source_sha256": "899215c444efcecfe8ef6d1d3b39942e21d8f9071d685ad4e42ce21d5cf87121",
+          "source_url": "https://github.com/theislab/scarches/blob/d35cde61fff4dec6b86660817f4750fa35ff836d/scarches/models/scpoli/scpoli.py#L363",
+          "source_verified": true
+        },
+        {
+          "proposed_kind": "head",
+          "proposed_name": "scpoli_prototype",
+          "source_path": "scarches/models/scpoli/scpoli.py",
+          "source_symbol": "scpoli.classify",
+          "input_output": "state[B,H], train-fitted prototypes[C,H] -> distances[B,C] / probabilities[B,C]",
+          "adaptation": "转换为分类头约定的分数并持久化原型。源实现依赖训练阶段的原型状态，需新增只由 train 构建/更新原型的生命周期，不可使用 validation/test 标签。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 270,
+          "source_sha256": "899215c444efcecfe8ef6d1d3b39942e21d8f9071d685ad4e42ce21d5cf87121",
+          "source_url": "https://github.com/theislab/scarches/blob/d35cde61fff4dec6b86660817f4750fa35ff836d/scarches/models/scpoli/scpoli.py#L270",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "numpy",
+        "scarches 模型内部工具；完整包还会引入 scvi 等"
+      ],
+      "notes": "prototype 不是任意初始化的线性层。整合任务不能把 cell-type 原型监督引入原先禁止生物标签监督的任务中。",
+      "repository": "https://github.com/theislab/scarches",
+      "commit": "d35cde61fff4dec6b86660817f4750fa35ff836d",
+      "commit_date": "2026-06-26T11:03:19+02:00"
+    },
+    {
+      "name": "MIOFlow",
+      "priority": "优先",
+      "tasks": [
+        "development"
+      ],
+      "cost": "中",
+      "license": "Yale Non-Commercial License（以快照 LICENSE.md 为准）",
+      "novelty": "显式时间输入的 Neural ODE 漂移网络；可与当前 flow 系列做结构比较。",
+      "paper": "https://github.com/KrishnaswamyLab/MIOFlow",
+      "components": [
+        {
+          "proposed_kind": "flow",
+          "proposed_name": "mioflow_ode",
+          "source_path": "mioflow/core/models/ode_model.py",
+          "source_symbol": "ODEFunc",
+          "input_output": "原始 forward(t,x)：t 为标量或可扩展列，x[P,H] -> velocity[P,H]",
+          "adaptation": "适配为 state/context/time 三输入，明确上下文和绝对年龄的条件融合；禁用 momentum_beta（设为 0），避免 previous_v 在不同 batch/solver 调用间造成隐藏状态。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 5,
+          "source_sha256": "98e21b08b370af043016a718ec7aa8ddbacbcc00e252092732517fda615a3208",
+          "source_url": "https://github.com/KrishnaswamyLab/MIOFlow/blob/4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8/mioflow/core/models/ode_model.py#L5",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch（此 ODEFunc 文件）",
+        "完整方法另有 torchdiffeq/PHATE 等依赖，见快照元数据"
+      ],
+      "notes": "当前仓库 2026-10 版本已改为小写 mioflow/ 路径，不能沿用旧教程 MIOFlow/models.py。条件包装后是组件混合，不等于原整套方法。",
+      "repository": "https://github.com/KrishnaswamyLab/MIOFlow",
+      "commit": "4e79ada3ce96feeb3f51ba02c7d999e095eaf7e8",
+      "commit_date": "2026-10-08T12:26:40-04:00"
+    },
+    {
+      "name": "PRESCIENT",
+      "priority": "优先",
+      "tasks": [
+        "development"
+      ],
+      "cost": "中到高",
+      "license": "MIT",
+      "novelty": "以势函数对状态的梯度产生漂移，扩展直接输出速度之外的结构族。",
+      "paper": "https://github.com/gifford-lab/prescient",
+      "components": [
+        {
+          "proposed_kind": "flow",
+          "proposed_name": "prescient_potential",
+          "source_path": "prescient/train/model.py",
+          "source_symbol": "AutoGenerator",
+          "input_output": "_pot: state[P,H] -> scalar[P,1]；_drift: state[P,H] -> gradient[P,H]",
+          "adaptation": "保留源实现 _drift 的符号（当前代码为正梯度）；评估器 no_grad 内需局部 enable_grad；训练需保留对势网络的高阶导数。若加入 context/time，须明确条件适配。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 36,
+          "source_sha256": "ec37d1b3bacfce6c2deb58b07bf5d4f6fb80e2e3e101452f7e15301761e39b20",
+          "source_url": "https://github.com/gifford-lab/prescient/blob/50971c7d495e8763eaa60f83af91f51555ed7ece/prescient/train/model.py#L36",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "numpy",
+        "原文件顶层导入 geomloss、sklearn、tqdm 等"
+      ],
+      "notes": "不是把势函数标量当 velocity。先采用现有确定性 solver；随机扩散项属于后续 solver 能力，不在本次组件收集中默认引入。",
+      "repository": "https://github.com/gifford-lab/prescient",
+      "commit": "50971c7d495e8763eaa60f83af91f51555ed7ece",
+      "commit_date": "2025-01-20T16:08:40-05:00"
+    },
+    {
+      "name": "scNym",
+      "priority": "优先",
+      "tasks": [
+        "annotation",
+        "integration"
+      ],
+      "cost": "低到中",
+      "license": "Apache-2.0",
+      "novelty": "已有成熟分类网络可作为结构参照；与当前 residual_mlp 有重叠，建议做结构去重。",
+      "paper": "https://github.com/calico/scnym",
+      "components": [
+        {
+          "proposed_kind": "encoder",
+          "proposed_name": "scnym_mlp",
+          "source_path": "scnym/model.py",
+          "source_symbol": "CellTypeCLF",
+          "input_output": "features[B,G] -> logits[B,C]；拆分类前主干后 -> state[B,H]",
+          "adaptation": "复用原 embedding 主干，分类投影按现有 head 接口拆开；避免把全模型 logits 当成 embedding。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 85,
+          "source_sha256": "c2e1e073b53689508588342e86eef66bbaa5f8ad8d74dfa0a2ec6aeb1af0b0e9",
+          "source_url": "https://github.com/calico/scnym/blob/e19f4f74d726be8831ce4b381ac297fb90228054/scnym/model.py#L85",
+          "source_verified": true
+        },
+        {
+          "proposed_kind": "residual",
+          "proposed_name": "scnym_resblock",
+          "source_path": "scnym/model.py",
+          "source_symbol": "ResBlock",
+          "input_output": "state[B,H] -> state[B,H]",
+          "adaptation": "n_inputs 必须等于 n_hidden（源码直接加 identity，无跳连投影）；检查 BatchNorm 在训练小批次时的行为。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 9,
+          "source_sha256": "c2e1e073b53689508588342e86eef66bbaa5f8ad8d74dfa0a2ec6aeb1af0b0e9",
+          "source_url": "https://github.com/calico/scnym/blob/e19f4f74d726be8831ce4b381ac297fb90228054/scnym/model.py#L9",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch"
+      ],
+      "notes": "不引入 MixMatch、域对抗训练策略；这里只收集网络结构。现有 residual_mlp 是 LayerNorm/GELU 系列，本实现为 BatchNorm/ReLU 系列。",
+      "repository": "https://github.com/calico/scnym",
+      "commit": "e19f4f74d726be8831ce4b381ac297fb90228054",
+      "commit_date": "2026-04-04T14:56:24-07:00"
+    },
+    {
+      "name": "SEDR",
+      "priority": "第二批",
+      "tasks": [
+        "spatial_niche",
+        "integration"
+      ],
+      "cost": "中",
+      "license": "MIT",
+      "novelty": "表达分支与图分支拼接可作为结构参照；单个 GCN 与已有 scBrain/GraphST 组件较接近。",
+      "paper": "https://doi.org/10.1186/s13073-024-01283-x",
+      "components": [
+        {
+          "proposed_kind": "encoder",
+          "proposed_name": "sedr_mlp",
+          "source_path": "SEDR/SEDR_module.py",
+          "source_symbol": "full_block",
+          "input_output": "features[B,G] -> state[B,H]",
+          "adaptation": "保留 Linear/BatchNorm/ELU/Dropout 顺序；可组合多个表达块。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 23,
+          "source_sha256": "4d7cf66f5566815775df97c52066d4430ed54c51c564bb7663504d2f3b971a39",
+          "source_url": "https://github.com/JinmiaoChenLab/SEDR/blob/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/SEDR_module.py#L23",
+          "source_verified": true
+        },
+        {
+          "proposed_kind": "spatial",
+          "proposed_name": "sedr_gcn",
+          "source_path": "SEDR/SEDR_module.py",
+          "source_symbol": "GraphConvolution",
+          "input_output": "state[N,H], normalized_sparse_adj[N,N] -> state[N,H]",
+          "adaptation": "复用一跳上下文构图和稀疏归一化，注意边方向；不能直接将完整多层 VGAE 包成单个一跳节点。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 33,
+          "source_sha256": "4d7cf66f5566815775df97c52066d4430ed54c51c564bb7663504d2f3b971a39",
+          "source_url": "https://github.com/JinmiaoChenLab/SEDR/blob/ef4836059a4ea49be3bf7c67008a44ffc16a2a0e/SEDR/SEDR_module.py#L33",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch；完整管线还用 numpy/scipy/scanpy 等"
+      ],
+      "notes": "decoder 中图重建、聚类目标不在本次结构收集范围。优先比较和已有 GCN 的重复度。",
+      "repository": "https://github.com/JinmiaoChenLab/SEDR",
+      "commit": "ef4836059a4ea49be3bf7c67008a44ffc16a2a0e",
+      "commit_date": "2024-11-06T15:20:31+08:00"
+    },
+    {
+      "name": "SpaGCN",
+      "priority": "第二批",
+      "tasks": [
+        "spatial_niche"
+      ],
+      "cost": "中",
+      "license": "MIT",
+      "novelty": "可补充带距离权重的空间卷积；纯 GraphConvolution 与已有算子重叠较高。",
+      "paper": "https://github.com/jianhuupenn/SpaGCN",
+      "components": [
+        {
+          "proposed_kind": "spatial",
+          "proposed_name": "spagcn_gcn",
+          "source_path": "SpaGCN_package/SpaGCN/layers.py",
+          "source_symbol": "GraphConvolution",
+          "input_output": "state[N,H], spatial_adjacency[N,N] -> state[N,H]",
+          "adaptation": "保留权重和 bias，避免构建整张 dense N×N 图；若使用距离核，需把邻居权重及上下文几何接入数据契约。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 7,
+          "source_sha256": "b3847f61a9e908d08a7ae232ab4be075628445934d7c5b3833bb0229a3e1d39d",
+          "source_url": "https://github.com/jianhuupenn/SpaGCN/blob/dc7a1c26ea0fdf4dfe7064adc7699be141b4871f/SpaGCN_package/SpaGCN/layers.py#L7",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch；构图原管线还依赖 numpy/scipy/scanpy 等"
+      ],
+      "notes": "当前缺少组织图像时只能标注空间位置版本，不能声称使用了 histology 信息。空间加权一跳版本与原完整图算法须区别记录。",
+      "repository": "https://github.com/jianhuupenn/SpaGCN",
+      "commit": "dc7a1c26ea0fdf4dfe7064adc7699be141b4871f",
+      "commit_date": "2026-02-09T09:33:32-05:00"
+    },
+    {
+      "name": "scFoundation",
+      "priority": "第二批",
+      "tasks": [
+        "annotation",
+        "integration"
+      ],
+      "cost": "中",
+      "license": "Apache-2.0（代码；不涉及模型权重许可）",
+      "novelty": "可训练软分箱表达嵌入，不是普通线性 patch 投影。",
+      "paper": "https://github.com/biomap-research/scFoundation",
+      "components": [
+        {
+          "proposed_kind": "encoder",
+          "proposed_name": "scfoundation_autobin",
+          "source_path": "model/pretrainmodels/mae_autobin.py",
+          "source_symbol": "AutoDiscretizationEmbedding2",
+          "input_output": "features[B,G,1] -> gene_tokens[B,G,H]",
+          "adaptation": "增加最后一维并保留基因身份编码；显式设置不与真实表达值重合的 mask/pad sentinel。形状推导目前只特殊支持 panel_patches，需要扩展通用 token encoder 的输出长度。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 18,
+          "source_sha256": "b68161adf0f6b5be8a0353f8d6f3c00519689498e5cf7a62e4e762a67854ca8f",
+          "source_url": "https://github.com/biomap-research/scFoundation/blob/397631c495eddf9ad6644fc00c6ea8139e651245/model/pretrainmodels/mae_autobin.py#L18",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "numpy",
+        "einops；原文件若触发其余模型导入需隔离选择"
+      ],
+      "notes": "只复用 AutoBin 结构时可从头初始化，不必下载大模型权重。完整预训练模型仍有 19,264 基因面板和归一化契约，不能拿 256 基因输入直接声称等价。",
+      "repository": "https://github.com/biomap-research/scFoundation",
+      "commit": "397631c495eddf9ad6644fc00c6ea8139e651245",
+      "commit_date": "2025-11-23T08:31:05Z"
+    },
+    {
+      "name": "scPRINT",
+      "priority": "第二批",
+      "tasks": [
+        "annotation",
+        "integration"
+      ],
+      "cost": "中",
+      "license": "GPL-3.0（代码）",
+      "novelty": "逐基因数值编码和可配置分类解码器，可补充 token/头结构。",
+      "paper": "https://github.com/cantinilab/scPRINT",
+      "components": [
+        {
+          "proposed_kind": "encoder",
+          "proposed_name": "scprint_value",
+          "source_path": "scprint/model/encoders.py",
+          "source_symbol": "ContinuousValueEncoder",
+          "input_output": "values[B,G] -> gene_tokens[B,G,H]",
+          "adaptation": "源代码会 clamp(min=0)，当前有符号标准化表达不能直接输入；需单独声明非负 log-expression 输入分支，并扩展 token encoder 形状推导。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 161,
+          "source_sha256": "61ba67535d641637161dc84c88f4f4f3f89fb40ce255d6afd018cd0019efeb95",
+          "source_url": "https://github.com/cantinilab/scPRINT/blob/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/scprint/model/encoders.py#L161",
+          "source_verified": true
+        },
+        {
+          "proposed_kind": "head",
+          "proposed_name": "scprint_classifier",
+          "source_path": "scprint/model/decoders.py",
+          "source_symbol": "ClsDecoder",
+          "input_output": "state[B,H] -> logits[B,C]",
+          "adaptation": "映射 d_model、n_cls 与隐藏层参数；保留 LayerNorm/激活/Dropout 结构；源文件单独导入可避免完整 Lightning 模型依赖。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 202,
+          "source_sha256": "d5d294b418f11a06461a339e1851a244ca5d7db02d7aa8be384059a6357f1d89",
+          "source_url": "https://github.com/cantinilab/scPRINT/blob/e7c60766cbff58bb7280a1c8fe4b7461b1af1911/scprint/model/decoders.py#L202",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch（所选两个文件）；完整框架依赖见 pyproject.toml"
+      ],
+      "notes": "GeneEncoder 的基因 ID/词表不能省略；只提取分类头不代表复用了其基因网络推断能力或预训练知识。",
+      "repository": "https://github.com/cantinilab/scPRINT",
+      "commit": "e7c60766cbff58bb7280a1c8fe4b7461b1af1911",
+      "commit_date": "2026-08-03T19:18:21+02:00"
+    },
+    {
+      "name": "scBERT",
+      "priority": "第二批",
+      "tasks": [
+        "annotation",
+        "integration"
+      ],
+      "cost": "低到中",
+      "license": "GPL-3.0（代码）",
+      "novelty": "Performer 随机特征线性注意力，区别于现有 SDPA/BERT 与自有 differential_linear。",
+      "paper": "https://doi.org/10.1038/s42256-022-00534-z",
+      "components": [
+        {
+          "proposed_kind": "attention",
+          "proposed_name": "scbert_performer",
+          "source_path": "performer_pytorch/performer_pytorch.py",
+          "source_symbol": "SelfAttention",
+          "input_output": "tokens[B,T,H] -> tokens[B,T,H]",
+          "adaptation": "选择纯 attention 层，不加载 PerformerLM 的固定基因词表/预训练权重；固定随机特征投影与重采样规则，验证其 checkpoint 可重载。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 336,
+          "source_sha256": "7d946c7d794a62830984eddf70331ff295ee5eeeafa849e5590ffaa8cdb0f4b5",
+          "source_url": "https://github.com/TencentAILabHealthcare/scBERT/blob/262fd4b91f3f1c21a6e595d03d4ef423e16ffc99/performer_pytorch/performer_pytorch.py#L336",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "einops",
+        "local_attention；以源文件 import 为准"
+      ],
+      "notes": "当前 panel_patches 只有 16 tokens，线性注意力的计算优势未必明显；增加一种注意力结构不保证提高准确率。",
+      "repository": "https://github.com/TencentAILabHealthcare/scBERT",
+      "commit": "262fd4b91f3f1c21a6e595d03d4ef423e16ffc99",
+      "commit_date": "2023-12-13T16:42:32+08:00"
+    },
+    {
+      "name": "CellOT",
+      "priority": "需先扩展接口",
+      "tasks": [
+        "development"
+      ],
+      "cost": "高",
+      "license": "BSD-3-Clause",
+      "novelty": "输入凸神经网络及其梯度运输映射，增加非 ODE 的端点预测结构。",
+      "paper": "https://github.com/bunnech/cellot",
+      "components": [
+        {
+          "proposed_kind": "endpoint（新增 kind）",
+          "proposed_name": "cellot_icnn_transport",
+          "source_path": "cellot/networks/icnns.py",
+          "source_symbol": "ICNN",
+          "input_output": "forward: state[P,H] -> scalar[P,1]；transport: state[P,H] -> endpoint[P,H]",
+          "adaptation": "现有图仅有 flow+solver，需新增 endpoint/potential 契约；维持凸性参数化（例如源实现 softplus_W_kernels=True）。局部启用 autograd。不能把 transport 输出直接充作 velocity。",
+          "registered": true,
+          "runtime_validated": true,
+          "source_line": 27,
+          "source_sha256": "380b0ae3d3a687e40e8c08e709e7a85b11bcfa7a9626cefbdc3eb8bae3ac3a35",
+          "source_url": "https://github.com/bunnech/cellot/blob/522d2b953da8ad244fcf36f64521487fdf763788/cellot/networks/icnns.py#L27",
+          "source_verified": true
+        }
+      ],
+      "deps": [
+        "torch",
+        "numpy"
+      ],
+      "notes": "细胞扰动和发育轨迹可提供结构参考，但与当前条件速度场任务不是同一输出语义。来源论文报告不等于在当前脑数据上已验证。",
+      "repository": "https://github.com/bunnech/cellot",
+      "commit": "522d2b953da8ad244fcf36f64521487fdf763788",
+      "commit_date": "2024-11-01T00:34:58+01:00"
+    }
+  ],
+  "graph_version": 3,
+  "integrated_at": "2026-10-29T08:48:42.532660+00:00"
+}

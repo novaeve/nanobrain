@@ -13,6 +13,10 @@ def component_catalog():
     catalog = backend_catalog()
     for kind, entries in catalog.items():
         for entry in entries:
+            if kind == "endpoint":
+                entry.update(searchable=False, graph_searchable=True,
+                    input_contract="state[P,H], context[P,H], time[P,3] -> endpoint[P,H]; architecture.endpoint only")
+                continue
             if kind == "operation":
                 entry["searchable"] = False
                 entry["graph_searchable"] = True
