@@ -137,6 +137,13 @@ class NanoDataset:
                 local_neighbor_mask_np[empty, 0] = False
             local_neighbors = torch.from_numpy(mapped)
             local_neighbor_mask = torch.from_numpy(local_neighbor_mask_np)
+        if "integration" in self.labels:
+            technical_ids = self.labels["integration"].masked_fill(~self.masks["integration"], -1)
+        else:
+            technical_ids = torch.full((self.size,), -1, dtype=torch.long)
+        technical_view = technical_ids[indices].detach().cpu().numpy()
+        if context_indices is not None and len(context_indices):
+            technical_view = np.concatenate((technical_view, technical_ids[context_indices].cpu().numpy()))
         return BrainBatch(
             features=self.features[indices],
             feature_observed=self.feature_observed[indices] if self.feature_observed is not None else None,
@@ -157,10 +164,13 @@ class NanoDataset:
             completion_target=self.completion_target[indices] if self.completion_target is not None else None,
             completion_mask=self.completion_mask[indices] if self.completion_mask is not None else None,
             metadata={
+                "technical_batch_ids": technical_view,
+                **{
                 key: (np.concatenate((value[indices.numpy()], value[context_indices.numpy()]), axis=0)
                       if key.startswith("integration_component_") and context_indices is not None and len(context_indices)
                       else value[indices.numpy()]) if isinstance(value, np.ndarray) else value
                 for key, value in (self.metadata or {}).items()
+                },
             },
         ).validate()
 
@@ -547,6 +557,11 @@ def load_v3_subset(
             continue
         dataset.metadata = dict(dataset.metadata or {})
         dataset.metadata["subset_manifest"] = manifest
+        if (location / "normalization_mean.npy").is_file() and (location / "normalization_std.npy").is_file():
+            dataset.metadata["feature_normalization"] = {
+                "mean": np.load(location / "normalization_mean.npy", allow_pickle=False),
+                "std": np.load(location / "normalization_std.npy", allow_pickle=False),
+            }
     for name, dataset in (("train", train), ("validation", validation), ("test", test)):
         if dataset is not None:
             dataset.metadata["component_split"] = name

@@ -1,0 +1,50 @@
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+........................................................................ [ 76%]
+.................................................................        [100%]
+=============================== warnings summary ===============================
+tests/test_backends.py: 14 warnings
+  /data/brainwm/BrainWM-Training-Benchmark/.venv/lib/python3.12/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_backends.py::test_pytorch_sdpa_backend_uses_bucket_fallback_for_packed_cpu_tokens
+  /mnt/aliyunsb/zim_rider/nanobrain/brain/.venv/lib/python3.12/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+    warnings.warn(
+
+tests/test_component_library_v3.py: 18 warnings
+  /data/brainwm/BrainWM-Training-Benchmark/.venv/lib/python3.12/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_component_library_v3.py::test_all_sources_update_and_reload_with_no_grad[attention-scbert_performer]
+  /mnt/aliyunsb/zim_rider/nanobrain/brain-components-v3-20261027/upstream_components/scBERT/performer_pytorch/performer_pytorch.py:115: UserWarning: torch.qr is deprecated in favor of torch.linalg.qr and will be removed in a future PyTorch release.
+  The boolean parameter 'some' has been replaced with a string parameter 'mode'.
+  Q, R = torch.qr(A, some)
+  should be replaced with
+  Q, R = torch.linalg.qr(A, 'reduced' if some else 'complete') (Triggered internally at /pytorch/aten/src/ATen/native/BatchLinearAlgebra.cpp:2496.)
+    q, r = torch.qr(unstructured_block.cpu(), some = True)
+
+tests/test_fused_attention_projections.py::test_fused_projection_matches_separate_on_flash_bla_bf16[fla_layernorm_qkv]
+  /mnt/aliyunsb/zim_rider/nanobrain/brain-components-v3-20261027/src/brainwm/foundation_moe.py:1056: RuntimeWarning: flash-linear-attention is unavailable; fla_layernorm_qkv is using the equivalent PyTorch layer_norm + linear fallback
+    layer_norm_linear = _load_fla_layer_norm_linear()
+
+tests/test_nanobrain_components.py::test_imported_components_compose_and_update[spatial-graphst_sparse]
+  /mnt/aliyunsb/zim_rider/nanobrain/brain/.venv/lib/python3.12/site-packages/GraphST/preprocess.py:10: DeprecationWarning: Please import `csc_matrix` from the `scipy.sparse` namespace; the `scipy.sparse.csc` namespace is deprecated and will be removed in SciPy 2.0.0.
+    from scipy.sparse.csc import csc_matrix
+
+tests/test_nanobrain_components.py::test_imported_components_compose_and_update[spatial-graphst_sparse]
+  /mnt/aliyunsb/zim_rider/nanobrain/brain/.venv/lib/python3.12/site-packages/GraphST/preprocess.py:11: DeprecationWarning: Please import `csr_matrix` from the `scipy.sparse` namespace; the `scipy.sparse.csr` namespace is deprecated and will be removed in SciPy 2.0.0.
+    from scipy.sparse.csr import csr_matrix
+
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+tests/test_numpy_resume.py::test_main_loader_worker_count_preserves_batch_sequence
+  /mnt/aliyunsb/.pm-agent/default/data/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=2026150) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+281 passed, 45 warnings in 86.73s (0:01:26)

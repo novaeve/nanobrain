@@ -122,6 +122,8 @@ class Experiment:
         from nanobrain.baseline_components import REFERENCE_FILES
         files = (sorted((ROOT / "src").rglob("*.py")) + sorted((ROOT / "scripts").glob("*.py"))
                  + [ROOT / relative for relative in REFERENCE_FILES])
+        from nanobrain.upstream_loader import upstream_fingerprint_files
+        files += upstream_fingerprint_files()
         self.fingerprint = {str(p.relative_to(ROOT)): sha(p) for p in files}
         self.fingerprint["data_manifest"] = sha(self.data / "manifest.json")
         import importlib.metadata
@@ -394,7 +396,14 @@ class Experiment:
                 'Patch paths may only target /architecture/... or /learning_rate. Never return both genome and patch. '
                 'Use ONLY the current parent IDs below. '
                 'Each candidate trains FROM SCRATCH INDEPENDENTLY for each task; checkpoints/optimizers are separate. '
-                'Architecture version 2 explicitly describes backbone and velocity-field graphs. You may insert, remove, '
+                'Architecture versions 2 and 3 describe backbone and velocity-field graphs. Version 3 additionally exposes '
+                'batch_id[B,1] (technical batch IDs, unknown=-1) and nonnegative_features[B,G] '
+                '(frozen train-normalization inverse, no biology labels). scpoli_conditional requires inputs=[features_or_state,batch_id]. '
+                'scprint_value must use nonnegative_features; scfoundation_autobin/scprint_value output G gene tokens and require pooling. '
+                'scpoli_prototype is annotation/niche only, with no pre graph; its train-only prototype state is checkpointed. '
+                'Optional architecture.endpoint selects a registered endpoint (state,context,time -> endpoint), '
+                'requires version 3 and objective endpoint_transport; it is not a velocity node. '
+                'You may insert, remove, '
                 'reorder, replace and repeat compatible nodes, and construct parallel paths with add/subtract/concat/stack. '
                 'The nodes list is topologically ordered; inputs reference prior nodes or declared external inputs. '
                 'Backbone input is features[B,G]; flow inputs are state[P,H], context[P,H], time[P,3] '

@@ -1,0 +1,26 @@
+{
+  "format": "nanobrain_graph_v3_component_library",
+  "created": "2026-10-27",
+  "status": "registered_and_runtime_validated_in_isolated_library",
+  "source_verified": true,
+  "method_count": 12,
+  "proposed_component_count": 17,
+  "runtime_component_test_count": 37,
+  "runtime_component_tests": "tests/test_component_library_v3.py",
+  "registry_catalog": {
+    "encoder": 13,
+    "attention": 7,
+    "spatial": 7,
+    "residual": 3,
+    "pairing": 2,
+    "flow": 9,
+    "head": 7,
+    "operation": 21,
+    "endpoint": 1
+  },
+  "full_regression_test_count": 281,
+  "full_regression_test_status": "passed",
+  "full_regression_log": "full-tests.log",
+  "source_execution": true,
+  "packages_installed": true
+}

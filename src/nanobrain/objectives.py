@@ -98,6 +98,8 @@ def masked_regression(prediction, target, mask=None, regression="mse"):
 def classification_objective(model, batch, embedding, params, task):
     label = "annotation" if task == "annotation" else "niche"
     head = model.annotation_head if task == "annotation" else model.niche_head
+    if model.training and hasattr(head, "observe"):
+        head.observe(embedding, batch.labels[label], batch.label_masks.get(label))
     return masked_classification(head(embedding), batch.labels[label], batch.label_masks.get(label), **params), {}
 
 
@@ -181,6 +183,31 @@ def population_objective(model, batch, *, tau=None):
     return api.compute(model, batch, tau=tau)
 
 
+def population_endpoint_objective(model, batch, *, tau=None):
+    """Reuse detached population matching for an explicit endpoint component.
+
+    This is endpoint regression in the host trainer, not CellOT dual training.
+    """
+    from brainwm.losses import barycentric_transport_target
+    if not hasattr(model, "endpoint"):
+        raise ValueError("endpoint objective requires an endpoint component")
+    p = model.objective_specs["development"]["params"]
+    source, target = model.encode(batch.source), model.encode(batch.target)
+    matched, plan = model.pairing(source, target)
+    time = model._time_features(len(source), source.new_ones((len(source), 1)),
+                                batch.source_time_days, batch.target_time_days)
+    endpoint = model.endpoint(source, source, time)
+    target_features = barycentric_transport_target(plan, batch.target.features.detach().float()).to(endpoint)
+    observed = None if batch.target.feature_observed is None else (
+        barycentric_transport_target(plan, batch.target.feature_observed.detach().float()) >= .5)
+    terms = {
+        "development_endpoint": masked_regression(endpoint, matched, regression=p["endpoint_regression"]),
+        "development_expression": masked_regression(model.population_decoder(endpoint), target_features,
+                                                    observed, p["expression_regression"]),
+    }
+    return p["endpoint_weight"] * terms["development_endpoint"] + p["expression_weight"] * terms["development_expression"], terms
+
+
 for _task, _function, _population in (
     ("annotation", classification_objective, False),
     ("integration", integration_objective, False),
@@ -190,3 +217,7 @@ for _task, _function, _population in (
     _spec = default_objectives()[_task]
     register_objective(_spec["name"], tasks=("annotation", "spatial_niche") if _task == "annotation" else (_task,),
                        compute=_function, defaults=_spec["params"], population=_population)
+
+register_objective("endpoint_transport", tasks=("development",), compute=population_endpoint_objective,
+    defaults={"endpoint_regression": "mse", "expression_regression": "mse",
+              "endpoint_weight": 1., "expression_weight": 1.}, population=True)

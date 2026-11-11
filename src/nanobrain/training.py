@@ -188,6 +188,9 @@ def train_candidate(
     from .integration_components import prepare_component_views, selected_components
     if train_config.task == "spatial_completion" and selected_components(genome):
         raise ValueError("dataset-level input components are unavailable for masked completion")
+    if (train_config.task == "spatial_completion" and genome.architecture is not None
+            and any(n["name"] == "scprint_value" for n in genome.architecture["backbone"]["nodes"])):
+        raise ValueError("scPRINT nonnegative expression input is not enabled for masked completion")
     component_receipts = prepare_component_views(splits, genome)
     _seed_everything(int(genome.seed) if genome.seed is not None else int(train_config.seed))
     device = resolve_device(train_config.device)
@@ -538,7 +541,7 @@ def train_candidate(
         "effective_flow_depth": (None if genome.architecture is not None else
                                  max(2, genome.flow_depth + genome.flow_depth % 2)
                                  if genome.flow == "fmt" else genome.flow_depth),
-        "architecture_version": 2 if genome.architecture is not None else 1,
+        "architecture_version": genome.architecture["version"] if genome.architecture is not None else 1,
         "module_manifest": ([dict(graph=part, id=n["id"], kind=n["kind"], name=n["name"],
                                   params=n["params"], repeat=n["repeat"],
                                   output_rank=n["shape"].rank, output_width=n["shape"].width,
