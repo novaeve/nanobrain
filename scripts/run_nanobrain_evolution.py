@@ -12,6 +12,7 @@ import csv
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -38,6 +39,7 @@ from nanobrain.genome import CandidateGenome, SEARCH_SPACE
 from nanobrain.component_catalog import component_catalog
 from nanobrain.llm_client import APIRequestError, OpenAICompatibleClient
 from nanobrain.search import CandidateScore, pareto_front
+from brainwm_benchmark.protocol import EVALUATION_SEED, METRIC_PROTOCOL_ID, metric_protocol, metric_role
 from scripts.run_nanobrain_campaign import (
     _extract_json, _parse_gpus, _write_json, _launch_candidates, _wait_processes,
     _load_training_receipt, _public_candidate, _launch_evaluations, _finalize_evaluations,
@@ -68,12 +70,35 @@ def proposal_history(history, recent_generations=5, best_candidates=12):
 
 
 def summarize_runs(runs, tasks=None):
+    if not runs:
+        raise ValueError("cannot summarize an empty replicate group")
     result = copy.deepcopy(runs[0])
     result["replicates"] = runs
+    required = [f"{task}.{metric}" for task, metric, _ in selected_objectives(tasks)]
+    failures = [dict(seed=run.get("genome", {}).get("seed"), reasons=run.get("failure_reasons", []))
+                for run in runs if run.get("failed") or any(
+                    not isinstance(run.get("metrics", {}).get(key), (int, float))
+                    or not math.isfinite(run["metrics"][key]) for key in required)]
+    if failures:
+        result.update(failed=True, failure_reasons=failures, metrics={}, diagnostics={}, score=-1.0e9)
+        return result
     result["metrics"] = {key: statistics.mean(x["metrics"][key] for x in runs) for key in runs[0]["metrics"]}
+    diagnostics = set.intersection(*(set(x.get("diagnostics", {})) for x in runs))
+    result["diagnostics"] = {key: statistics.mean(x["diagnostics"][key] for x in runs)
+                             for key in diagnostics if all(isinstance(x["diagnostics"][key], (int, float))
+                             and math.isfinite(x["diagnostics"][key]) for x in runs)}
     result["score"] = joint_score(result["metrics"], tasks)
     result["runtime_seconds"] = statistics.mean(x["runtime_seconds"] for x in runs)
     return result
+
+
+def evaluation_checkpoint(receipt, selection):
+    if selection not in {"validation_primary_metric", "best_validation"}:
+        raise ValueError("test-driven V3 still requires validation-selected best weights")
+    path = Path(receipt.get("best_checkpoint", ""))
+    if not path.is_file() or int(receipt.get("best_step", 0)) < 1:
+        raise RuntimeError("validation-best checkpoint or selected step missing")
+    return path.resolve()
 
 
 class Experiment:
@@ -81,6 +106,28 @@ class Experiment:
         self.args = args
         self.output = args.output.resolve()
         self.protocol = json.loads(args.config.read_text())
+        declared = self.protocol.get("metric_protocol_id")
+        if declared != METRIC_PROTOCOL_ID:
+            raise ValueError(f"use a fresh {METRIC_PROTOCOL_ID} config/output; legacy metric protocols cannot be resumed")
+        if self.protocol.get("training_mode") != "independent":
+            raise ValueError("metric V3 checkpoint selection requires independent task training")
+        if self.protocol.get("checkpoint_policy") not in {"all", "best_weights"}:
+            raise ValueError("metric V3 requires saving validation-best checkpoints")
+        if self.protocol.get("checkpoint_selection") != "validation_primary_metric":
+            raise ValueError("metric V3 requires validation_primary_metric checkpoint selection")
+        if self.protocol.get("evaluation_seed") != EVALUATION_SEED:
+            raise ValueError(f"metric V3 requires evaluation_seed={EVALUATION_SEED}")
+        split = self.protocol.get("selection_evaluation_split", "validation")
+        if split not in {"validation", "test"}:
+            raise ValueError("selection_evaluation_split must be validation or test")
+        if split == "test" and not (self.protocol.get("single_stage_evolution")
+                                    and self.protocol.get("test_used_for_selection") is True):
+            raise ValueError("test architecture selection requires an explicit test-driven single-stage protocol")
+        if self.protocol.get("single_stage_evolution"):
+            seeds = self.protocol.get("evolution_seeds", [])
+            if len(seeds) < 3 or len(seeds) != len(set(seeds)) or self.protocol.get("evolution_steps", 0) < 1:
+                raise ValueError("single-stage evolution requires at least three unique seeds and a positive budget")
+        self.protocol["metric_protocol"] = metric_protocol()
         tasks = self.protocol.get("tasks")
         selected_objectives(tasks)
         if self.protocol.get("training_mode", "joint") not in {"joint", "independent"}:
@@ -106,7 +153,9 @@ class Experiment:
             raise ValueError("the first propagation seed must be the screening seed")
         self.data = (ROOT / self.protocol["data"]).resolve()
         from nanobrain.data import verify_subset_manifest
-        verify_subset_manifest(self.data, verify_hashes=True, data_splits=("train", "validation"))
+        data_manifest = verify_subset_manifest(self.data, verify_hashes=True, data_splits=("train", "validation"))
+        if data_manifest.get("niche_contract", {}).get("mode") != "composition":
+            raise ValueError("Metric V3 requires true niche composition targets; anatomy proxies are incompatible")
         self.state_path = self.output / "campaign.json"
         self.state = {}
         self.api = APIConfig.from_env()
@@ -125,7 +174,7 @@ class Experiment:
         self.fingerprint = {str(p.relative_to(ROOT)): sha(p) for p in files}
         self.fingerprint["data_manifest"] = sha(self.data / "manifest.json")
         import importlib.metadata
-        for package in ("torch", "transformers", "scvi-tools", "numpy", "scikit-learn"):
+        for package in ("torch", "transformers", "scvi-tools", "numpy", "scikit-learn", "scib-metrics", "geomloss", "jax"):
             self.fingerprint[f"package:{package}"] = importlib.metadata.version(package)
         for package in ("celltypist", "harmonypy", "scanorama", "bbknn", "scipy"):
             self.fingerprint[f"package:{package}"] = importlib.metadata.version(package)
@@ -155,7 +204,7 @@ class Experiment:
             self.state = dict(protocol_id=self.protocol["protocol_id"], started_at=utc(),
                               generations=[], reference=None, confirmations=[], selected=None,
                               training_gpus=args.gpus, api=self.api.redacted(),
-                              test_used_for_selection=False, status="initialized")
+                              selection_split=split, test_used_for_selection=split == "test", status="initialized")
             self.save()
 
     def save(self, status=None):
@@ -168,7 +217,11 @@ class Experiment:
         if self.protocol.get("training_mode", "joint") == "joint":
             return self._run_single_batch(specs, directory, steps)
         tasks = self.protocol["tasks"]
-        results = {task: self._run_single_batch(specs, directory / task, steps, task=task) for task in tasks}
+        if getattr(self.args, "adaptive_queue", False):
+            from scripts.nanobrain_scheduler import run_task_queue
+            results = run_task_queue(self, specs, directory, steps, evaluation_checkpoint)
+        else:
+            results = {task: self._run_single_batch(specs, directory / task, steps, task=task) for task in tasks}
         merged = []
         from scripts.run_nanobrain_baselines import _write_rows
         for index, spec in enumerate(specs):
@@ -290,10 +343,10 @@ class Experiment:
                         raise RuntimeError(f"reference training failed: {item['directory']}; {audit['reasons']}")
                     results.append(_public_candidate(item))
                     continue
-                # Proxy training quality is diagnostic only. Compare final-step weights.
-                checkpoint = Path(receipt["checkpoint"])
+                # Validation-best weights are selected with the canonical task primary.
+                checkpoint = Path(receipt["best_checkpoint"])
                 if not checkpoint.is_file():
-                    raise RuntimeError("final-step checkpoint missing")
+                    raise RuntimeError("validation-best checkpoint missing")
                 item["training_audit"] = {**audit, "checkpoint": str(checkpoint.resolve())}
                 item["parameter_count"] = receipt["parameter_count"]
                 item["runtime_seconds"] = receipt["runtime_seconds"]
@@ -301,7 +354,9 @@ class Experiment:
             if successful:
                 evaluated = _launch_evaluations(candidates=successful, gpus=self.args.gpus, data=self.data,
                             batch_size=self.protocol["evaluation_batch_size"],
-                            evaluation_seed=self.protocol["evaluation_seed"])
+                            evaluation_seed=self.protocol["evaluation_seed"],
+                            evaluation_split=self.protocol.get("selection_evaluation_split", "validation"),
+                            output_name="test_selection_evaluation" if self.protocol.get("selection_evaluation_split") == "test" else "evaluation")
                 _finalize_evaluations(evaluated, manifest=self.state, manifest_path=self.state_path)
             for item in wave:
                 if item.get("failed"):
@@ -354,6 +409,12 @@ class Experiment:
             return None
         context = lambda x: {k: x[k] for k in ("architecture_id", "genome", "metrics", "score",
                                                "runtime_seconds", "parameter_count", "diagnostics") if k in x}
+        full_context = context
+        def context(x):
+            value = full_context(x)
+            if "diagnostics" in value:
+                value["diagnostics"] = {k: v for k, v in value["diagnostics"].items() if "_type_" not in k and "_section_" not in k}
+            return value
         prompt = (
             "Propose module combinations for nanoBrain. Respond with JSON {\"candidates\": [...]} only. "
             f"Exactly {count} distinct candidates. Each needs parent_ids (one mutation parent or two "
@@ -429,6 +490,10 @@ class Experiment:
                     previous_generations=proposal_history(history,
                         int(self.protocol.get("llm_history_generations", 5)),
                         int(self.protocol.get("llm_history_best_candidates", 12)))), ensure_ascii=False))
+        if self.protocol.get("selection_evaluation_split") == "test":
+            prompt = prompt.replace("No test results are available.",
+                "This is explicitly test-driven exploratory search: test results are provided for architecture "
+                "selection and must not be described as untouched holdout generalization. Validation alone selects weights.")
         (folder / "prompt.txt").write_text(prompt)
         client = OpenAICompatibleClient(self.api)
         attempt = 0
@@ -450,7 +515,9 @@ class Experiment:
                     "for this response when possible; do not repeat any architecture already present "
                     "in the parent or previous responses.",
                     temperature=0.2,
-                    max_tokens=int(self.protocol.get("llm_response_max_tokens", 8000)))
+                    max_tokens=int(self.protocol.get("llm_response_max_tokens", 8000)),
+                    **({"reasoning_effort": self.protocol["llm_reasoning_effort"]}
+                       if self.protocol.get("llm_reasoning_effort") else {}))
                 (folder / f"llm_response_{attempt:03d}.txt").write_text(response)
                 payload = _extract_json(response)
                 raw = payload.get("candidates") if isinstance(payload, dict) else None
@@ -558,6 +625,9 @@ class Experiment:
                 time.sleep(min(30.0, 2.0 * attempt))
 
     def run(self):
+        if self.protocol.get("single_stage_evolution"):
+            from scripts.nanobrain_single_stage import run_single_stage
+            return run_single_stage(self, summarize_runs)
         if self.state.get("status") == "complete":
             return
         p = self.protocol
@@ -738,6 +808,9 @@ class Experiment:
             finalized_at=utc()))
 
     def report(self):
+        if self.protocol.get("single_stage_evolution"):
+            from scripts.nanobrain_single_stage import write_single_stage_report
+            return write_single_stage_report(self)
         rows = []
         for generation in self.state.get("generations", []):
             for x in generation["candidates"]:
@@ -751,9 +824,10 @@ class Experiment:
         lines = ["# nanoBrain 100k LLM 模块演化", "", f"协议：{self.protocol['protocol_id']}", "",
                  f"状态：{self.state['status']}；完成代数：{len(self.state.get('generations', []))}；LLM 候选数：{len(rows)}。", "",
                  "固定 60k/20k/20k；搜索和选择只用 validation。历史 test 已公开，最终仅作冻结后的描述性复评。", "",
+                 "综合分及晋级目标是内部选权重/搜索规则，不是官方科学指标。正式标准单项见 final_standard_metrics_long.csv；整合逐项报告，不以项目综合分排名。", "",
                  f"训练模式：{self.protocol.get('training_mode', 'joint')}；每任务独立训练时分别保存权重。短预算 {self.protocol['screen_steps']} steps；晋级父代前进行 3-seed 重测；确认阶段 3 seeds × {self.protocol['confirmation_steps']} steps。原始模型与候选使用配对 seed。", "",
                  f"晋级规则：{json.dumps(self.protocol['gate'], ensure_ascii=False)}；配置内任务的综合分与逐任务退化限制。", "",
-                 "| 代 | 候选 | 综合分 | 可晋级 |", "| --- | --- | ---: | --- |"]
+                 "| 代 | 候选 | 内部搜索效用 | 可晋级 |", "| --- | --- | ---: | --- |"]
         for x in rows:
             lines.append(f"| {x['generation']} | {x['architecture']} | {x['score']:.6f} | {x['eligible']} |")
         lines += ["", f"停止原因：{self.state.get('stop_reason', '仍在执行')}",
@@ -763,7 +837,7 @@ class Experiment:
             gate = confirmed["gate"]
             lines += [f"## 配对长预算验证：{confirmed['screen_architecture_id']}", "",
                       f"通过晋级：{gate['passed']}；三个 seed 的综合分差值：{gate['paired_score_deltas']}", "",
-                      "| 指标 | 原始模型均值 | 演化模型均值 |", "| --- | ---: | ---: |"]
+                      "| 内部选优目标 | 原始模型均值 | 演化模型均值 |", "| --- | ---: | ---: |"]
             for metric, value in gate["mean_metrics"].items():
                 lines.append(f"| {metric} | {gate['reference_mean_metrics'][metric]:.6f} | {value:.6f} |")
             lines.append("")
@@ -779,10 +853,19 @@ class Experiment:
             with (self.output / "final_metrics_long.csv").open("w", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=list(long_rows[0]))
                 writer.writeheader(); writer.writerows(long_rows)
+            standard_rows = [row for row in long_rows
+                             if row.get("status") == "complete" and row.get("stratum_type") == "overall"
+                             and row.get("stratum_value") == "overall"
+                             and metric_role(row.get("task", ""), row.get("metric", "")) == "benchmark"]
+            with (self.output / "final_standard_metrics_long.csv").open("w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=list(long_rows[0]))
+                writer.writeheader(); writer.writerows(standard_rows)
         for name, runs in self.state.get("test_reevaluation", {}).items():
             all_metrics = [overall_metrics(read_metric_table(x["evaluation"]), candidate_method(x["candidate_id"])) for x in runs]
             lines += [f"## {name}：冻结后 test 复评", "", "| 任务 | 指标 | Mean ± SD |", "| --- | --- | ---: |"]
             for key in sorted(set.intersection(*(set(m) for m in all_metrics))):
+                if metric_role(*key) != "benchmark":
+                    continue
                 values = [m[key] for m in all_metrics]
                 lines.append(f"| {key[0]} | {key[1]} | {statistics.mean(values):.6f} ± {statistics.stdev(values):.6f} |")
             lines.append("")
@@ -791,13 +874,20 @@ class Experiment:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=ROOT / "configs/nanobrain_evolution_independent_100k.json")
+    parser.add_argument("--config", type=Path, default=ROOT / "configs/nanobrain_graph_v2/metrics_v3_20261102.json")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--gpus", type=_parse_gpus, default=[3, 5, 6])
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--adaptive-queue", action="store_true")
+    parser.add_argument("--workers-per-gpu", type=int, default=8)
+    parser.add_argument("--max-workers", type=int, default=48)
+    parser.add_argument("--allow-shared-gpus", action="store_true",
+                        help="share memory-capable GPUs instead of the legacy five-worker busy-card fallback")
     parser.add_argument("--task-suite-only", action="store_true",
                         help="train/evaluate the reference task suite only, without LLM or test access")
     args = parser.parse_args()
+    if args.workers_per_gpu < 1 or args.max_workers < 1:
+        parser.error("worker limits must be positive")
     experiment = Experiment(args)
     try:
         if args.task_suite_only:

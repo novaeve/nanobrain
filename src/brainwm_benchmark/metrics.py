@@ -5,6 +5,7 @@ from collections.abc import Mapping
 import math
 import numpy as np
 from scipy import sparse, stats
+from scipy.spatial.distance import cdist
 from scipy.sparse.csgraph import connected_components
 from sklearn.metrics import (
     accuracy_score, adjusted_rand_score, balanced_accuracy_score,
@@ -13,6 +14,11 @@ from sklearn.metrics import (
     recall_score, roc_auc_score, average_precision_score, silhouette_score,
 )
 from sklearn.neighbors import NearestNeighbors
+
+from .protocol import (
+    DEVELOPMENT_EVAL_CELLS, EVALUATION_SEED, SCIB_MAX_CELLS, SCIB_NEIGHBORS,
+    SCIB_VERSION, SINKHORN_BLUR, SINKHORN_SCALING,
+)
 
 
 def _finite(name: str, value, ndim: int | None = None) -> np.ndarray:
@@ -49,9 +55,11 @@ def annotation(data: Mapping[str, np.ndarray]) -> dict[str, float]:
         "cohen_kappa": cohen_kappa_score(y, p),
     }
     for average in ("macro", "micro", "weighted"):
-        result[f"precision_{average}"] = precision_score(y, p, average=average, zero_division=0)
-        result[f"recall_{average}"] = recall_score(y, p, average=average, zero_division=0)
-        result[f"f1_{average}"] = f1_score(y, p, average=average, zero_division=0)
+        # The macro class universe must not change with a candidate's predictions.
+        kwargs = {"labels": np.unique(y)} if average == "macro" else {}
+        result[f"precision_{average}"] = precision_score(y, p, average=average, zero_division=0, **kwargs)
+        result[f"recall_{average}"] = recall_score(y, p, average=average, zero_division=0, **kwargs)
+        result[f"f1_{average}"] = f1_score(y, p, average=average, zero_division=0, **kwargs)
     if "y_prob" in data:
         prob = _finite("y_prob", data["y_prob"], 2).astype(float)
         if len(prob) != len(y):
@@ -107,25 +115,64 @@ def _rbf_mmd(a: np.ndarray, b: np.ndarray) -> float:
     limit = 2048
     a = np.asarray(a)[:limit]
     b = np.asarray(b)[:limit]
-    merged = np.concatenate([a, b])
-    sample = merged[:min(len(merged), limit)]
-    distance = np.sum((sample[:, None] - sample[None, :]) ** 2, axis=2)
-    positive = distance[distance > 0]
-    gamma = 1.0 / max(float(np.median(positive)) if positive.size else 1.0, 1e-12)
-    def kernel(x, z): return np.exp(-gamma * np.sum((x[:, None] - z[None, :]) ** 2, axis=2))
+    # A fixed bandwidth in the shared feature space cannot be enlarged by a
+    # candidate to make its own discrepancy disappear. Avoid N x N x D arrays.
+    a, b = a / np.sqrt(a.shape[1]), b / np.sqrt(b.shape[1])
+    def kernel(x, z): return np.exp(-cdist(x, z, "sqeuclidean"))
     return float(kernel(a, a).mean() + kernel(b, b).mean() - 2 * kernel(a, b).mean())
+
+
+def _population_sample(x: np.ndarray) -> np.ndarray:
+    if len(x) <= DEVELOPMENT_EVAL_CELLS:
+        return x
+    indices = np.sort(np.random.default_rng(EVALUATION_SEED).choice(
+        len(x), DEVELOPMENT_EVAL_CELLS, replace=False))
+    return x[indices]
+
+
+def sinkhorn_divergence(truth: np.ndarray, pred: np.ndarray) -> float:
+    """Debiased distribution error in a common, dimension-normalized gene space."""
+    import torch
+    from geomloss import SamplesLoss
+
+    truth, pred = _population_sample(truth), _population_sample(pred)
+    scale = np.sqrt(truth.shape[1])
+    with torch.no_grad():
+        loss = SamplesLoss("sinkhorn", p=2, blur=SINKHORN_BLUR,
+                           scaling=SINKHORN_SCALING, debias=True, backend="tensorized")
+        value = float(loss(torch.tensor(truth / scale, dtype=torch.float64),
+                           torch.tensor(pred / scale, dtype=torch.float64)))
+    if not math.isfinite(value) or value < -1e-7:
+        raise ValueError(f"invalid Sinkhorn divergence: {value}")
+    return max(0.0, value)
+
+
+def wasserstein2(truth: np.ndarray, pred: np.ndarray) -> float:
+    """Exact empirical W2; no row pairing or model-specific feature space."""
+    from scipy.optimize import linear_sum_assignment
+    truth, pred = _population_sample(truth), _population_sample(pred)
+    cost = cdist(truth, pred, "sqeuclidean")
+    if len(truth) == len(pred):
+        rows, columns = linear_sum_assignment(cost)
+        squared = cost[rows, columns].mean()
+    else:
+        from ot.lp import emd2
+        squared = emd2(np.full(len(truth), 1 / len(truth)),
+                       np.full(len(pred), 1 / len(pred)), cost)
+    return float(np.sqrt(max(0.0, squared)))
 
 
 def _development_distribution(truth: np.ndarray, pred: np.ndarray) -> dict[str, float]:
     if truth.shape[1] != pred.shape[1]:
         raise ValueError("target and prediction feature counts differ")
-    n = min(len(truth), len(pred), 4096)
-    if n < 2:
+    if min(len(truth), len(pred)) < 2:
         raise ValueError("development population metrics require at least two cells")
-    truth, pred = truth[:n], pred[:n]
+    truth, pred = _population_sample(truth), _population_sample(pred)
     mean_error = np.mean((truth.mean(0) - pred.mean(0)) ** 2)
     variance_error = np.mean((truth.var(0) - pred.var(0)) ** 2)
     return {
+        "wasserstein2": wasserstein2(truth, pred),
+        "sinkhorn_divergence": sinkhorn_divergence(truth, pred),
         "population_mse": mean_error,
         "mean_error": mean_error,
         "variance_error": variance_error,
@@ -177,51 +224,176 @@ def _knn_graph(x: np.ndarray, k: int = 15) -> tuple[np.ndarray, sparse.csr_matri
     return idx, graph.maximum(graph.T)
 
 
-def integration(data: Mapping[str, np.ndarray]) -> dict[str, float]:
+def _integration_sample(biology: np.ndarray, batch: np.ndarray) -> np.ndarray:
+    if len(biology) <= SCIB_MAX_CELLS:
+        return np.arange(len(biology))
+    # Selection depends only on the fixed labels/row order, never on embeddings.
+    _, groups = np.unique(np.column_stack([biology, batch]), axis=0, return_inverse=True)
+    rng = np.random.default_rng(EVALUATION_SEED)
+    required = np.array([rng.choice(np.flatnonzero(groups == g)) for g in np.unique(groups)])
+    if len(required) > SCIB_MAX_CELLS:
+        raise ValueError("more integration strata than the frozen sample budget")
+    rest = np.setdiff1d(np.arange(len(biology)), required)
+    extra = rng.choice(rest, SCIB_MAX_CELLS - len(required), replace=False)
+    return np.sort(np.concatenate([required, extra]))
+
+
+def integration(data: Mapping[str, np.ndarray], *, diagnostics=True) -> dict[str, float]:
+    """Fixed official scIB subset; no approximate lookalikes or silent fallback."""
+    import os
+    from importlib.metadata import version
+
+    os.environ.setdefault("JAX_PLATFORMS", "cpu")
+    os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+    if version("scib-metrics") != SCIB_VERSION:
+        raise RuntimeError(f"this protocol requires scib-metrics=={SCIB_VERSION}")
+    import jax
+    import scib_metrics as scib
+    from scib_metrics.nearest_neighbors import NeighborsResults
+
     x = _finite("embedding", data["embedding"], 2).astype(float)
     biology, batch = np.asarray(data["biology_label"]), np.asarray(data["batch_label"])
     if len(x) != len(biology) or len(x) != len(batch): raise ValueError("integration row counts differ")
-    idx, graph = _knn_graph(x)
-    cell_asw = (silhouette_score(x, biology, sample_size=min(len(x), 10000), random_state=0) + 1) / 2
-    batch_asw = 1 - (silhouette_score(x, batch, sample_size=min(len(x), 10000), random_state=0) + 1) / 2
-    connect = []
-    for label in np.unique(biology):
-        take = np.flatnonzero(biology == label)
-        if len(take) > 1:
-            _, component = connected_components(graph[take][:, take])
-            connect.append(np.bincount(component).max() / len(take))
-    graph_connectivity = float(np.mean(connect))
-    local_batch = batch[idx]
-    ilisi = np.mean([1 / np.sum((np.unique(row, return_counts=True)[1] / len(row)) ** 2) for row in local_batch])
-    ilisi /= max(1, len(np.unique(batch)))
-    same_biology = biology[idx] == biology[:, None]
-    isolated = f1_score(np.ones(same_biology.size), same_biology.ravel(), zero_division=0)
-    biology_score = np.mean([cell_asw, graph_connectivity, isolated])
-    batch_score = np.mean([batch_asw, ilisi])
-    return {k: float(v) for k, v in {
-        "celltype_asw": cell_asw, "batch_asw_inverse": batch_asw,
-        "graph_connectivity": graph_connectivity, "isolated_label_f1": isolated,
-        "ilisi_normalized": ilisi, "biology_conservation": biology_score,
-        "batch_removal": batch_score, "integration_composite": .6 * biology_score + .4 * batch_score,
-    }.items()}
+    take = _integration_sample(biology, batch)
+    x, biology, batch = x[take], biology[take], batch[take]
+    if not 1 < len(np.unique(biology)) < len(x) or len(np.unique(batch)) < 2:
+        raise ValueError("scIB requires multiple biological labels and batches")
+    if not any(1 < len(np.unique(batch[biology == label])) < int((biology == label).sum())
+               for label in np.unique(biology)):
+        raise ValueError("no cell type has evaluable within-type batch replication")
+    neighbors = min(SCIB_NEIGHBORS, len(x))
+    distances, indices = NearestNeighbors(n_neighbors=neighbors).fit(x).kneighbors(x)
+    knn = NeighborsResults(indices=indices, distances=distances)
+    with jax.default_device(jax.devices("cpu")[0]):
+        clustering = scib.nmi_ari_cluster_labels_kmeans(x, biology)
+        metrics = {
+            "scib_label_asw": scib.silhouette_label(x, biology),
+            "scib_isolated_label_asw": scib.isolated_labels(x, biology, batch),
+            "scib_nmi": clustering["nmi"],
+            "scib_ari": clustering["ari"],
+            "scib_batch_asw": scib.silhouette_batch(x, biology, batch),
+            "scib_ilisi": scib.ilisi_knn(knn, batch),
+            "scib_graph_connectivity": scib.graph_connectivity(knn.subset_neighbors(min(15, neighbors)), biology),
+        }
+        conditional = []
+        if diagnostics:
+            metrics["bras"] = scib.bras(x, biology, batch)
+        for label in np.unique(biology) if diagnostics else []:
+            take = np.flatnonzero(biology == label)
+            if len(take) < 6 or len(np.unique(batch[take])) < 2:
+                continue
+            distances, indices = NearestNeighbors(n_neighbors=min(SCIB_NEIGHBORS, len(take))).fit(x[take]).kneighbors(x[take])
+            value = scib.ilisi_knn(NeighborsResults(indices=indices, distances=distances), batch[take])
+            if not np.isfinite(value):
+                raise ValueError("undefined conditional iLISI")
+            conditional.append(float(value))
+        if diagnostics and conditional:
+            metrics["cilisi"] = float(np.mean(conditional))
+    for name, value in metrics.items():
+        low = -1 if name == "scib_ari" else 0
+        if not np.isfinite(value) or not low - 1e-5 <= value <= 1 + 1e-5:
+            raise ValueError(f"undefined or out-of-range scIB component: {name}={value}")
+        metrics[name] = float(np.clip(value, low, 1))
+    bio = np.mean([metrics["scib_label_asw"], metrics["scib_isolated_label_asw"],
+                   metrics["scib_nmi"], max(0.0, metrics["scib_ari"])])
+    mixing = np.mean([metrics["scib_batch_asw"], metrics["scib_ilisi"], metrics["scib_graph_connectivity"]])
+    metrics.update(biology_conservation=float(bio), batch_removal=float(mixing),
+                   scib_composite=float(0.6 * bio + 0.4 * mixing))
+    if diagnostics:
+        metrics["cilisi_evaluable_labels"] = float(len(conditional))
+        metrics.setdefault("cilisi", math.nan)
+    return metrics
+
+
+def niche_composition(data: Mapping[str, np.ndarray]) -> dict[str, float]:
+    """Paired center-cell targets; equal weighting of prespecified radii."""
+    truth = _finite("target_composition", data["target_composition"], 3).astype(float)
+    pred = _finite("prediction_composition", data["prediction_composition"], 3).astype(float)
+    mask = np.asarray(data.get("composition_mask", np.ones(truth.shape[:2])), dtype=bool)
+    if truth.shape != pred.shape or mask.shape != truth.shape[:2]:
+        raise ValueError("niche composition shape mismatch")
+    if np.any(pred < -1e-7) or not np.allclose(pred.sum(-1), 1, atol=1e-5):
+        raise ValueError("predicted compositions must be probability vectors")
+    if not mask.any() or not np.allclose(truth[mask].sum(-1), 1, atol=1e-5) or np.any(truth < 0):
+        raise ValueError("niche composition has no valid normalized targets")
+    maes, mses, jsds = [], [], []
+    result = {}
+    for scale in range(truth.shape[1]):
+        take = mask[:, scale]
+        if not take.any():
+            raise ValueError(f"no valid niche targets at scale {scale}")
+        y, p = truth[take, scale], pred[take, scale]
+        error = np.abs(y - p)
+        mid = (y + p) / 2
+        jsd = .5 * np.sum(y * np.log(y.clip(1e-12) / mid.clip(1e-12))
+                           + p * np.log(p.clip(1e-12) / mid.clip(1e-12)), axis=1)
+        maes.append(float(error.mean())); mses.append(float(np.square(y - p).mean())); jsds.append(float(jsd.mean()))
+        result[f"composition_mae_scale_{scale}"] = maes[-1]
+        for cell_type, value in enumerate(error.mean(0)):
+            result[f"composition_mae_scale_{scale}_type_{cell_type}"] = float(value)
+    result.update(composition_mae=float(np.mean(maes)), composition_mse=float(np.mean(mses)),
+                  composition_jsd=float(np.mean(jsds)))
+    if "section_id" in data:
+        sections = np.asarray(data["section_id"])
+        if sections.shape != (len(truth),):
+            raise ValueError("niche section identifiers do not match centers")
+        scores = []
+        for section in np.unique(sections[mask.any(1)]):
+            values = []
+            for s in range(truth.shape[1]):
+                take = (sections == section) & mask[:, s]
+                if take.any():
+                    values.append(float(np.abs(truth[take, s] - pred[take, s]).mean()))
+            if values:
+                scores.append(float(np.mean(values)))
+                result[f"composition_mae_section_{section}"] = scores[-1]
+        if scores:
+            result["section_macro_mae"] = float(np.mean(scores))
+    if "target_density" in data and "prediction_density" in data:
+        from sklearn.metrics import r2_score
+        density = _finite("target_density", data["target_density"], 2)
+        estimate = _finite("prediction_density", data["prediction_density"], 2)
+        valid = np.asarray(data.get("density_mask", mask), dtype=bool)
+        if density.shape != mask.shape or estimate.shape != density.shape or valid.shape != density.shape:
+            raise ValueError("niche density shape mismatch")
+        if np.any(estimate < 0):
+            raise ValueError("density predictions must be nonnegative")
+        result["density_mae"] = float(np.mean([np.abs(density[valid[:, s], s] - estimate[valid[:, s], s]).mean()
+                                                for s in range(density.shape[1]) if valid[:, s].any()]))
+        r2 = [r2_score(density[valid[:, s], s], estimate[valid[:, s], s]) for s in range(density.shape[1])
+              if valid[:, s].sum() > 1 and np.std(density[valid[:, s], s]) > 0]
+        result["density_r2"] = float(np.mean(r2)) if r2 else math.nan
+    return result
 
 
 def spatial_niche(data: Mapping[str, np.ndarray]) -> dict[str, float]:
+    if "target_composition" in data:
+        return niche_composition(data)
     x = _finite("embedding", data["embedding"], 2).astype(float)
-    coord = _finite("coordinates", data["coordinates"], 2).astype(float)
     labels = np.asarray(data["labels"])
     clusters = np.asarray(data["clusters"])
-    idx, graph = _knn_graph(coord)
-    same = labels[idx] == labels[:, None]
-    centered = x[:, 0] - x[:, 0].mean()
-    w = graph.sum()
-    moran = len(x) / w * float(centered @ graph @ centered) / float(centered @ centered)
-    geary = (len(x) - 1) / (2 * w) * float(sum((centered[i] - centered[j]) ** 2 for i, j in zip(*graph.nonzero()))) / float(centered @ centered)
-    return {"ari": float(adjusted_rand_score(labels, clusters)),
-            "nmi": float(normalized_mutual_info_score(labels, clusters)),
-            "celltype_asw": float((silhouette_score(x, labels, sample_size=min(len(x),10000),random_state=0)+1)/2),
-            "morans_i": moran, "gearys_c": geary,
-            "neighbor_label_enrichment": float(same.mean())}
+    if len(x) != len(labels) or labels.shape != clusters.shape:
+        raise ValueError("spatial row counts differ")
+    result = {"ari": float(adjusted_rand_score(labels, clusters)),
+              "nmi": float(normalized_mutual_info_score(labels, clusters))}
+    if "section_id" in data:
+        sections = np.asarray(data["section_id"])
+        if sections.shape != labels.shape:
+            raise ValueError("spatial section identifiers do not match labels")
+        per_section = []
+        for section in np.unique(sections):
+            take = sections == section
+            if section == -1 or take.sum() < 2 or len(np.unique(labels[take])) < 2:
+                continue
+            per_section.append((adjusted_rand_score(labels[take], clusters[take]),
+                                normalized_mutual_info_score(labels[take], clusters[take])))
+        if per_section:
+            result["section_mean_ari"], result["section_mean_nmi"] = map(float, np.mean(per_section, axis=0))
+    # Cluster IDs have no semantic class meaning. Never score them as classes
+    # or fit a cluster-to-region map using evaluation labels.
+    if "y_pred" in data:
+        result.update(annotation({"y_true": labels, "y_pred": data["y_pred"]}))
+    return result
 
 
 EVALUATORS = {"annotation": annotation, "integration": integration,

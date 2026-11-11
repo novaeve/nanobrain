@@ -148,7 +148,7 @@ def test_graph_all_independent_tasks_train_reload_and_evaluate(tmp_path, task):
     assert receipt["optimizer_changed_parameter"] and receipt["gradient_nonzero_parameters"] > 0
     assert receipt["architecture_version"] == 2 and receipt["module_manifest"]
     assert not receipt["test_opened"]
-    rows = _run_nanobrain(splits, Path(receipt["checkpoint"]), tmp_path / "eval", "cpu", 12, evaluation_seed=5)
+    rows = _run_nanobrain(splits, Path(receipt["checkpoint"]), tmp_path / "eval", "cpu", 12, evaluation_seed=20260915)
     assert rows and {r["task"] for r in rows} == {task}
     assert all(r["status"] not in {"error", "failed"} for r in rows)
 

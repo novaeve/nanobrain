@@ -29,6 +29,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from brainwm_benchmark import evaluate  # noqa: E402
+from brainwm_benchmark.protocol import (  # noqa: E402
+    BENCHMARK_METRICS, DEVELOPMENT_EVAL_CELLS, EVALUATION_SEED, METRIC_PROTOCOL_ID,
+    PRIMARY_METRICS, metric_protocol, metric_role,
+)
+from brainwm_benchmark.reporting import write_standard_report  # noqa: E402
 from nanobrain.data import DatasetSplits, NanoDataset, load_v3_subset, verify_subset_manifest  # noqa: E402
 
 
@@ -38,6 +43,9 @@ METRIC_DIRECTION: dict[str, str] = {
     "rmse": "min", "mae": "min", "nonzero_rmse": "min",
     "heldout_rmse": "min", "heldout_mae": "min", "row_mse": "min", "row_mae": "min",
     "population_mse": "min", "mean_error": "min", "variance_error": "min",
+    "sinkhorn_divergence": "min",
+    "wasserstein2": "min", "composition_mae": "min", "composition_mse": "min",
+    "composition_jsd": "min", "density_mae": "min", "section_macro_mae": "min",
     "mmd_rbf": "min", "gearys_c": "min", "ece": "min", "nll": "min",
     "brier_multiclass": "min", "zero_calibration_error": "min",
 }
@@ -173,6 +181,7 @@ def _metric_rows(
 ) -> list[dict[str, Any]]:
     """Evaluate one artifact and turn scalar metrics into table rows."""
     base = {
+        "metric_protocol_id": METRIC_PROTOCOL_ID,
         "split_id": SPLIT_ID,
         "subset": "nanobrain_v3_100k",
         "task": task,
@@ -190,6 +199,8 @@ def _metric_rows(
     try:
         with np.load(artifact, allow_pickle=False) as payload:
             metrics = evaluate(task, payload)
+            if task == "spatial_niche" and "y_pred" not in payload and "target_composition" not in payload:
+                base["notes"] += "; clustering diagnostics only; no semantic region predictions or primary F1"
             # Keep the evaluator contract as the source of truth while adding
             # task-specific held-out diagnostics below.
             if task == "spatial_completion":
@@ -220,10 +231,17 @@ def _metric_rows(
     # a single method independently auditable without parsing the aggregate
     # CSV and preserves undefined metrics as JSON null values.
     receipt_path = artifact.with_suffix(".metrics.json")
+    required = [m for t, m, _ in BENCHMARK_METRICS if t == task]
+    if task == "spatial_completion":
+        required = ["heldout_rmse"]
     receipt_path.write_text(
         json.dumps(
             {
                 "format": "brainwm_v3_metric_receipt_v1",
+                "metric_protocol": metric_protocol(),
+                "primary_metric_available": bool(required) and all(m in metrics for m in required),
+                "selection_metric_available": any(task == t and m in metrics for t, m, _ in PRIMARY_METRICS),
+                "metric_roles": {m: metric_role(task, m) for m in metrics},
                 "split_id": SPLIT_ID,
                 "subset": "nanobrain_v3_100k",
                 "task": task,
@@ -245,8 +263,9 @@ def _metric_rows(
         row = dict(base)
         row.update({
             "metric": metric,
+            "metric_role": metric_role(task, metric),
             "value": float(value) if np.isfinite(value) else None,
-            "direction": METRIC_DIRECTION.get(metric, "max"),
+            "direction": "min" if metric.startswith("composition_mae") else METRIC_DIRECTION.get(metric, "max"),
             "stratum_type": "overall",
             "stratum_value": "overall",
         })
@@ -280,6 +299,7 @@ def _append_group_classification_rows(
                 ("f1_macro", f1_score(y_true[take], y_pred[take], average="macro", zero_division=0)),
             ):
                 rows.append({
+                    "metric_protocol_id": METRIC_PROTOCOL_ID,
                     "split_id": SPLIT_ID, "subset": "nanobrain_v3_100k",
                     "task": "annotation", "method": method, "method_family": family,
                     "training_regime": regime, "fit_rows": int(fit_rows),
@@ -432,7 +452,13 @@ def _run_integration(train: NanoDataset, evaluation: NanoDataset, output: Path, 
 
 
 def _run_spatial(train: NanoDataset, evaluation: NanoDataset, output: Path, seed: int, methods: set[str]) -> list[dict[str, Any]]:
+    if train.labels["niche"].ndim == 3:
+        return _run_niche_composition(train, evaluation, output, seed, methods)
     from sklearn.cluster import MiniBatchKMeans
+    from sklearn.dummy import DummyClassifier
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
 
     train_label, train_label_valid = _labels(train, "niche")
     eval_label, eval_label_valid = _labels(evaluation, "niche")
@@ -457,13 +483,59 @@ def _run_spatial(train: NanoDataset, evaluation: NanoDataset, output: Path, seed
         model = MiniBatchKMeans(n_clusters=n_clusters, batch_size=2048, n_init=3, max_iter=100, random_state=int(seed))
         model.fit(fit_rep[train_valid])
         clusters = model.predict(eval_rep[indices])
+        classifier = (make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000, random_state=int(seed)))
+                      if len(np.unique(train_label[train_valid])) > 1 else DummyClassifier(strategy="most_frequent"))
+        classifier.fit(fit_rep[train_valid], train_label[train_valid])
+        prediction = classifier.predict(eval_rep[indices])
         artifact = output / "predictions" / f"{name}__spatial_niche.npz"
         _write_npz(artifact, embedding=eval_rep[indices], coordinates=eval_coord[indices, :2],
-                   labels=eval_label[indices].astype(np.int64), clusters=clusters.astype(np.int64), eval_indices=indices)
+                   labels=eval_label[indices].astype(np.int64), clusters=clusters.astype(np.int64),
+                   y_pred=prediction.astype(np.int64), section_id=_metadata(evaluation, "section")[indices], eval_indices=indices)
         result.extend(_metric_rows(task="spatial_niche", artifact=artifact, method=name, family="classical",
                                    regime="fit", fit_rows=int(train_valid.sum()), eval_rows=len(indices),
-                                   runtime=time.perf_counter() - started, notes=notes))
+                                   runtime=time.perf_counter() - started,
+                                   notes=notes + "; anatomical-region classification: train-label-only linear probe; ARI/NMI retain unsupervised clusters"))
     return result
+
+
+def _run_niche_composition(train, evaluation, output, seed, methods):
+    """Matched center-expression-only controls, fitted on training targets only."""
+    from sklearn.linear_model import Ridge
+    y = _array(train.labels["niche"], np.float32)
+    mask = _array(train.masks["niche"]).astype(bool)
+    valid = _array(evaluation.masks["niche"]).astype(bool)
+    n, scales, classes = y.shape
+    prior = np.stack([y[mask[:, s], s].mean(0) for s in range(scales)])
+    x = _features(train); z = _features(evaluation)
+    pca = _fit_pca(x, min(32, x.shape[1]), seed)
+    fit_x, eval_x = pca.transform(x), pca.transform(z)
+    rows = []
+    for name in ("niche_global_mean", "spatial_no_structure"):
+        if name not in methods:
+            continue
+        started = time.perf_counter()
+        predicted = np.broadcast_to(prior, (len(z), scales, classes)).copy()
+        density = np.zeros((len(z), scales), dtype=np.float32)
+        for s in range(scales):
+            take = mask[:, s]
+            real_density = _array(train.labels["niche_density"])[take, s]
+            if name == "spatial_no_structure":
+                raw = Ridge(alpha=1.0).fit(fit_x[take], y[take, s]).predict(eval_x).clip(0)
+                norm = raw.sum(1, keepdims=True)
+                predicted[:, s] = np.where(norm > 1e-12, raw / norm.clip(1e-12), prior[s])
+                density[:, s] = np.expm1(Ridge(alpha=1.0).fit(fit_x[take], np.log1p(real_density)).predict(eval_x).clip(0, 20))
+            else:
+                density[:, s] = real_density.mean()
+        artifact = output / "predictions" / f"{name}__spatial_niche.npz"
+        _write_npz(artifact, target_composition=_array(evaluation.labels["niche"]),
+                   prediction_composition=predicted, composition_mask=valid,
+                   target_density=_array(evaluation.labels["niche_density"]), prediction_density=density,
+                   density_mask=_array(evaluation.masks["niche_density"]), section_id=_metadata(evaluation, "sample"),
+                   eval_indices=np.arange(len(z)))
+        rows.extend(_metric_rows(task="spatial_niche", artifact=artifact, method=name, family="classical",
+            regime="train_only_composition_probe", fit_rows=int(mask.any(1).sum()), eval_rows=int(valid.any(1).sum()),
+            runtime=time.perf_counter() - started, notes="true full-section neighborhood proportions; center expression only; train targets only"))
+    return rows
 
 
 def _run_completion(train: NanoDataset, evaluation: NanoDataset, output: Path, methods: set[str]) -> list[dict[str, Any]]:
@@ -507,7 +579,7 @@ def _run_development(
     if splits.development_train is not None and splits.development_validation is not None:
         train_pairs = list(splits.development_train.iter_batches(max_cells=64, seed=seed))
         validation_pairs = list(
-            splits.development_validation.iter_batches(max_cells=64, seed=seed)
+            splits.development_validation.iter_batches(max_cells=DEVELOPMENT_EVAL_CELLS, seed=EVALUATION_SEED)
         )
         train_source_means = np.stack(
             [_array(pair.source.features, np.float32).mean(0) for pair in train_pairs]
@@ -668,7 +740,9 @@ def _run_nanobrain(
     genome = CandidateGenome.from_dict(payload["genome"])
     from nanobrain.integration_components import prepare_component_views
     prepare_component_views(splits, genome)
-    population_seed = genome.seed if evaluation_seed is None else int(evaluation_seed)
+    population_seed = EVALUATION_SEED if evaluation_seed is None else int(evaluation_seed)
+    if population_seed != EVALUATION_SEED:
+        raise ValueError(f"metric V3 freezes the population evaluation seed at {EVALUATION_SEED}")
     model = NanoBrainModel(config, genome)
     model.load_state_dict(payload["model"])
     requested = str(device).lower()
@@ -677,7 +751,7 @@ def _run_nanobrain(
     torch_device = torch.device(requested)
     model.to(torch_device).eval()
     eval_set = splits.validation
-    collected: dict[str, list[np.ndarray]] = {"embedding": [], "annotation": [], "niche": [], "integration": [], "development": [], "completion": []}
+    collected: dict[str, list[np.ndarray]] = {"embedding": [], "annotation": [], "niche": [], "niche_density": [], "integration": [], "development": [], "completion": []}
     started = time.perf_counter()
     with torch.no_grad():
         if selected_tasks != {"development"} or splits.development_validation is None:
@@ -693,6 +767,11 @@ def _run_nanobrain(
                     from nanobrain.task_training import task_input
                     embedding = model.encode(task_input(batch, training_task))
                     collected["embedding"].append(_array(embedding))
+                    if training_task == "spatial_niche" and config.niche_mode == "composition":
+                        composition, density = model.predict_niche(embedding)
+                        collected["niche"].append(_array(composition))
+                        collected["niche_density"].append(_array(density))
+                        continue
                     head = {"annotation": ("annotation", model.annotation_head),
                             "spatial_niche": ("niche", model.niche_head),
                             "spatial_completion": ("completion", model.completion_head)}.get(training_task)
@@ -721,13 +800,35 @@ def _run_nanobrain(
                                            regime=regime, fit_rows=splits.train.size, runtime=time.perf_counter() - started,
                                            notes=f"checkpoint={checkpoint}", dataset=eval_set)
 
-    if "spatial_niche" in selected_tasks:
+    if "spatial_niche" in selected_tasks and config.niche_mode == "composition":
+        if training_task == "joint":
+            raise ValueError("composition niche requires independent task checkpoints")
+        artifact = output / "predictions" / f"{method}__spatial_niche.npz"
+        _write_npz(artifact, target_composition=_array(eval_set.labels["niche"]),
+                   prediction_composition=outputs["niche"], composition_mask=_array(eval_set.masks["niche"]),
+                   target_density=_array(eval_set.labels["niche_density"]), prediction_density=outputs["niche_density"],
+                   density_mask=_array(eval_set.masks["niche_density"]), section_id=_metadata(eval_set, "sample"),
+                   eval_indices=np.arange(eval_set.size))
+        emit("spatial_niche", artifact, int(splits.train.masks["niche"].any(1).sum()),
+             int(eval_set.masks["niche"].any(1).sum()), f"checkpoint={checkpoint}; full-section composition regression; center expression only")
+    elif "spatial_niche" in selected_tasks:
         niche, niche_valid = _labels(eval_set, "niche")
         indices = np.flatnonzero(niche_valid & np.isfinite(_coords(eval_set)[:, :2]).all(axis=1))
         niche_logits = outputs["niche"][indices]
         artifact = output / "predictions" / f"{method}__spatial_niche.npz"
-        _write_npz(artifact, embedding=outputs["embedding"][indices], coordinates=_coords(eval_set)[indices, :2], labels=niche[indices].astype(np.int64), clusters=niche_logits.argmax(axis=1).astype(np.int64), eval_indices=indices)
-        emit("spatial_niche", artifact, splits.train.size, len(indices), f"checkpoint={checkpoint}; niche head")
+        prediction = niche_logits.argmax(axis=1).astype(np.int64)
+        # Semantic predictions score the supervised region task. Separately,
+        # the embedding partition is an unsupervised ARI/NMI diagnostic.
+        from sklearn.cluster import MiniBatchKMeans
+        train_niche, train_valid = _labels(splits.train, "niche")
+        n_clusters = min(len(np.unique(train_niche[train_valid])), len(indices))
+        clusters = MiniBatchKMeans(n_clusters=max(1, n_clusters), random_state=EVALUATION_SEED,
+                                  n_init=10, batch_size=2048).fit_predict(outputs["embedding"][indices])
+        _write_npz(artifact, embedding=outputs["embedding"][indices], coordinates=_coords(eval_set)[indices, :2],
+                   labels=niche[indices].astype(np.int64), clusters=clusters.astype(np.int64),
+                   y_pred=prediction, section_id=_metadata(eval_set, "section")[indices], eval_indices=indices)
+        emit("spatial_niche", artifact, splits.train.size, len(indices),
+             f"checkpoint={checkpoint}; supervised anatomical-region head; anatomy proxy; embedding clusters diagnostic only")
 
     if "integration" in selected_tasks:
         integ, integ_valid = _labels(eval_set, "integration")
@@ -752,7 +853,7 @@ def _run_nanobrain(
             pointer = [0]
             with torch.no_grad():
                 for population in splits.development_validation.iter_batches(
-                    max_cells=64, seed=population_seed
+                    max_cells=DEVELOPMENT_EVAL_CELLS, seed=population_seed
                 ):
                     population = population.to(torch_device)
                     with torch.autocast(
@@ -792,11 +893,12 @@ def _run_nanobrain(
 
 def _write_rows(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["split_id", "subset", "task", "method", "method_family", "training_regime", "fit_rows", "eval_rows", "status", "runtime_seconds", "prediction_artifact", "metric", "value", "direction", "stratum_type", "stratum_value", "notes", "error"]
+    fields = ["metric_protocol_id", "split_id", "subset", "evaluation_split", "task", "method", "method_family", "training_regime", "fit_rows", "eval_rows", "status", "runtime_seconds", "prediction_artifact", "metric", "metric_role", "value", "direction", "stratum_type", "stratum_value", "notes", "error"]
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows({**row, "metric_role": metric_role(row.get("task", ""), row.get("metric", ""))}
+                         for row in rows)
 
 
 def main() -> None:
@@ -865,7 +967,7 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=True)
     all_methods = {
         "majority", "nearest_centroid", "knn", "linear_sgd", "multinomial_nb", "linear_svm", "logistic_regression",
-        "raw_pca", "batch_centered_pca", "spatial_no_structure", "spatial_neighbor_mean",
+        "raw_pca", "batch_centered_pca", "spatial_no_structure", "spatial_neighbor_mean", "niche_global_mean",
         "spatial_coordinate_kmeans", "zero_fill", "gene_mean", "row_mean",
         "global_mean", "condition_mean", "ridge_features",
         "development_identity", "development_global_delta", "development_ridge_delta",
@@ -886,8 +988,17 @@ def main() -> None:
                                    evaluation_seed=args.population_evaluation_seed))
     elif not args.skip_nanobrain:
         warnings.warn("no nanoBrain checkpoint found; baseline-only pilot", RuntimeWarning)
+    for row in rows:
+        row["evaluation_split"] = args.evaluation_split
+    for receipt_path in (output / "predictions").glob("*.metrics.json"):
+        receipt = json.loads(receipt_path.read_text())
+        receipt.update(evaluation_split=args.evaluation_split, test_opened=args.evaluation_split == "test")
+        receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True, allow_nan=False) + "\n")
     _write_rows(output / "benchmark_table.csv", rows)
+    standard_report = write_standard_report(output, rows, evaluation_split=args.evaluation_split)
     manifest_out = {
+        "metric_protocol": metric_protocol(),
+        "standard_report": standard_report,
         "format": "nanobrain_pilot_benchmark_v1",
         "split_id": SPLIT_ID,
         "data": str(Path(args.data).resolve()),

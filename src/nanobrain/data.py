@@ -430,6 +430,10 @@ def verify_subset_manifest(
             path = location / info["path"]
             if hashlib.sha256(path.read_bytes()).hexdigest() != info["sha256"]:
                 raise ValueError(f"preprocessing checksum mismatch: {path}")
+        for info in manifest.get("niche_contract", {}).get("artifacts", []):
+            path = location / info["path"]
+            if hashlib.sha256(path.read_bytes()).hexdigest() != info["sha256"]:
+                raise ValueError(f"niche provenance checksum mismatch: {path}")
     unknown = sorted(set(data_splits) - {"train", "validation", "test"})
     if unknown:
         raise ValueError(f"unknown subset splits: {unknown}")
@@ -482,7 +486,8 @@ def load_v3_subset(
         feature_observed = _load_optional_tensor(directory, "feature_observed")
         labels = {
             "annotation": _readonly_tensor(directory / "label_annotation.npy").long(),
-            "niche": _readonly_tensor(directory / "label_niche.npy").long(),
+            "niche": (_readonly_tensor(directory / "label_niche.npy") if manifest.get("niche_contract", {}).get("mode") == "composition"
+                      else _readonly_tensor(directory / "label_niche.npy").long()),
             "integration": _readonly_tensor(directory / "label_integration.npy").long(),
             "development": _readonly_tensor(directory / "label_development.npy", dtype=np.dtype("float32")),
         }
@@ -490,6 +495,9 @@ def load_v3_subset(
             name: _readonly_tensor(directory / f"mask_{name}.npy").bool()
             for name in ("annotation", "niche", "integration", "development")
         }
+        if manifest.get("niche_contract", {}).get("mode") == "composition":
+            labels["niche_density"] = _readonly_tensor(directory / "label_niche_density.npy")
+            masks["niche_density"] = _readonly_tensor(directory / "mask_niche_density.npy").bool()
         development_condition = _load_optional_tensor(directory, "development_condition")
         development_condition_observed = _load_optional_tensor(
             directory, "development_condition_observed"
@@ -561,6 +569,9 @@ def infer_label_cardinalities(splits: DatasetSplits) -> dict[str, int]:
     """
     result: dict[str, int] = {}
     for name in ("annotation", "niche", "integration"):
+        if name == "niche" and splits.train.labels[name].ndim == 3:
+            result[name] = int(splits.train.labels[name].shape[-1])
+            continue
         maximum = -1
         for dataset in (splits.train, splits.validation):
             values = dataset.labels[name]
@@ -570,6 +581,11 @@ def infer_label_cardinalities(splits: DatasetSplits) -> dict[str, int]:
                 maximum = max(maximum, int(values[valid].max().item()))
         result[name] = maximum + 1
     return result
+
+
+def niche_model_options(splits):
+    target = splits.train.labels["niche"]
+    return dict(niche_mode="composition", niche_scales=int(target.shape[1])) if target.ndim == 3 else {}
 
 
 __all__ = [

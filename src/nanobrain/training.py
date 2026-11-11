@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-import copy
 import json
 import random
 import time
@@ -19,6 +18,7 @@ from .data import DatasetSplits, NanoDataset
 from .genome import CandidateGenome
 from .model import NanoBrainModel, NanoBrainModelConfig
 from .task_training import TASKS, configure_task, row_task_loss, evaluate_task
+from brainwm_benchmark.protocol import METRIC_PROTOCOL_ID, PRIMARY_METRICS, metric_protocol
 from brainwm.multitask_objective import MultiObjectiveBalancer
 from brainwm.training_observability import (
     append_jsonl,
@@ -53,7 +53,7 @@ class TrainConfig:
     def __post_init__(self):
         if self.task not in ("joint", *TASKS):
             raise ValueError(f"unsupported training task: {self.task}")
-        if self.checkpoint_policy not in {"all", "final_weights"}:
+        if self.checkpoint_policy not in {"all", "final_weights", "best_weights"}:
             raise ValueError("unsupported checkpoint_policy")
         if int(self.integration_adversarial_warmup_steps) < 1:
             raise ValueError("integration_adversarial_warmup_steps must be positive")
@@ -160,6 +160,16 @@ def _evaluate(
 
 
 def _quality(validation: dict[str, float]) -> float:
+    primary = [(f"{task}.{metric}", direction) for task, metric, direction in PRIMARY_METRICS
+               if f"{task}.{metric}" in validation]
+    if primary:
+        utilities = []
+        for key, direction in primary:
+            value = float(validation[key])
+            if not np.isfinite(value):
+                raise ValueError(f"nonfinite validation primary metric: {key}")
+            utilities.append(value if direction == "max" else -value)
+        return float(np.mean(utilities))
     values: list[float] = []
     for name in ("annotation_accuracy", "niche_accuracy"):
         value = validation.get(name, float("nan"))
@@ -185,6 +195,12 @@ def train_candidate(
 ) -> dict[str, Any]:
     """Train one candidate and return an immutable, JSON-safe receipt."""
     genome.validate()
+    if splits.train.labels["niche"].ndim == 3 and train_config.task == "joint":
+        raise ValueError("niche composition protocol requires independent task training")
+    if train_config.task == "spatial_niche" and model_config.niche_mode == "composition":
+        for split in (splits.train, splits.validation):
+            if not bool(split.masks["niche"].any(0).all()):
+                raise ValueError("niche training/validation requires targets at every fixed radius")
     from .integration_components import prepare_component_views, selected_components
     if train_config.task == "spatial_completion" and selected_components(genome):
         raise ValueError("dataset-level input components are unavailable for masked completion")
@@ -252,6 +268,7 @@ def train_candidate(
         *, step: int, validation: dict[str, float], include_optimizer: bool
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
+            "metric_protocol": metric_protocol(),
             "model": model.state_dict(),
             "genome": genome.to_dict(),
             "config": asdict(model_config),
@@ -403,7 +420,8 @@ def train_candidate(
             improved = current_quality > best_quality
             if improved:
                 best_quality = current_quality
-                best_state = copy.deepcopy(model.state_dict()) if train_config.checkpoint_policy == "all" else None
+                best_state = ({name: value.detach().cpu().clone() for name, value in model.state_dict().items()}
+                              if train_config.checkpoint_policy in {"all", "best_weights"} else None)
                 best_validation = dict(validation)
                 best_step = step + 1
             if target is not None:
@@ -417,7 +435,7 @@ def train_candidate(
                 if train_config.checkpoint_policy == "all":
                     atomic_torch_save(version_path, payload)
                     atomic_torch_save(latest_path, payload)
-                if improved and train_config.checkpoint_policy == "all":
+                if improved and train_config.checkpoint_policy in {"all", "best_weights"}:
                     atomic_torch_save(
                         target / f"candidate-{genome.genome_id}-best.pt",
                         {
@@ -470,7 +488,8 @@ def train_candidate(
         quality = _quality(validation)
         if quality > best_quality:
             best_quality = quality
-            best_state = copy.deepcopy(model.state_dict()) if train_config.checkpoint_policy == "all" else None
+            best_state = ({name: value.detach().cpu().clone() for name, value in model.state_dict().items()}
+                          if train_config.checkpoint_policy in {"all", "best_weights"} else None)
             best_validation = dict(validation)
             best_step = int(train_config.steps)
         validation_history.append({"step": float(train_config.steps), "quality": quality, **validation})
@@ -489,7 +508,7 @@ def train_candidate(
                 include_optimizer=train_config.checkpoint_policy == "all",
             ),
         )
-        if train_config.checkpoint_policy == "all":
+        if train_config.checkpoint_policy in {"all", "best_weights"}:
             best_checkpoint_path = target / f"candidate-{genome.genome_id}-best.pt"
             atomic_torch_save(
                 best_checkpoint_path,
@@ -523,6 +542,8 @@ def train_candidate(
     manifest_test_rows = subset_manifest.get("splits", {}).get("test", {}).get("rows", 0)
     test_rows = splits.test.size if splits.test is not None else int(manifest_test_rows)
     receipt: dict[str, Any] = {
+        "metric_protocol_id": METRIC_PROTOCOL_ID,
+        "metric_protocol": metric_protocol(),
         "format": "nanobrain_experiment_receipt_v1",
         "candidate_id": genome.genome_id,
         "genome": genome.to_dict(),
@@ -566,6 +587,7 @@ def train_candidate(
         "validation": validation,
         "quality": finite_float(quality),
         "best_validation_quality": finite_float(best_quality),
+        "best_step": int(best_step),
         "loss_balance": {
             "mode": balancer.mode,
             "decay": balancer.decay,

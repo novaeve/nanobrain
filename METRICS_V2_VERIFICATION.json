@@ -1,0 +1,136 @@
+{
+  "status": "complete",
+  "created_at": "2026-11-02T07:25:02.290615+00:00",
+  "root": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102",
+  "github_origin": "https://github.com/novaeve/nanobrain.git",
+  "base_commit": "b5e6bbf01f8b9f14ec63de873f1fa950c079738c",
+  "branch": "metrics-v2-20261102",
+  "metric_protocol": {
+    "id": "NANOBRAIN-METRICS-V2-20261102",
+    "primary_metrics": [
+      [
+        "annotation",
+        "f1_macro",
+        "max"
+      ],
+      [
+        "integration",
+        "scib_composite",
+        "max"
+      ],
+      [
+        "spatial_niche",
+        "f1_macro",
+        "max"
+      ],
+      [
+        "spatial_completion",
+        "heldout_rmse",
+        "min"
+      ],
+      [
+        "development",
+        "sinkhorn_divergence",
+        "min"
+      ]
+    ],
+    "classification": "macro F1 over ground-truth-supported evaluation classes; unknown truths excluded upstream",
+    "spatial_task": "supervised anatomical-region classification; anatomy is a proxy, not niche ground truth",
+    "integration": {
+      "implementation": "scib-metrics==0.6.0",
+      "biology": [
+        "silhouette_label",
+        "isolated_labels_ASW",
+        "kmeans_NMI",
+        "kmeans_ARI_zero_floor"
+      ],
+      "batch": [
+        "silhouette_batch_within_label",
+        "ilisi_knn",
+        "graph_connectivity"
+      ],
+      "weights": [
+        0.6,
+        0.4
+      ],
+      "max_cells": 5000,
+      "sampling": "fixed label-by-batch stratified sample; mandatory one per stratum",
+      "neighbors": 90,
+      "seed": 20260915,
+      "cross_method_minmax_scaling": false,
+      "note": "fixed subset of official scIB metrics, not the entire original 14-metric suite"
+    },
+    "development": {
+      "implementation": "geomloss==0.3.1 SamplesLoss(sinkhorn)",
+      "p": 2,
+      "blur": 0.05,
+      "scaling": 0.9,
+      "debias": true,
+      "cost": "0.5 * squared Euclidean distance / number of features",
+      "space": "shared train-normalized gene panel; never a model-specific latent space",
+      "max_cells_per_population": 256,
+      "seed": 20260915,
+      "aggregation": "unweighted mean across source-target-time/anatomy population groups",
+      "note": "regularized squared-cost Sinkhorn divergence, not exact Wasserstein distance"
+    }
+  },
+  "tests": {
+    "tests": 116,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "validation_smokes": [
+    {
+      "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/metric-v2-validation-smoke",
+      "metric_rows": 188,
+      "statuses": {
+        "complete": 188
+      },
+      "test_opened": false,
+      "runtime_seconds": 52.484377447050065,
+      "table_sha256": "f5f3c12f9a9d082bc273f16f0254e6c5f85456530ba037dac9e8e4da30ee4b58"
+    },
+    {
+      "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/results/metric-v2-spatial-validation-smoke",
+      "metric_rows": 15,
+      "statuses": {
+        "complete": 15
+      },
+      "test_opened": false,
+      "runtime_seconds": 3.543148420751095,
+      "table_sha256": "c6993e3096118263574cd63b7bd37aced80de4c7d6495442e66492f765d88022"
+    }
+  ],
+  "diff_check": "passed",
+  "compileall": "passed",
+  "uv_lock_check": "passed",
+  "evolution_started": false,
+  "old_experiment_code_modified": false,
+  "source_sha256": {
+    "README.md": "18bc88f1b324b5c8bbb4994e350b1b175b01722a344a58f84830ea8c6d7b4373",
+    "pyproject.toml": "b2a5e96aed1132d2e99f1a1871b81934ca2e479d80eef019852d59df3fee4fad",
+    "scripts/build_leaderboard.py": "4ec52c7803cb6b2e80ffa67004aa838872c8100e9c5c9f6768d3595ed3296095",
+    "scripts/run_nanobrain_baselines.py": "6a1f0c8030d3ea1835513398ad7854e29807f83463f5c81fef4124f38330169f",
+    "scripts/run_nanobrain_campaign.py": "cb73dbae66bc107c87639099e721e06741d1e8087bd364f579ac6fa91a421c39",
+    "scripts/run_nanobrain_evolution.py": "4d322efbe6b81314c98cf290c02aa0dd11dbbc77f0123243e0078cdd3d891606",
+    "scripts/train_nanobrain.py": "9a6fe31d15e0deade599477fb5aef081935382114267b11fb2530b851c388d9c",
+    "src/brainwm_benchmark/metrics.py": "70691dbca99f0809b85295c55b7a863dd848cffcd7815931260ad60fdd3423cb",
+    "src/nanobrain/baselines/development.py": "42c0ad02c78bb14fdd8f42ae04fa6226fc92844d2f5a64166d1628430e3c30ed",
+    "src/nanobrain/campaign.py": "97147771ca8f00eb750f0879e3e6d3a6a45d93254879b6d3cb54c750e2791c67",
+    "src/nanobrain/evolution.py": "e11fa4fd9f116c7102008685a4f9130e524e734d85b74aa9294bab759d3de897",
+    "src/nanobrain/task_training.py": "28c1fd42bdc55739ad0ed6fe8b69804eb0afd98b9ff3696adc51d0e7ff297499",
+    "src/nanobrain/training.py": "19610fec9cf300075f971dbacc93b6532844d0e6755987bb5ea988fff329ca60",
+    "tests/test_nanobrain_campaign.py": "d53444cd72eb040e53d91250afd1f6f31ed0ca77d29d9b069ce0ada6380df363",
+    "tests/test_nanobrain_campaign_gates.py": "fa61adfc2ef6fca96ec2856a487a78339df1c9dd18070cfb53c8457c308aee58",
+    "tests/test_nanobrain_evolution.py": "c17a3cf686053cf451515e1fff53b8e6adb21e6f1475a585c601d27c8cee9b99",
+    "tests/test_nanobrain_graph.py": "c4188ff9371f3c16b86dfa5204ab2a9b419cf63a13738a774cff3c9b0c39f0c4",
+    "tests/test_nanobrain_independent_tasks.py": "0e798ff3a2d648e829b800373801753218800dec16069fa837014090a1e6cbf1",
+    "tests/test_nanobrain_joint_evolution.py": "c3fe342e32546e27392ab362fa8dc9970c4eae7bd2e9de589a80d42f7a0923ab",
+    "uv.lock": "feb5ed367c895a03b9455815f0fae8ffa5ef7d13ebc1e6f18988891f9d73afc7",
+    "METRICS_V2.md": "95bf9a29422a75b47ecb265fa0dd7ccddbf6ea4041889a558b41106c82e2c4fe",
+    "configs/nanobrain_graph_v2/metrics_v2_20261102.json": "49155e76f9d134ba16ec424893813b5428086b6125c9e0861862339395a29b58",
+    "src/brainwm_benchmark/protocol.py": "2b970337166a7a61d29e337382f7746cf6fa6079c4da3e265e6dc950d29082e9",
+    "tests/test_metric_protocol_v2.py": "c093daac48bc9a659aeb044fc6cba95b6ae16b44be6dc07dda9e552dab4bcf27"
+  }
+}

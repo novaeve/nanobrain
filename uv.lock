@@ -239,6 +239,21 @@ wheels = [
 ]
 
 [[package]]
+name = "geomloss"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "torch", version = "2.10.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.10.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/be/a8/c7635702d96693895bc4831ad909423b57ec93183a2d92d9066369eb7cbf/geomloss-0.3.1.tar.gz", hash = "sha256:8d8bee2a57c9393642866c329e0dd069f6270b06a721683b0f164cadc4902505", size = 67281, upload-time = "2026-05-05T11:40:08.047Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/7e/37f7b8b7d78ca5b62062c804264914696faf12850040930f12c5e75fb094/geomloss-0.3.1-py3-none-any.whl", hash = "sha256:3ecb9ed72a7122d1ff60f0975edd759d2d1ac1b2397eaea7af6c7523ee117d4b", size = 82962, upload-time = "2026-05-05T11:40:06.525Z" },
+]
+
+[[package]]
 name = "google-crc32c"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -633,6 +648,7 @@ name = "nanobrain"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "geomloss" },
     { name = "jsonpatch" },
     { name = "numpy" },
     { name = "pandas" },
@@ -661,6 +677,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anndata", marker = "extra == 'benchmark'", specifier = ">=0.11" },
+    { name = "geomloss", specifier = "==0.3.1" },
     { name = "jsonpatch", specifier = ">=1.33,<2" },
     { name = "numpy", specifier = ">=2.0,<2.3" },
     { name = "pandas", specifier = ">=2.2,<3" },
@@ -670,7 +687,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11" },
     { name = "scanpy", marker = "extra == 'benchmark'", specifier = ">=1.11" },
-    { name = "scib-metrics", marker = "extra == 'benchmark'", specifier = ">=0.5" },
+    { name = "scib-metrics", marker = "extra == 'benchmark'", specifier = "==0.6.0" },
     { name = "scikit-learn", specifier = ">=1.5" },
     { name = "scipy", specifier = ">=1.14" },
     { name = "torch", marker = "extra == 'cpu'", specifier = ">=2.10,<2.11", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "nanobrain", extra = "cpu" } },
@@ -1207,7 +1224,7 @@ wheels = [
 
 [[package]]
 name = "scib-metrics"
-version = "0.6.1"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anndata" },
@@ -1228,9 +1245,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "umap-learn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/43/7ff3ab58e8e8a9eee8fe5f1ef5aa0efaf8baf49ffb8d44983dcc2fafb2fb/scib_metrics-0.6.1.tar.gz", hash = "sha256:b22a7b6b0dfb86196d47d6e787ef982df8796c2d4d33b22886ef8abe50fca141", size = 444595, upload-time = "2026-09-10T07:59:20.294Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/bd/c9e248fc6a68a0d83913c8d990e3e1e0594b2db8034062baea880524961c/scib_metrics-0.6.0.tar.gz", hash = "sha256:a605094eb366f06e74da4d3065c5a4731c01c7a7daa5da16caae5aaf76b67995", size = 443434, upload-time = "2026-07-28T13:03:59.176Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/bf/75740259cf47129ee9e9f413c2ca7be3d30979b8c5b070122cb88008f9d9/scib_metrics-0.6.1-py3-none-any.whl", hash = "sha256:82311826bcf8a0e6c0677ca08e03246ae2766f7d351fa725da5d292cb43f0030", size = 42512, upload-time = "2026-09-10T07:59:17.97Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/0f/65ea2d88bd33786486841b735c094cf10676cffeb926d1cbf00fcf7dc5c8/scib_metrics-0.6.0-py3-none-any.whl", hash = "sha256:0ae481215b588069e7d351bc7ca4a6cb32df147484d750c050dc17747e79f332", size = 41969, upload-time = "2026-07-28T13:03:57.766Z" },
 ]
 
 [[package]]

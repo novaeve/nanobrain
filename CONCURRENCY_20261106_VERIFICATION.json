@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-06T06:04:10.097236+00:00",
+  "pid": 1343713,
+  "maximum_workers": 20,
+  "active_processes": 19,
+  "paused_processes": 0,
+  "completed_generations_preserved": 11,
+  "no_training_reset": true,
+  "scientific_protocol_unchanged": true,
+  "gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ]
+}

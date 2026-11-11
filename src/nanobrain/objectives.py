@@ -101,6 +101,23 @@ def classification_objective(model, batch, embedding, params, task):
     return masked_classification(head(embedding), batch.labels[label], batch.label_masks.get(label), **params), {}
 
 
+def niche_composition_objective(model, batch, embedding, params, task):
+    composition, density = model.predict_niche(embedding)
+    target = batch.labels["niche"]
+    mask = batch.label_masks["niche"]
+    if target.ndim != 3 or composition.shape != target.shape:
+        raise ValueError("niche task requires valid full-neighborhood composition targets")
+    scale_losses = [F.mse_loss(composition[mask[:, s], s], target[mask[:, s], s].float())
+                    for s in range(target.shape[1]) if bool(mask[:, s].any())]
+    composition_loss = torch.stack(scale_losses).mean() if scale_losses else composition.sum() * 0.
+    loss = composition_loss
+    density_mask = batch.label_masks.get("niche_density", mask)
+    if bool(density_mask.any()):
+        loss = loss + params["density_weight"] * F.mse_loss(
+            density[density_mask].log1p(), batch.labels["niche_density"][density_mask].float().log1p())
+    return loss, {"niche_composition_mse": composition_loss.detach()}
+
+
 def completion_objective(model, batch, embedding, params, task):
     if batch.completion_target is None or batch.completion_mask is None:
         raise ValueError("completion requires held-out targets and masks")
@@ -190,3 +207,6 @@ for _task, _function, _population in (
     _spec = default_objectives()[_task]
     register_objective(_spec["name"], tasks=("annotation", "spatial_niche") if _task == "annotation" else (_task,),
                        compute=_function, defaults=_spec["params"], population=_population)
+
+register_objective("niche_composition", tasks=("spatial_niche",), compute=niche_composition_objective,
+                   defaults={"density_weight": .1})

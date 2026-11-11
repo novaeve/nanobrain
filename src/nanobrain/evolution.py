@@ -28,7 +28,7 @@ def selected_objectives(tasks=None):
 
 
 def joint_score(metrics: dict[str, float], tasks=None) -> float:
-    """Five equally weighted, bounded utilities; higher is always better."""
+    """Metric-V2 utilities; this score is not comparable with legacy campaigns."""
     values = []
     for task, metric, direction in selected_objectives(tasks):
         key = f"{task}.{metric}"
@@ -55,13 +55,13 @@ def improvement_gate(candidate: dict[str, float], reference: dict[str, float], p
     checks = []
     try:
         delta = joint_score(candidate, policy.get("tasks")) - joint_score(reference, policy.get("tasks"))
-        if delta < float(policy["minimum_joint_gain"]):
+        if delta < float(policy.get("minimum_joint_gain", 0.0)):
             reasons.append("joint_gain_below_threshold")
         for task, metric, direction in selected_objectives(policy.get("tasks")):
             key = f"{task}.{metric}"
             observed, base = float(candidate[key]), float(reference[key])
-            tolerance = (float(policy["max_score_drop"]) if direction == "max"
-                         else float(policy["max_error_relative_increase"]) * max(abs(base), 1e-12))
+            tolerance = (float(policy.get("max_score_drop", 0.0)) if direction == "max"
+                         else float(policy.get("max_error_relative_increase", 0.0)) * max(abs(base), 1e-12))
             deterioration = base - observed if direction == "max" else observed - base
             passed = deterioration <= tolerance + 1e-12
             checks.append(dict(metric=key, candidate=observed, reference=base,
@@ -153,6 +153,10 @@ def validate_proposals(payload: Any, parents: list[dict], *, count: int, seed: i
             if any(raw[key] not in choices for key, choices in SEARCH_SPACE.items()):
                 raise ValueError("genome contains an unregistered search value")
         genome = CandidateGenome.from_dict({**raw, "seed": seed}).to_dict()
+        if graph_mode:
+            required = parent_map[parent_ids[0]]["genome"]["architecture"]["objectives"]["spatial_niche"]["name"]
+            if required == "niche_composition" and genome["architecture"]["objectives"]["spatial_niche"]["name"] != required:
+                raise ValueError("candidates cannot replace the niche composition task with proxy classification")
         if graph_mode and any(genome["architecture"]["input_dim"] != parent_map[p]["genome"]["architecture"]["input_dim"]
                               for p in parent_ids):
             raise ValueError("graph candidates cannot change the fixed data input contract")
@@ -196,40 +200,3 @@ def has_module_change(proposal, parents):
     return any(fields & set(d) for d in proposal["changes"].values())
 
 EVOLUTION_TASKS: tuple[str, ...] = ("annotation", "integration", "spatial_niche", "development")
-
-# V1 metric alias retained for old public benchmark rows.
-def joint_score(metrics: dict[str, float], tasks=None) -> float:
-    values=[]
-    for task,metric,direction in selected_objectives(tasks):
-        key=f'{task}.{metric}'
-        if key not in metrics and task=='annotation' and metric=='accuracy': key='annotation.f1_macro'
-        value=float(metrics[key])
-        if not math.isfinite(value): raise ValueError(f'nonfinite primary metric: {key}')
-        if direction=='min':
-            if value<0: raise ValueError(f'negative error: {key}')
-            value=1.0/(1.0+value)
-        elif metric=='ari':
-            if not -1<=value<=1: raise ValueError('ARI outside [-1, 1]')
-            value=(value+1.0)/2.0
-        elif not 0<=value<=1: raise ValueError(f'metric outside [0, 1]: {key}')
-        values.append(value)
-    return statistics.mean(values)
-
-def improvement_gate(candidate, reference, policy):
-    reasons=[]; checks=[]; tasks=policy.get("tasks")
-    def val(metrics, task, metric):
-        return metrics.get(f"{task}.{metric}", metrics.get("annotation.f1_macro") if task=="annotation" and metric=="accuracy" else None)
-    try:
-        delta=joint_score(candidate,tasks)-joint_score(reference,tasks)
-        if delta < float(policy.get("minimum_joint_gain",0.0)): reasons.append("joint_gain_below_threshold")
-        for task,metric,direction in selected_objectives(tasks):
-            key=f"{task}.{metric}"; observed=val(candidate,task,metric); base=val(reference,task,metric)
-            if observed is None or base is None: raise KeyError(key)
-            observed=float(observed); base=float(base)
-            tolerance=float(policy.get("max_score_drop",0.0)) if direction=="max" else float(policy.get("max_error_relative_increase",0.0))*max(abs(base),1e-12)
-            deterioration=base-observed if direction=="max" else observed-base; passed=deterioration<=tolerance+1e-12
-            checks.append({"metric":key,"candidate":observed,"reference":base,"deterioration":deterioration,"allowance":tolerance,"passed":passed})
-            if not passed: reasons.append(f"task_regression:{key}")
-    except (KeyError,ValueError,TypeError) as exc:
-        delta=None; reasons.append(f"invalid_metrics:{exc}")
-    return {"passed":not reasons,"joint_gain":delta,"checks":checks,"reasons":reasons}

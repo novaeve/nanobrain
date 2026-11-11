@@ -1,0 +1,396 @@
+{
+  "status": "complete",
+  "created_at": "2026-11-02T10:27:27.301011+00:00",
+  "root": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102",
+  "github_origin": "https://github.com/novaeve/nanobrain.git",
+  "base_commit": "b5e6bbf01f8b9f14ec63de873f1fa950c079738c",
+  "branch": "metrics-v2-20261102",
+  "metric_protocol": {
+    "id": "NANOBRAIN-METRICS-V3-20261102",
+    "primary_metrics": [
+      [
+        "annotation",
+        "f1_macro",
+        "max"
+      ],
+      [
+        "integration",
+        "scib_composite",
+        "max"
+      ],
+      [
+        "spatial_niche",
+        "composition_mae",
+        "min"
+      ],
+      [
+        "spatial_completion",
+        "heldout_rmse",
+        "min"
+      ],
+      [
+        "development",
+        "wasserstein2",
+        "min"
+      ]
+    ],
+    "classification": "macro F1 over ground-truth-supported evaluation classes; unknown truths excluded upstream",
+    "spatial_task": {
+      "target": "true neighborhood cell-type count proportions, not anatomy",
+      "input": "center expression only; target-neighbor context is hidden",
+      "scales": [
+        10,
+        20,
+        50,
+        100
+      ],
+      "radii": "per-source fixed radii calibrated from full training sections only",
+      "normalization": "counts / total neighbors; unknown types retain an explicit bin",
+      "loss": "composition MSE; separate density probe on detached embeddings with log1p MSE (default weight 0.1)",
+      "aggregation": "equal mean over four radii; per-type and per-section diagnostics"
+    },
+    "integration": {
+      "implementation": "scib-metrics==0.6.0",
+      "biology": [
+        "silhouette_label",
+        "isolated_labels_ASW",
+        "kmeans_NMI",
+        "kmeans_ARI_zero_floor"
+      ],
+      "batch": [
+        "silhouette_batch_within_label",
+        "ilisi_knn",
+        "graph_connectivity"
+      ],
+      "weights": [
+        0.6,
+        0.4
+      ],
+      "max_cells": 5000,
+      "sampling": "fixed label-by-batch stratified sample; mandatory one per stratum",
+      "neighbors": 90,
+      "seed": 20260915,
+      "cross_method_minmax_scaling": false,
+      "robustness_diagnostics": [
+        "BRAS",
+        "cell-type-conditional iLISI"
+      ],
+      "note": "fixed subset of official scIB metrics, not the entire original 14-metric suite"
+    },
+    "development": {
+      "implementation": "exact uniform-mass OT; scipy assignment for equal populations; POT for unequal populations",
+      "p": 2,
+      "cost": "squared Euclidean distance; square root after transport averaging",
+      "space": "shared train-normalized gene panel; never a model-specific latent space",
+      "max_cells_per_population": 256,
+      "seed": 20260915,
+      "aggregation": "unweighted mean across source-target-time/anatomy population groups",
+      "note": "exact empirical W2 in the common gene panel; Sinkhorn remains a separately named diagnostic"
+    }
+  },
+  "tests": {
+    "tests": 124,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "warnings": 6,
+    "log": "results/verification-v3/pytest.log",
+    "xml": "results/verification-v3/pytest.xml",
+    "xml_sha256": "fee5545e3a2d656831a807d9fb3f4669b309571256a15847ac5ef366a81fc49d"
+  },
+  "validation_baselines": {
+    "directory": "results/metric-v3-validation-baselines",
+    "methods": [
+      "batch_centered_pca",
+      "development_identity",
+      "majority",
+      "niche_global_mean",
+      "raw_pca",
+      "spatial_no_structure"
+    ],
+    "metric_rows": 722,
+    "statuses": {
+      "complete": 722
+    },
+    "test_opened": false,
+    "table_sha256": "86c5a54bc54d44b1aa1f74e641fd600cb4da0cc282db91c722835c50560d0397",
+    "evaluated_data_manifest_sha256": "2fb11191387d91acb098a4f788502ede10f1491ee56fd9c2ce2666f9c4e5e5f6",
+    "primary_values": [
+      {
+        "task": "annotation",
+        "method": "majority",
+        "metric": "f1_macro",
+        "value": 0.002207948085521717
+      },
+      {
+        "task": "integration",
+        "method": "raw_pca",
+        "metric": "scib_composite",
+        "value": 0.4218350961176949
+      },
+      {
+        "task": "integration",
+        "method": "batch_centered_pca",
+        "metric": "scib_composite",
+        "value": 0.4352639174654107
+      },
+      {
+        "task": "spatial_niche",
+        "method": "niche_global_mean",
+        "metric": "composition_mae",
+        "value": 0.028231509956873173
+      },
+      {
+        "task": "spatial_niche",
+        "method": "spatial_no_structure",
+        "metric": "composition_mae",
+        "value": 0.017986310911078357
+      },
+      {
+        "task": "development",
+        "method": "development_identity",
+        "metric": "wasserstein2",
+        "value": 18.0254174753169
+      }
+    ]
+  },
+  "validation_training_smokes": [
+    {
+      "task": "annotation",
+      "steps": 2,
+      "architecture_id": "8ed4356443227af6",
+      "primary_metric": "f1_macro",
+      "direction": "max",
+      "best_step": 2,
+      "best_validation_value": 0.001571627099174791,
+      "reloaded_validation_value": 0.001571627099174791,
+      "absolute_difference": 0.0,
+      "statuses": {
+        "complete": 145
+      },
+      "test_opened": false,
+      "stability_passed": true,
+      "optimizer_changed_parameter": true,
+      "receipt": "results/metric-v3-preflight/annotation/receipt-8ed4356443227af6-steps2.json",
+      "receipt_sha256": "91db6a2b7473ffad3ee361c8d8ff16075105092b9b248fcde826e538f29180e9",
+      "best_checkpoint": "results/metric-v3-preflight/annotation/candidate-8ed4356443227af6-best.pt",
+      "best_checkpoint_sha256": "630a144847866b272b05967795523bcb3854224b85486fc14ffdec674259bf5a",
+      "table_sha256": "4b58515b9a40918a932ea17f3421c20533a16c0c3762977bdad0af89e8c64eff",
+      "evaluated_data_manifest_sha256": "2fb11191387d91acb098a4f788502ede10f1491ee56fd9c2ce2666f9c4e5e5f6"
+    },
+    {
+      "task": "integration",
+      "steps": 2,
+      "architecture_id": "8ed4356443227af6",
+      "primary_metric": "scib_composite",
+      "direction": "max",
+      "best_step": 2,
+      "best_validation_value": 0.3676580719415718,
+      "reloaded_validation_value": 0.3676580719415718,
+      "absolute_difference": 0.0,
+      "statuses": {
+        "complete": 13
+      },
+      "test_opened": false,
+      "stability_passed": true,
+      "optimizer_changed_parameter": true,
+      "receipt": "results/metric-v3-preflight/integration/receipt-8ed4356443227af6-steps2.json",
+      "receipt_sha256": "4b649b7ccb571293792ea2f7903e28aa539701adbf51d1084beec30530ee56ce",
+      "best_checkpoint": "results/metric-v3-preflight/integration/candidate-8ed4356443227af6-best.pt",
+      "best_checkpoint_sha256": "b5e7207b7e4223a30aa1b248639a07bdc7e5be478661568557867383bd1f5265",
+      "table_sha256": "10ea5e8ed7ebf811fe6db05595ad189ef71411ea58d8ec1b91e00ba8492753f6",
+      "evaluated_data_manifest_sha256": "2fb11191387d91acb098a4f788502ede10f1491ee56fd9c2ce2666f9c4e5e5f6"
+    },
+    {
+      "task": "spatial_niche",
+      "steps": 2,
+      "architecture_id": "8ed4356443227af6",
+      "primary_metric": "composition_mae",
+      "direction": "min",
+      "best_step": 2,
+      "best_validation_value": 0.029346924942000613,
+      "reloaded_validation_value": 0.029346924942000613,
+      "absolute_difference": 0.0,
+      "statuses": {
+        "complete": 271
+      },
+      "test_opened": false,
+      "stability_passed": true,
+      "optimizer_changed_parameter": true,
+      "receipt": "results/metric-v3-preflight/spatial_niche/receipt-8ed4356443227af6-steps2.json",
+      "receipt_sha256": "6c7c752b606ca6153459ddf47e0f26d41c5fd5788f7a4270080616ff8f2356f4",
+      "best_checkpoint": "results/metric-v3-preflight/spatial_niche/candidate-8ed4356443227af6-best.pt",
+      "best_checkpoint_sha256": "b4844faf0a800073e0a867c81d80f7686811b2506a76660ef004420f636a4184",
+      "table_sha256": "c90bc9c0147f146cb480240e39b4042960348bffd5cf54ac23efe59ec5cd653d",
+      "evaluated_data_manifest_sha256": "2fb11191387d91acb098a4f788502ede10f1491ee56fd9c2ce2666f9c4e5e5f6"
+    },
+    {
+      "task": "development",
+      "steps": 2,
+      "architecture_id": "8ed4356443227af6",
+      "primary_metric": "wasserstein2",
+      "direction": "min",
+      "best_step": 2,
+      "best_validation_value": 20.60353862493821,
+      "reloaded_validation_value": 20.60353862493821,
+      "absolute_difference": 0.0,
+      "statuses": {
+        "complete": 9
+      },
+      "test_opened": false,
+      "stability_passed": true,
+      "optimizer_changed_parameter": true,
+      "receipt": "results/metric-v3-preflight/development/receipt-8ed4356443227af6-steps2.json",
+      "receipt_sha256": "23ae7fbfdccb781d015912737b27a1f5fb698590167903458b2dcf8e4bd15692",
+      "best_checkpoint": "results/metric-v3-preflight/development/candidate-8ed4356443227af6-best.pt",
+      "best_checkpoint_sha256": "01586d9cb72e2c65a977f2ca88ff262bea1e7f31f16fd47dc50c52c7b913a386",
+      "table_sha256": "70e361c91daca8c1715a1965c75488acf74d73e15277dc224851b59e63656ad3",
+      "evaluated_data_manifest_sha256": "2fb11191387d91acb098a4f788502ede10f1491ee56fd9c2ce2666f9c4e5e5f6"
+    }
+  ],
+  "data": {
+    "directory": "/mnt/aliyunsb/zim_rider/nanobrain/try/metrics-v2-20261102/assets/nanobrain_v3_100k_niche_v3",
+    "manifest_sha256": "e0e03d5f972a97f183a38b4e6e04f1e60c939fa1e52c09005a29b90ef094926a",
+    "parent_manifest_sha256": "484f67099a5bea9789728e7b261c93a68e7f4b07067053b0cd20a82a1a861aa0",
+    "identity_proof": "results/verification-v3/data_identity.json",
+    "identity_proof_sha256": "cc54d3e061cab0d22f6e560a8184ac9a404ca4d7b9b13bf0eae9573341974e65",
+    "same_center_rows_and_splits": true,
+    "unchanged_files_per_split": {
+      "train": 43,
+      "validation": 43,
+      "test": 43
+    },
+    "changed_existing_files": {
+      "train": [
+        "label_niche",
+        "mask_niche"
+      ],
+      "validation": [
+        "label_niche",
+        "mask_niche"
+      ],
+      "test": [
+        "label_niche",
+        "mask_niche"
+      ]
+    },
+    "post_smoke_manifest_change": {
+      "only_change": "correct spatial_niche task_rows summary to composition eligibility",
+      "counts": {
+        "test": {
+          "before": 11483,
+          "after": 1293
+        },
+        "train": {
+          "before": 34467,
+          "after": 14872
+        },
+        "validation": {
+          "before": 11329,
+          "after": 1612
+        }
+      },
+      "data_arrays_unchanged": true
+    },
+    "niche_coverage": {
+      "train": {
+        "rows": 60000,
+        "valid_centers": 14872,
+        "valid_per_scale": [
+          14843,
+          14869,
+          14871,
+          14872
+        ],
+        "density_centers": 14872
+      },
+      "validation": {
+        "rows": 20000,
+        "valid_centers": 1612,
+        "valid_per_scale": [
+          1593,
+          1605,
+          1612,
+          1612
+        ],
+        "density_centers": 1612
+      },
+      "test": {
+        "rows": 20000,
+        "valid_centers": 1293,
+        "valid_per_scale": [
+          1286,
+          1291,
+          1292,
+          1293
+        ],
+        "density_centers": 1293
+      }
+    },
+    "niche_class_count": 65,
+    "niche_radii_fit_split": "train",
+    "target_preparation_reads_heldout_annotations": true,
+    "training_and_validation_load_test_arrays": false,
+    "independent_new_test_holdout": false,
+    "new_whole_timepoint_holdout": false
+  },
+  "static_checks": {
+    "git_diff_check": "passed",
+    "compileall": "passed",
+    "uv_lock_check_offline": "passed"
+  },
+  "environment": {
+    "python": "3.12.13",
+    "dependencies": {
+      "torch": "2.10.0",
+      "scib-metrics": "0.6.0",
+      "geomloss": "0.3.1",
+      "POT": "0.9.7.post1",
+      "scipy": "1.18.1",
+      "scikit-learn": "1.9.0"
+    }
+  },
+  "evolution_started": false,
+  "llm_invoked": false,
+  "full_baseline_retraining_started": false,
+  "old_experiment_code_modified": false,
+  "source_files_sha256": {
+    "METRICS_V3.md": "8ece29250a3b1183cd4d0f583a79f7d689b5f3b7bbe7d23a5ed03423bcf75fa8",
+    "README.md": "e49370de8afbc625daf86ee8fdb80548af6a5d4874c4daeb88a57bfc05e068f9",
+    "configs/nanobrain_graph_v2/metrics_v2_20261102.json": "49155e76f9d134ba16ec424893813b5428086b6125c9e0861862339395a29b58",
+    "configs/nanobrain_graph_v2/metrics_v3_20261102.json": "4c9b1d57ac6157252af44e1ef349b0efbe211b2e254e577fed9f5c83023f8cea",
+    "docs/tasks/annotation.md": "34b479a293383a8b93ba0adbfa68d83ab1e542ed22a901a920772b5162080600",
+    "docs/tasks/development.md": "0330a783faf7ca9067a4d92d08b2126be3533f0d725f80452f5e76e8bdd10ae2",
+    "docs/tasks/integration.md": "0db549527bb255145fbe534a16a97a1db646b602c41a280de8d5c11f5cfd8e18",
+    "docs/tasks/spatial-niche.md": "2a7d9cc78806195a9ae732c4863d2ea055497e3bc127b482b3fd7a29139030df",
+    "pyproject.toml": "b2a5e96aed1132d2e99f1a1871b81934ca2e479d80eef019852d59df3fee4fad",
+    "scripts/audit_niche_geometry.py": "1b7a554e718fa1f7492eb7d1eb70d4a014ca5267a6b4c24382040d8db440487a",
+    "scripts/build_leaderboard.py": "02712d449fbdf665d4a1baef24443d8f52cc537ca3135260abee7ce1746db229",
+    "scripts/materialize_niche_composition.py": "001d4bd865de6b30c007610f0f495a3681809543d80373301001f96ad6804638",
+    "scripts/run_nanobrain_baselines.py": "eeecca88fbdfb29e97d22d747ec1ab13456f1e04e80ab93b2026b3fb4739d606",
+    "scripts/run_nanobrain_campaign.py": "56222145e65a84d369961d519daa4c99137ac29dac96cc348ca34c2a88c4ef51",
+    "scripts/run_nanobrain_evolution.py": "705b814ed98bd3dc8766ace0c12cdd001a65fcdfc1c49f2fae015077b1b7f22f",
+    "scripts/train_nanobrain.py": "5ef74438c917c6d734cb3ccef7cac2069dc2048901564cf13be06a2c28ce87d3",
+    "src/brainwm_benchmark/metrics.py": "9e3b233f1831cc65d61ff63f19e252db94f831f8b2b652fdd0d9e9f1407a68cf",
+    "src/brainwm_benchmark/protocol.py": "5b2b7dcf5b8ae8c6b1400e268c3e7344eed408edc65d69ee429fbcb98bb8c0f0",
+    "src/nanobrain/baselines/development.py": "42c0ad02c78bb14fdd8f42ae04fa6226fc92844d2f5a64166d1628430e3c30ed",
+    "src/nanobrain/baselines/spatial.py": "9a1e1aed18d0eacb8af77d6a7f71d37259a6a16e5e4093df11ac246fb77b94dd",
+    "src/nanobrain/campaign.py": "18cf3ba98cf6cdedbbb2893a062c2b2df8fc15fdb5ffd029c5572e8e7d1ae3ad",
+    "src/nanobrain/data.py": "99b5382cb757c1629e519c4f6238e734a2f839010b62a5762c59f24f218f72c8",
+    "src/nanobrain/evolution.py": "6dd59eb82bdb9c8992f10907a2cda3f7ad989e71722d11038ca0b7cb70091f47",
+    "src/nanobrain/model.py": "e7b33ce812639b00e6df34763da834339750b180d59059d5354410ad53f6312a",
+    "src/nanobrain/niche_data.py": "e81de7577d120f9403491d85587e822d80c235ae133a05d393ef74367e458fb5",
+    "src/nanobrain/objectives.py": "5cb396651a63e748c3ccc5786f00bd85e6170067b545ce3092e43b62219df5db",
+    "src/nanobrain/task_training.py": "51c290a1d0dbe70f223d5fdcbe44f0399199e45d63962d38fe8f93a091f1feb3",
+    "src/nanobrain/training.py": "bd61532ca9c31212fa2a9f0f9c6b6b73531926444817737493851bc88729fd27",
+    "tests/test_metric_protocol_v2.py": "4d0237d778106551928c185a335904251fb2f99d7bd955433e1a6a2bce4c4a06",
+    "tests/test_nanobrain_campaign.py": "9766b9615a03ab33f857fecd776bdd4ffe38ef3f3d10f06b1baacf1664ccb292",
+    "tests/test_nanobrain_campaign_gates.py": "17b2b2fc5b799a9c97fa686d55b7723bb4a8460c25d0ec660094b05f1f483138",
+    "tests/test_nanobrain_evolution.py": "8078be88551cce6cf595ae691e2135ffe3c3db1881168dbb1c80998302fcb056",
+    "tests/test_nanobrain_graph.py": "c4188ff9371f3c16b86dfa5204ab2a9b419cf63a13738a774cff3c9b0c39f0c4",
+    "tests/test_nanobrain_independent_tasks.py": "0e798ff3a2d648e829b800373801753218800dec16069fa837014090a1e6cbf1",
+    "tests/test_nanobrain_joint_evolution.py": "e302468e99f515fc33082f35111c9e93bdef090ced0d3f5ff741be64efdf03a4",
+    "tests/test_niche_composition.py": "4da1d23ad5aadfb060881cdca4014c4d1c8239a22d95bd19412403da4858afd3",
+    "uv.lock": "feb5ed367c895a03b9455815f0fae8ffa5ef7d13ebc1e6f18988891f9d73afc7"
+  }
+}

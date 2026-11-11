@@ -3,11 +3,13 @@ from __future__ import annotations
 import csv
 
 from scripts.build_leaderboard import build
+from brainwm_benchmark.protocol import METRIC_PROTOCOL_ID
 
 
 def test_leaderboard_keeps_only_overall_rows_for_four_tasks(tmp_path) -> None:
     source = tmp_path / "source.csv"
     fields = [
+        "metric_protocol_id",
         "split_id",
         "subset",
         "evaluation_split",
@@ -97,6 +99,8 @@ def test_leaderboard_keeps_only_overall_rows_for_four_tasks(tmp_path) -> None:
             "notes": "",
         },
     ]
+    for row in rows:
+        row["metric_protocol_id"] = METRIC_PROTOCOL_ID
     with source.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
