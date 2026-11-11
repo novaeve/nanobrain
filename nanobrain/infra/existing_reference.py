@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from .contracts import ROOT, digest, reference_bundle, resolved_document, sha
-from .selection import check_metrics
+from .gate import check_metrics
 
 
 def load(cfg, seed=0):

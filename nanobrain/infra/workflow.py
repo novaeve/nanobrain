@@ -12,7 +12,7 @@ import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
-from . import selection
+from . import gate as selection
 from .contracts import (
     METRICS,
     ROOT,
@@ -409,7 +409,7 @@ class Workflow:
             return self._execute_locked(client)
 
     def run_proposal(self, client, generation, index, root, champion, allowed, seen, seen_lock, context):
-        from .agent import ToolSession, propose
+        from ..agent.react import ToolSession, propose
 
         origin = {"generation": generation, "proposal": index}
         submission = self.output / "proposals" / f"g{generation:02d}-p{index:02d}.json"

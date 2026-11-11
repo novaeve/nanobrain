@@ -14,10 +14,10 @@ dev = ["ruff", "pytest"]
 
 [project.scripts]
 cajal = "brainwm_unified.cli:main"
-cajal-react = "cajal_research.cli:main"
+nanobrain = "nanobrain.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["brainwm_unified*", "cajal_research*"]
+include = ["brainwm_unified*", "nanobrain*"]
 
 [tool.ruff]
 line-length = 120

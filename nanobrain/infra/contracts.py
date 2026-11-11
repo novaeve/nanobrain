@@ -8,7 +8,7 @@ import math
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TASKS = ("gene", "integration", "cell_type", "anatomy", "spatial")
 METRICS = (
     "Cell type fine macro-F1",

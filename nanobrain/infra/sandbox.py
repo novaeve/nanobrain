@@ -60,7 +60,7 @@ def command(root, output, arguments, *, inputs=(), gpu=None):
         args += ["--ro-bind", info["venv"], str(alias)]
     source_entries = {
         "brainwm_unified",
-        "cajal_research",
+        "nanobrain",
         "scripts",
         "configs",
         "reference",
@@ -126,7 +126,7 @@ def command(root, output, arguments, *, inputs=(), gpu=None):
     args += ["--bind", str(output), "/work", "--chdir", "/work"]
     for key, value in env.items():
         args += ["--setenv", key, value]
-    return args + ["--", str(python), "-B", "-m", "cajal_research.worker", *arguments]
+    return args + ["--", str(python), "-B", "-m", "nanobrain.infra.worker", *arguments]
 
 
 def clean_environment():

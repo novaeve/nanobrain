@@ -12,8 +12,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from cajal_research import components as C
-from cajal_research.contracts import save, sha
+from nanobrain.infra import components as C
+from nanobrain.infra.contracts import save, sha
 
 
 def native_entries():
@@ -209,7 +209,7 @@ def check_entry(name, slot=None):
     import tempfile
 
     from brainwm_unified.objectives import compute_losses
-    from cajal_research.worker import synthetic
+    from nanobrain.infra.worker import synthetic
 
     with tempfile.TemporaryDirectory() as d:
         b, maps, panels = synthetic(d)

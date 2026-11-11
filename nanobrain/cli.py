@@ -5,8 +5,8 @@ import dataclasses
 import json
 from pathlib import Path
 
-from .contracts import ROOT, load_config
-from .workflow import Workflow, plan
+from .infra.contracts import ROOT, load_config
+from .infra.workflow import Workflow, plan
 
 
 def main(argv=None):
@@ -26,8 +26,8 @@ def main(argv=None):
         print(json.dumps(plan(cfg), indent=2))
         return
     # Do not import/read credential configuration in plan or acceptance tests.
-    from .api_config import APIConfig
-    from .llm_client import OpenAICompatibleClient
+    from .agent.api_config import APIConfig
+    from .agent.llm_client import OpenAICompatibleClient
 
     api = dataclasses.replace(
         APIConfig.from_env(env_file=cfg["api_env_file"]), model=cfg["model"], max_retries=-1, timeout_seconds=900

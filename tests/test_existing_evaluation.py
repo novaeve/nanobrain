@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 from scipy import sparse
 
-from cajal_research import contracts as C
+from nanobrain.infra import contracts as C
 
 
 def scorer(name):
@@ -189,7 +189,7 @@ def test_imputation_predictions_only_preserves_original_summaries(task, tmp_path
 
 @pytest.mark.parametrize("task", ["annotation", "integration", "genes", "spatial"])
 def test_campaign_worker_never_requests_baseline_work(task, monkeypatch):
-    from cajal_research import worker
+    from nanobrain.infra import worker
 
     calls = []
     monkeypatch.setattr(worker, "script", lambda name, args: calls.append((name, args)))
@@ -203,8 +203,8 @@ def test_campaign_worker_never_requests_baseline_work(task, monkeypatch):
 
 
 def test_initial_reference_reuses_existing_checkpoint_and_results(tmp_path, monkeypatch):
-    from cajal_research.store import Store
-    from cajal_research.workflow import Workflow
+    from nanobrain.infra.store import Store
+    from nanobrain.infra.workflow import Workflow
 
     workflow = Workflow(C.load_config(), tmp_path)
     workflow.store = Store(tmp_path / "lineage")
@@ -221,7 +221,7 @@ def test_initial_reference_reuses_existing_checkpoint_and_results(tmp_path, monk
 
 
 def test_changed_existing_reference_fails_without_refitting(monkeypatch):
-    from cajal_research import existing_reference
+    from nanobrain.infra import existing_reference
 
     snapshot = json.loads((C.ROOT / "reference/existing_cajal_v1_10k.json").read_text())
 
@@ -234,8 +234,8 @@ def test_changed_existing_reference_fails_without_refitting(monkeypatch):
 
 
 def test_llm_uses_cajal_scores_and_reuses_legacy_components_only(tmp_path):
-    from cajal_research.agent import SYSTEM, ToolSession
-    from cajal_research.workflow import baseline
+    from nanobrain.agent.react import SYSTEM, ToolSession
+    from nanobrain.infra.workflow import baseline
 
     opponents = baseline()
     session = ToolSession(None, opponents, None, [], [], {}, tmp_path / "unused.json")

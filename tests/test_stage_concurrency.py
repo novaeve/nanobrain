@@ -4,9 +4,9 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from cajal_research import contracts as C
-from cajal_research import handoff as H
-from cajal_research.workflow import Workflow
+from nanobrain.infra import contracts as C
+from nanobrain.infra import handoff as H
+from nanobrain.infra.workflow import Workflow
 
 
 def test_global_stage_cap_also_covers_cpu_stages(tmp_path, monkeypatch):

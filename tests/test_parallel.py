@@ -10,10 +10,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from cajal_research import contracts as C
-from cajal_research.agent import ToolSession
-from cajal_research.resources import ResourcePool
-from cajal_research.store import Store
+from nanobrain.agent.react import ToolSession
+from nanobrain.infra import contracts as C
+from nanobrain.infra.resources import ResourcePool
+from nanobrain.infra.store import Store
 
 
 def test_ten_training_leases_stay_on_five_cards():
@@ -45,7 +45,7 @@ def test_pending_and_observed_memory_are_both_reserved():
 
 
 def test_refresh_ignores_unauthorized_gpus_and_counts_own_descendants(monkeypatch):
-    from cajal_research import resources
+    from nanobrain.infra import resources
 
     cfg = C.load_config()
     pool = ResourcePool(cfg["gpu_ids"], 2, cfg["resources"])
@@ -90,7 +90,7 @@ def test_concurrent_llm_submissions_claim_semantics_once(tmp_path):
 
 
 def test_parallel_generation_is_ordered_and_resumable(tmp_path, monkeypatch):
-    from cajal_research import workflow as W
+    from nanobrain.infra import workflow as W
 
     cfg = C.load_config()
     cfg["generations"] = 1
@@ -153,8 +153,8 @@ def test_parallel_generation_is_ordered_and_resumable(tmp_path, monkeypatch):
 
 
 def test_failed_worker_releases_its_gpu_lease(tmp_path, monkeypatch):
-    from cajal_research import sandbox
-    from cajal_research.workflow import Workflow
+    from nanobrain.infra import sandbox
+    from nanobrain.infra.workflow import Workflow
 
     workflow = Workflow(C.load_config(), tmp_path)
     leases = []

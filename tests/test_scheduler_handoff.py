@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from cajal_research import contracts as C
-from cajal_research import handoff as H
-from cajal_research.workflow import Workflow
+from nanobrain.infra import contracts as C
+from nanobrain.infra import handoff as H
+from nanobrain.infra.workflow import Workflow
 
 
 def stage_plan(tmp_path):
@@ -71,7 +71,7 @@ def test_running_stage_memory_is_reserved_and_receipt_is_reused_without_retraini
     artifact.write_bytes(b"synthetic checkpoint")
     receipt = {"status": "complete", "seed": 0, "step": 10000, "artifact_hashes": {"latest.pt": C.sha(artifact)}}
     C.save(Path(key) / "receipt.json", receipt)
-    from cajal_research import sandbox
+    from nanobrain.infra import sandbox
 
     monkeypatch.setattr(sandbox, "launch", lambda *a, **k: pytest.fail("restarted an already-running trainer"))
     retired = []

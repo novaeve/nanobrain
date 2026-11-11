@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 import torch
 
-from cajal_research import contracts as C
-from cajal_research import selection
-from cajal_research.agent import ToolSession, propose
-from cajal_research.store import Store
+from nanobrain.agent.react import ToolSession, propose
+from nanobrain.infra import contracts as C
+from nanobrain.infra import gate as selection
+from nanobrain.infra.store import Store
 
 
 def candidate(**train):
@@ -54,8 +54,8 @@ def build(hidden_dim):
 
 
 def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
-    from cajal_research import cli
-    from cajal_research.api_config import APIConfig
+    from nanobrain import cli
+    from nanobrain.agent.api_config import APIConfig
 
     monkeypatch.setattr(APIConfig, "from_env", lambda *a, **k: pytest.fail("plan read API credentials"))
     monkeypatch.setattr(cli.Workflow, "execute", lambda *a: pytest.fail("plan started evolution"))
@@ -219,7 +219,7 @@ def test_store_is_immutable_and_tree_keeps_failures(tmp_path):
 
 
 def test_token_plugins_cannot_mix_cells():
-    from cajal_research.plugins import apply_transforms
+    from nanobrain.infra.plugins import apply_transforms
 
     class Mean(torch.nn.Module):
         def forward(self, x):
@@ -336,7 +336,7 @@ def test_mock_react_uses_tools_no_real_llm(tmp_path):
     ["reference", "module", "module_loss_optimizer", "component_hybrid", "legacy_prototype", "regularizer_budget"],
 )
 def test_linux_sandbox_five_joint_gradients_update_and_reload(tmp_path, variant):
-    from cajal_research.sandbox import clean_environment, command, launch
+    from nanobrain.infra.sandbox import clean_environment, command, launch
 
     b = plugin_candidate() if variant in ("module", "module_loss_optimizer") else C.reference_bundle()
     if variant == "component_hybrid":
@@ -423,7 +423,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
     import threading
     import time
 
-    from cajal_research.workflow import Workflow
+    from nanobrain.infra.workflow import Workflow
 
     cfg = C.load_config()
     workflow = Workflow(cfg, tmp_path)
@@ -437,7 +437,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
         directory.mkdir(parents=True, exist_ok=True)
         calls.append(args)
         if args[0] == "train":
-            from cajal_research.training_policy import identity_for
+            from nanobrain.infra.training_policy import identity_for
 
             path = directory / "train/latest.pt"
             path.parent.mkdir()
@@ -488,7 +488,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
 
 def test_complete_mock_campaign_resume_and_contract_freeze(tmp_path, monkeypatch):
     """Control-flow integration only: all training and LLM responses are simulated."""
-    from cajal_research import workflow as W
+    from nanobrain.infra import workflow as W
 
     cfg = C.load_config()
     cfg.update(generations=1, candidates_per_generation=1)
@@ -559,7 +559,7 @@ def test_complete_mock_campaign_resume_and_contract_freeze(tmp_path, monkeypatch
 
 
 def test_resource_interruption_does_not_freeze_a_failed_candidate(tmp_path, monkeypatch):
-    from cajal_research.workflow import InfrastructureError, Workflow
+    from nanobrain.infra.workflow import InfrastructureError, Workflow
 
     workflow = Workflow(C.load_config(), tmp_path)
     workflow.store = Store(tmp_path / "lineage")
@@ -596,7 +596,7 @@ def test_optimizer_and_balancer_parameters_reach_actual_implementations():
     from brainwm_unified.balance import build_balancer
     from brainwm_unified.config import TrainConfig
     from brainwm_unified.train import lr_lambda
-    from cajal_research.plugins import make_optimizers
+    from nanobrain.infra.plugins import make_optimizers
 
     b = candidate(
         optimizer="adamw",
@@ -632,7 +632,7 @@ def test_historical_teacher_is_outside_the_candidate_contract():
 
 
 def test_component_catalog_is_merged_and_does_not_import_legacy_data():
-    from cajal_research.components import catalog, legacy
+    from nanobrain.infra.components import catalog, legacy
 
     rows = catalog()
     ids = {r["id"] for r in rows}
@@ -647,7 +647,7 @@ def test_component_catalog_is_merged_and_does_not_import_legacy_data():
     assert "legacy.attention.differential_linear" in ids
     assert any(r["id"] == "baseline.XGBoost" and r["role"] == "whole_method_baseline" for r in rows)
     legacy()
-    assert "nanobrain.data" not in sys.modules and "nanobrain.training" not in sys.modules
+    assert "nanobrain_v1.data" not in sys.modules and "nanobrain_v1.training" not in sys.modules
     for row in rows:
         if row.get("verification", {}).get("status") == "unavailable":
             b = candidate()
@@ -669,7 +669,7 @@ def test_baseline_snapshot_matches_current_cajal_scores():
 def test_available_components_preserve_masked_spatial_causality():
     from brainwm_unified import model as M
     from brainwm_unified.config import ModelConfig
-    from cajal_research.components import catalog
+    from nanobrain.infra.components import catalog
 
     rows = [r for r in catalog() if r["available"] and "neighborhood" in r["slots"]]
     cfg = ModelConfig(
@@ -713,7 +713,7 @@ def test_available_components_preserve_masked_spatial_causality():
 def test_sandbox_username_allows_torch_compile_initialization(tmp_path):
     import subprocess
 
-    from cajal_research.sandbox import clean_environment, command
+    from nanobrain.infra.sandbox import clean_environment, command
 
     args = command(C.ROOT, tmp_path / "worker", [])
     separator = args.index("--")

@@ -3,7 +3,7 @@
 import json
 from contextlib import nullcontext
 
-from .contracts import (
+from ..infra.contracts import (
     BALANCER_RANGES,
     DATA_RANGES,
     KINDS,
@@ -151,7 +151,7 @@ class ToolSession:
         self.submitted, self.validation_attempts = None, 0
 
     def call(self, name, args):
-        from .schema import validate
+        from ..infra.schema import validate
 
         schema = next((t["function"]["parameters"] for t in TOOLS if t["function"]["name"] == name), None)
         if schema is None:
@@ -173,7 +173,7 @@ class ToolSession:
                 "weight_policy": "random initialization; resume only this candidate's own same-seed checkpoint; no historical/pretrained teachers",
             }
         if name == "list_components":
-            from .components import catalog
+            from ..infra.components import catalog
 
             entries = catalog()
             if args.get("available_only", True):
@@ -198,7 +198,7 @@ class ToolSession:
             }
         if name == "baseline_detail":
             if args.get("method"):
-                from .contracts import ROOT
+                from ..infra.contracts import ROOT
 
                 methods = json.loads((ROOT / "reference/current_method_scores.json").read_text())
                 return {

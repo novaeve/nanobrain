@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from cajal_research.contracts import ROOT, save
-from cajal_research.dependencies import snapshot
+from nanobrain.infra.contracts import ROOT, save
+from nanobrain.infra.dependencies import snapshot
 
 environment = snapshot()
 save(

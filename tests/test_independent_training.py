@@ -5,11 +5,11 @@ import json
 
 import pytest
 
-from cajal_research import contracts as C
-from cajal_research.agent import SYSTEM, ToolSession
-from cajal_research.code_policy import inspect_source
-from cajal_research.components import catalog
-from cajal_research.training_policy import identity_for, prepare_training, validate_identity
+from nanobrain.agent.react import SYSTEM, ToolSession
+from nanobrain.infra import contracts as C
+from nanobrain.infra.code_policy import inspect_source
+from nanobrain.infra.components import catalog
+from nanobrain.infra.training_policy import identity_for, prepare_training, validate_identity
 
 
 def test_config_rejects_reintroducing_a_pretrained_teacher(tmp_path):

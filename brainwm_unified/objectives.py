@@ -79,7 +79,7 @@ def compute_losses(
 
     losses, metrics = {}, {}
     if cfg.research_components:
-        from cajal_research.components import observe_heads
+        from nanobrain.infra.components import observe_heads
 
         observe_heads(model, b, out, level_maps)
     losses["gene"] = F.mse_loss(out["gene_pred"], b["tok_target"][b["tok_masked"]].float())
@@ -122,7 +122,7 @@ def compute_losses(
     for name, fn in (extras or {}).items():
         losses[name] = fn(model, b, out)
     if model.cfg.research_plugins:
-        from cajal_research.plugins import replace_losses
+        from nanobrain.infra.plugins import replace_losses
 
         losses = replace_losses(model.cfg.research_plugins, model, b, out, level_maps, losses)
     return losses, metrics

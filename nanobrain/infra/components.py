@@ -5,6 +5,7 @@ component adapter is not a reproduction of the source paper's complete method.
 """
 
 import importlib
+import importlib.util
 import inspect
 import itertools
 import json
@@ -12,7 +13,7 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LIBRARY = ROOT / "component_library"
 SLOTS = (
     "value_embedding",
@@ -37,18 +38,27 @@ PARAM_RANGES = {
 }
 
 
+# The retired 100k-cell nanoBrain v1 package, vendored byte-for-byte as a component source.
+# It is loaded under its own name so it never shadows this package; its imports are all relative.
+LEGACY_PACKAGE = "nanobrain_v1"
+
+
 @lru_cache(None)
 def legacy():
     extras = ROOT / ".component_deps"
     if extras.is_dir() and str(extras) not in sys.path:
         sys.path.insert(0, str(extras))
-    location = str(LIBRARY / "legacy/src")
-    if location not in sys.path:
-        sys.path.insert(0, location)
-    importlib.import_module("nanobrain.modules")
-    importlib.import_module("nanobrain.graph_ops")
-    importlib.import_module("nanobrain.component_extensions")
-    return importlib.import_module("nanobrain.registry")
+    if LEGACY_PACKAGE not in sys.modules:
+        source = LIBRARY / "legacy/src/nanobrain"
+        spec = importlib.util.spec_from_file_location(
+            LEGACY_PACKAGE, source / "__init__.py", submodule_search_locations=[str(source)]
+        )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[LEGACY_PACKAGE] = module
+        spec.loader.exec_module(module)
+    for name in ("modules", "graph_ops", "component_extensions"):
+        importlib.import_module(f"{LEGACY_PACKAGE}.{name}")
+    return importlib.import_module(f"{LEGACY_PACKAGE}.registry")
 
 
 @lru_cache(None)

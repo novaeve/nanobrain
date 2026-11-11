@@ -197,7 +197,7 @@ class Block(nn.Module):
             self.backcast = nn.Linear(d, d, bias=False)
             self.forecast = nn.Linear(d, d, bias=False)
         if cfg.research_components:
-            from cajal_research.components import install_block
+            from nanobrain.infra.components import install_block
 
             install_block(self, cfg)
 
@@ -237,11 +237,11 @@ class Encoder(nn.Module):
         nn.init.zeros_(self.inject.weight)
         self.final_norm = nn.RMSNorm(d)
         nn.init.normal_(self.mask_emb, std=0.02)
-        from cajal_research.plugins import build_transforms
+        from nanobrain.infra.plugins import build_transforms
 
         self.research_transforms = build_transforms(cfg.research_plugins, d)
         if cfg.research_components:
-            from cajal_research.components import build_token_modules, install_value_embedding
+            from nanobrain.infra.components import build_token_modules, install_value_embedding
 
             self.research_transforms.extend(build_token_modules(cfg))
             install_value_embedding(self, cfg)
@@ -293,7 +293,7 @@ class Encoder(nn.Module):
             x, total = self.run_block(blk, x, total, attn_mask, gene)
         h = self.final_norm(total if self.cfg.nbeats else x)
         if len(self.research_transforms):
-            from cajal_research.plugins import apply_transforms
+            from nanobrain.infra.plugins import apply_transforms
 
             h = apply_transforms(self.research_transforms, h, b["tok_doc"])
         return h
@@ -471,7 +471,7 @@ class UnifiedModel(nn.Module):
         if cfg.batch_adversary:
             self.batch_adversary = BatchDiscriminator(cfg.z_dim, cfg.batch_adversary, cfg.n_batches)
         if cfg.research_components:
-            from cajal_research.components import install_model
+            from nanobrain.infra.components import install_model
 
             install_model(self, cfg)
         if cfg.compile_blocks:

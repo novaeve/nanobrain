@@ -175,7 +175,7 @@ def main(argv=None):
     muon_params, adamw_params = M.param_groups(model)
     if tcfg.optimizer == "muon" and any(p.ndim == 3 for p in muon_params):
         raise ValueError("torch Muon only takes 2-D weights; stacked expert weights need train.optimizer=grouped_muon")
-    from cajal_research.plugins import make_optimizers
+    from nanobrain.infra.plugins import make_optimizers
 
     opts = make_optimizers(model, tcfg, MUON, (muon_params, adamw_params))
     scheds = [torch.optim.lr_scheduler.LambdaLR(o, lr_lambda(tcfg)) for o in opts]
