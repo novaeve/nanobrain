@@ -94,6 +94,12 @@ def code_fingerprint():
     }
 
 
+def campaign_fingerprint(cfg):
+    from .freeze import verify
+
+    return verify(cfg)
+
+
 def input_fingerprint(cfg):
     from .existing_reference import load
 
@@ -454,6 +460,7 @@ class Workflow:
             "protocol": self.cfg,
             "code": code_fingerprint(),
             "data": input_fingerprint(self.cfg),
+            "campaign": campaign_fingerprint(self.cfg),
             "reference": reference_document(self.cfg),
             "reference_bundle": reference_bundle(),
             "opponents": baseline(),

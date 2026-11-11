@@ -14,6 +14,7 @@ def main(argv=None):
     ap.add_argument("--config", type=Path, default=ROOT / "configs/cajal_react.json")
     ap.add_argument("--output", type=Path, default=ROOT / "research-runs/cajal-react-self-contained-20261110")
     ap.add_argument("--execute", action="store_true", help="explicitly start/resume real ReAct evolution")
+    ap.add_argument("--freeze", action="store_true", help="lock the campaign definition, data and judges")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     # Workers use the committed canonical file; avoid a controller/worker config mismatch.
@@ -22,6 +23,12 @@ def main(argv=None):
         and json.loads(args.config.read_text()) != load_config()
     ):
         raise ValueError("workers require the committed canonical configuration")
+    if args.freeze:
+        from .infra.freeze import freeze
+
+        lock = freeze(cfg)
+        print(json.dumps({k: lock[k] for k in ("campaign_id", "frozen_at")} | {"files": len(lock["files"])}))
+        return
     if not args.execute:
         print(json.dumps(plan(cfg), indent=2))
         return

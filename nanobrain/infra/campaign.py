@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT = ROOT / "campaigns/cajal-v1"
-SECTIONS = ("campaign", "budget", "resources", "objectives", "gate", "metrics", "search")
+SECTIONS = ("campaign", "budget", "resources", "objectives", "gate", "metrics", "search", "freeze")
 
 
 def directory():

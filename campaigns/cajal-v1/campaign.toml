@@ -24,6 +24,30 @@ reason = "GPUs 5, 6 and 7 are excluded by the user"
 # The seed model's joint training losses; all must stay active (brainwm_unified.objectives.TASKS).
 names = ["gene", "integration", "cell_type", "anatomy", "spatial"]
 
+[freeze]
+# Locked by `nanobrain --freeze` in addition to this file, the agent brief, the reference recipe and the
+# seed model: the code and records this campaign's tasks are judged with. Data manifests are locked too.
+seed_model = "brainwm_unified"
+files = [
+    "scripts/predict_eval.py",
+    "scripts/eval_zero_shot.py",
+    "scripts/eval_imputation.py",
+    "scripts/eval_env.sh",
+    "reference/evaluation_protocol.json",
+    "reference/opponents.json",
+    "reference/cajal_existing_five_tasks.csv",
+    "reference/current_method_scores.json",
+    "reference/existing_cajal_v1_10k.json",
+    "reference/existing_cajal_v1_config.json",
+    "reference/existing_cajal_v1_record.json",
+    "reference/input_fingerprints.json",
+    "reference/model_dimensions.json",
+    "reference/cache_fingerprints.json",
+    "reference/baseline_cache/features.pkl",
+    "reference/imputation_cache/genes_eval_10k_seed0.json",
+    "reference/imputation_cache/spatial_eval_spatial_seed0.json",
+]
+
 [gate]
 # A candidate may not fall below its parent by more than this on any metric.
 regression_floor = 0.005

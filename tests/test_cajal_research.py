@@ -494,6 +494,7 @@ def test_complete_mock_campaign_resume_and_contract_freeze(tmp_path, monkeypatch
     cfg.update(generations=1, candidates_per_generation=1)
     monkeypatch.setattr(W, "code_fingerprint", lambda: {"git_sha": "frozen-test-code"})
     monkeypatch.setattr(W, "input_fingerprint", lambda cfg: {"mock_data": "fixed"})
+    monkeypatch.setattr(W, "campaign_fingerprint", lambda cfg: "frozen-test-campaign")
     workflow = W.Workflow(cfg, tmp_path)
     monkeypatch.setattr(workflow, "validate", lambda *a: {"status": "accepted"})
     evaluated = []
