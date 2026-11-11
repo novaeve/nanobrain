@@ -1,0 +1,138 @@
+# Cajal v1 joint ReAct campaign: the open choices that `nanobrain freeze` locks.
+# Edit this file to define a new campaign BEFORE it starts; once frozen, any change is a new campaign.
+
+[campaign]
+id = "CAJAL-V1-JOINT-REACT-SELF-CONTAINED-20261110"
+seed_model = "Cajal v1 shared encoder, five joint pretraining objectives"
+reference_recipe = "configs/experiments/cajal_v1.toml"
+reference_evaluation = "reuse_existing_cajal_v1_10000"
+weight_policy = "random_init_self_contained"
+agent_brief = "agent_brief.md"
+
+[budget]
+schedule_steps = 30000
+stop_at = 10000
+seeds = [0]
+checkpoint_selection = "fixed_stop"
+scaling_enabled = false
+
+[resources]
+gpu_whitelist = [0, 1, 2, 3, 4]
+reason = "GPUs 5, 6 and 7 are excluded by the user"
+
+[objectives]
+# The seed model's joint training losses; all must stay active (brainwm_unified.objectives.TASKS).
+names = ["gene", "integration", "cell_type", "anatomy", "spatial"]
+
+[gate]
+# A candidate may not fall below its parent by more than this on any metric.
+regression_floor = 0.005
+
+[[metrics]]
+name = "Cell type fine macro-F1"
+group = "annotation"
+range = [0.0, 1.0]
+
+[[metrics]]
+name = "Region fine macro-F1"
+group = "annotation"
+range = [0.0, 1.0]
+
+[[metrics]]
+name = "Integration bio"
+group = "integration"
+range = [0.0, 1.0]
+
+[[metrics]]
+name = "Integration batch"
+group = "integration"
+range = [0.0, 1.0]
+
+[[metrics]]
+name = "Gene imputation Pearson (cell median)"
+group = "genes"
+range = [-1.0, 1.0]
+
+[[metrics]]
+name = "Spatial imputation Pearson (cell median)"
+group = "spatial"
+range = [-1.0, 1.0]
+
+[search]
+plugin_kinds = ["token_transform", "gene_loss", "cell_type_loss", "anatomy_loss", "optimizer"]
+balancers = ["initial", "grad_equal", "famo"]
+optimizers = ["grouped_muon", "adamw", "adam", "sgd", "custom"]
+regularizers = ["cond_hsic", "sigreg", "batch_swap", "batch_adversary"]
+
+[search.model]
+d_model = [128, 256, 384, 512]
+n_heads = [2, 4, 6, 8]
+n_prelude = [1, 2, 3, 4]
+n_core = [1, 2, 3, 4]
+n_coda = [1, 2, 3, 4]
+loops = [2, 3, 4, 5, 6]
+min_loops = [1, 2, 3, 4]
+max_loops = [2, 3, 4, 5, 6, 8]
+n_experts = [8, 16, 32, 64]
+top_k = [1, 2, 4, 8]
+n_shared_experts = [1, 2]
+expert_hidden = [128, 256, 384, 512]
+router_score = ["sqrtsoftplus", "sigmoid"]
+n_hash_layers = [0, 1, 2]
+nbeats = [false, true]
+loop_injection = [false, true]
+z_dim = [32, 64, 128]
+decoder_hidden = [256, 512, 768, 1024]
+decoder = ["separate", "unified"]
+latent_reg = ["kl", "mog", "none"]
+mog_components = [8, 16, 32, 64]
+batch_adversary = [0, 64, 128, 256]
+residual_dim = [0, 16, 32, 64]
+recon_detach_mu = [false, true]
+spatial_d = [64, 128, 256]
+spatial_layers = [1, 2, 3, 4]
+spatial_residual_mean = [false, true]
+input_norm = ["log1p", "pearson"]
+
+[search.model_ranges]
+router_bias_rate = [0.0, 0.01]
+spatial_latent = [0.0, 5.0]
+
+[search.train_ranges]
+lr = [1e-06, 0.02]
+weight_decay = [0.0, 0.3]
+grad_clip = [0.1, 20.0]
+kl_weight = [0.001, 20.0]
+kl_target = [0.0, 300.0]
+kl_dual_lr = [0.0001, 0.1]
+min_lr_ratio = [0.01, 0.5]
+
+[search.train_integers]
+warmup_steps = [0, 4000]
+kl_warmup_steps = [100, 10000]
+norm_steps = [20, 1000]
+
+[search.data_ranges]
+dissociated_cells = [16, 512]
+spatial_groups = [2, 64]
+max_nonzero_tokens = [512, 8192]
+zero_tokens = [8, 256]
+
+[search.optimizer_ranges]
+adam_beta1 = [0.8, 0.99]
+adam_beta2 = [0.9, 0.9999]
+adam_eps = [1e-09, 1e-06]
+muon_momentum = [0.8, 0.99]
+muon_ns_steps = [3, 8]
+sgd_momentum = [0.0, 0.99]
+
+[search.balancer_ranges.grad_equal]
+every = [1, 200]
+beta = [0.5, 0.99]
+
+[search.balancer_ranges.famo]
+w_lr = [0.001, 0.1]
+gamma = [0.0, 0.1]
+eps = [1e-10, 1e-05]
+
+[search.balancer_ranges.initial]

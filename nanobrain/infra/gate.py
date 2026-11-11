@@ -3,15 +3,15 @@
 import math
 import statistics
 
-from .contracts import METRICS, digest
+from .contracts import GATE_FLOOR, METRIC_RANGES, METRICS, digest
 
 
 def check_metrics(metrics):
     if set(metrics) != set(METRICS):
         raise ValueError("all six Cajal metric columns are required")
     for key, v in metrics.items():
-        low = -1.0 if "Pearson" in key else 0.0
-        if type(v) not in (int, float) or not math.isfinite(v) or not low <= v <= 1.0:
+        low, high = METRIC_RANGES[key]
+        if type(v) not in (int, float) or not math.isfinite(v) or not low <= v <= high:
             raise ValueError("invalid Cajal metric")
 
 
@@ -42,7 +42,7 @@ def quality(node, baselines):
     return min(v), sum(v) / len(v)
 
 
-def promote(candidate, parent, reference, baselines, targets, floor=0.005):
+def promote(candidate, parent, reference, baselines, targets, floor=GATE_FLOOR):
     tolerance = {k: floor for k in METRICS}
     regressions = [k for k in METRICS if candidate["metrics"][k] < parent["metrics"][k] - tolerance[k]]
     # Always require improvement on the incumbent's weakest frontier dimension.

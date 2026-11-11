@@ -6,6 +6,8 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from .contracts import GPU_REASON, GPU_WHITELIST
+
 
 def parent_pid(pid):
     try:
@@ -16,8 +18,8 @@ def parent_pid(pid):
 
 class ResourcePool:
     def __init__(self, gpus, per_gpu, options):
-        if not gpus or set(gpus) - set(range(5)):
-            raise ValueError("only GPUs 0..4 are authorized")
+        if not gpus or set(gpus) - set(GPU_WHITELIST):
+            raise ValueError(GPU_REASON)
         self.gpus, self.per_gpu, self.options = list(gpus), per_gpu, options
         self.condition = threading.Condition()
         self.leases, self.snapshot, self.snapshot_at = {}, {}, 0.0

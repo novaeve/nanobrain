@@ -8,77 +8,38 @@ import math
 import re
 from pathlib import Path
 
+from . import campaign
+
 ROOT = Path(__file__).resolve().parents[2]
-TASKS = ("gene", "integration", "cell_type", "anatomy", "spatial")
-METRICS = (
-    "Cell type fine macro-F1",
-    "Region fine macro-F1",
-    "Integration bio",
-    "Integration batch",
-    "Gene imputation Pearson (cell median)",
-    "Spatial imputation Pearson (cell median)",
-)
-MODEL_SPACE = {
-    "d_model": [128, 256, 384, 512],
-    "n_heads": [2, 4, 6, 8],
-    "n_prelude": [1, 2, 3, 4],
-    "n_core": [1, 2, 3, 4],
-    "n_coda": [1, 2, 3, 4],
-    "loops": [2, 3, 4, 5, 6],
-    "min_loops": [1, 2, 3, 4],
-    "max_loops": [2, 3, 4, 5, 6, 8],
-    "n_experts": [8, 16, 32, 64],
-    "top_k": [1, 2, 4, 8],
-    "n_shared_experts": [1, 2],
-    "expert_hidden": [128, 256, 384, 512],
-    "router_score": ["sqrtsoftplus", "sigmoid"],
-    "n_hash_layers": [0, 1, 2],
-    "nbeats": [False, True],
-    "loop_injection": [False, True],
-    "z_dim": [32, 64, 128],
-    "decoder_hidden": [256, 512, 768, 1024],
-    "decoder": ["separate", "unified"],
-    "latent_reg": ["kl", "mog", "none"],
-    "mog_components": [8, 16, 32, 64],
-    "batch_adversary": [0, 64, 128, 256],
-    "residual_dim": [0, 16, 32, 64],
-    "recon_detach_mu": [False, True],
-    "spatial_d": [64, 128, 256],
-    "spatial_layers": [1, 2, 3, 4],
-    "spatial_residual_mean": [False, True],
-    "input_norm": ["log1p", "pearson"],
+DEFINITION = campaign.load()
+_search = DEFINITION["search"]
+
+
+def _ranges(mapping):
+    return {k: tuple(v) for k, v in mapping.items()}
+
+
+TASKS = tuple(DEFINITION["objectives"]["names"])
+METRICS = tuple(m["name"] for m in DEFINITION["metrics"])
+METRIC_GROUPS = {
+    g: tuple(m["name"] for m in DEFINITION["metrics"] if m["group"] == g)
+    for g in dict.fromkeys(m["group"] for m in DEFINITION["metrics"])
 }
-MODEL_RANGES = {"router_bias_rate": (0.0, 0.01), "spatial_latent": (0.0, 5.0)}
-TRAIN_RANGES = {
-    "lr": (1e-6, 0.02),
-    "weight_decay": (0.0, 0.3),
-    "grad_clip": (0.1, 20.0),
-    "kl_weight": (0.001, 20.0),
-    "kl_target": (0.0, 300.0),
-    "kl_dual_lr": (0.0001, 0.1),
-    "min_lr_ratio": (0.01, 0.5),
-}
-TRAIN_INTS = {"warmup_steps": (0, 4000), "kl_warmup_steps": (100, 10000), "norm_steps": (20, 1000)}
-DATA_RANGES = {
-    "dissociated_cells": (16, 512),
-    "spatial_groups": (2, 64),
-    "max_nonzero_tokens": (512, 8192),
-    "zero_tokens": (8, 256),
-}
-OPTIMIZER_RANGES = {
-    "adam_beta1": (0.8, 0.99),
-    "adam_beta2": (0.9, 0.9999),
-    "adam_eps": (1e-9, 1e-6),
-    "muon_momentum": (0.8, 0.99),
-    "muon_ns_steps": (3, 8),
-    "sgd_momentum": (0.0, 0.99),
-}
-BALANCER_RANGES = {
-    "grad_equal": {"every": (1, 200), "beta": (0.5, 0.99)},
-    "famo": {"w_lr": (0.001, 0.1), "gamma": (0.0, 0.1), "eps": (1e-10, 1e-5)},
-    "initial": {},
-}
-KINDS = ("token_transform", "gene_loss", "cell_type_loss", "anatomy_loss", "optimizer")
+METRIC_RANGES = {m["name"]: tuple(m["range"]) for m in DEFINITION["metrics"]}
+MODEL_SPACE = {k: list(v) for k, v in _search["model"].items()}
+MODEL_RANGES = _ranges(_search["model_ranges"])
+TRAIN_RANGES = _ranges(_search["train_ranges"])
+TRAIN_INTS = _ranges(_search["train_integers"])
+DATA_RANGES = _ranges(_search["data_ranges"])
+OPTIMIZER_RANGES = _ranges(_search["optimizer_ranges"])
+BALANCER_RANGES = {name: _ranges(mapping) for name, mapping in _search["balancer_ranges"].items()}
+KINDS = tuple(_search["plugin_kinds"])
+BALANCERS = tuple(_search["balancers"])
+OPTIMIZERS = tuple(_search["optimizers"])
+REGULARIZERS = tuple(_search["regularizers"])
+GPU_WHITELIST = tuple(DEFINITION["resources"]["gpu_whitelist"])
+GPU_REASON = f"GPU whitelist is {list(GPU_WHITELIST)}; {DEFINITION['resources']['reason']}"
+GATE_FLOOR = DEFINITION["gate"]["regression_floor"]
 
 
 def digest(value):
@@ -105,20 +66,20 @@ def save(path, value):
 
 def load_config(path=None):
     cfg = json.loads(Path(path or ROOT / "configs/cajal_react.json").read_text())
-    if cfg.get("weight_policy") != "random_init_self_contained" or cfg.get("trusted_teachers"):
+    if cfg.get("weight_policy") != DEFINITION["campaign"]["weight_policy"] or cfg.get("trusted_teachers"):
         raise ValueError("candidates must train independently without historical or pretrained teacher weights")
-    if cfg["reference_recipe"] != "configs/experiments/cajal_v1.toml":
+    if cfg["reference_recipe"] != DEFINITION["campaign"]["reference_recipe"]:
         raise ValueError("reference must be the frozen existing Cajal v1 recipe")
-    if cfg["reference_evaluation"] != "reuse_existing_cajal_v1_10000":
+    if cfg["reference_evaluation"] != DEFINITION["campaign"]["reference_evaluation"]:
         raise ValueError("reuse the existing Cajal reference result; never silently refit it")
-    if cfg["schedule_steps"] != 30000 or cfg["stop_at"] != 10000:
+    if cfg["schedule_steps"] != DEFINITION["budget"]["schedule_steps"] or cfg["stop_at"] != DEFINITION["budget"]["stop_at"]:
         raise ValueError("this protocol uses the Cajal 30k schedule stopped at 10k")
-    if cfg["seeds"] != [0]:
+    if cfg["seeds"] != DEFINITION["budget"]["seeds"]:
         raise ValueError("this revision uses the existing Cajal seed 0 only")
-    if cfg["checkpoint_selection"] != "fixed_stop" or cfg["scaling_enabled"]:
+    if cfg["checkpoint_selection"] != DEFINITION["budget"]["checkpoint_selection"] or bool(cfg["scaling_enabled"]) != DEFINITION["budget"]["scaling_enabled"]:
         raise ValueError("fixed-stop Cajal evaluation; no automatic scaling in this protocol")
-    if not cfg["gpu_ids"] or any(type(g) is not int or g not in range(5) for g in cfg["gpu_ids"]):
-        raise ValueError("GPU whitelist is 0..4; GPUs 5, 6 and 7 are excluded by the user")
+    if not cfg["gpu_ids"] or any(type(g) is not int or g not in GPU_WHITELIST for g in cfg["gpu_ids"]):
+        raise ValueError(GPU_REASON)
     if len(set(cfg["gpu_ids"])) != len(cfg["gpu_ids"]):
         raise ValueError("GPU IDs must be unique")
     if type(cfg["max_workers"]) is not int or not 1 <= cfg["max_workers"] <= 16:
@@ -201,8 +162,8 @@ def candidate_schema():
     )
     train_properties.update(
         {
-            "balancer": {"enum": ["initial", "grad_equal", "famo"]},
-            "optimizer": {"enum": ["grouped_muon", "adamw", "adam", "sgd", "custom"]},
+            "balancer": {"enum": list(BALANCERS)},
+            "optimizer": {"enum": list(OPTIMIZERS)},
             "lr_schedule": {"enum": ["cosine", "linear", "constant"]},
             "optimizer_params": {
                 "type": "object",
@@ -226,7 +187,7 @@ def candidate_schema():
                     "additionalProperties": False,
                     "required": ["name", "weight"],
                     "properties": {
-                        "name": {"enum": ["cond_hsic", "sigreg", "batch_swap", "batch_adversary"]},
+                        "name": {"enum": list(REGULARIZERS)},
                         "weight": {"type": "number", "minimum": 0.0, "maximum": 20.0},
                         "coeff": {"type": "number"},
                         "label": {"enum": ["cell_type", "anatomy"]},
@@ -353,10 +314,10 @@ def validate_bundle(bundle, parent_ids=None):
         elif key in ("lr_schedule", "optimizer_params", "balancer_params"):
             pass  # precise cross-field checks below
         elif key == "balancer":
-            if value not in ("initial", "grad_equal", "famo"):
+            if value not in BALANCERS:
                 raise ValueError("unknown Cajal balancer")
         elif key == "optimizer":
-            if value not in ("grouped_muon", "adamw", "adam", "sgd", "custom"):
+            if value not in OPTIMIZERS:
                 raise ValueError("unsupported optimizer")
         elif key == "task_weights":
             if set(value) != set(TASKS):
@@ -384,7 +345,7 @@ def validate_bundle(bundle, parent_ids=None):
                     "dual_lr",
                 }:
                     raise ValueError("only existing tensor-only regularizers are searchable")
-                if entry.get("name") not in ("cond_hsic", "sigreg", "batch_swap", "batch_adversary"):
+                if entry.get("name") not in REGULARIZERS:
                     raise ValueError("external teacher/data paths are outside the candidate contract")
                 if entry["name"] in seen:
                     raise ValueError("duplicate objective")
@@ -500,7 +461,7 @@ def semantic_id(bundle):
 
 def resolved_document(bundle, cfg, seed):
     validate_bundle(bundle)
-    if cfg.get("weight_policy") != "random_init_self_contained" or cfg.get("trusted_teachers"):
+    if cfg.get("weight_policy") != DEFINITION["campaign"]["weight_policy"] or cfg.get("trusted_teachers"):
         raise ValueError("historical weight dependencies are outside this research protocol")
     base = reference_document(cfg)
     payload = {"plugins": bundle["plugins"], "files": bundle["files"]} if bundle["plugins"] else {}

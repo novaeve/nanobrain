@@ -14,6 +14,7 @@ from pathlib import Path
 
 from . import gate as selection
 from .contracts import (
+    METRIC_GROUPS,
     METRICS,
     ROOT,
     digest,
@@ -327,12 +328,7 @@ class Workflow:
             with summary.open() as fh:
                 rows = list(csv.DictReader(fh))
             (row,) = [r for r in rows if r[next(iter(r))] == "candidate"]
-            wanted = {
-                "annotation": METRICS[:2],
-                "integration": METRICS[2:4],
-                "genes": METRICS[4:5],
-                "spatial": METRICS[5:],
-            }[task]
+            wanted = METRIC_GROUPS[task]
             task_metrics = {key: float(row[key]) for key in wanted}
             task_artifacts = {}
             for p in (pred, pred_dir / "receipt.json", score_dir / "receipt.json", summary):
