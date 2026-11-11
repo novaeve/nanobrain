@@ -1,0 +1,38 @@
+{
+  "format": "nanobrain_experiment_config_v1",
+  "data": {
+    "path": "assets/nanobrain_v3_100k",
+    "format": "nanobrain_v3_subset_v1",
+    "split_id": "BRAINWM-HUMAN-GLOBAL-6-2-2-V3",
+    "load": "numpy_memmap_then_torch",
+    "h5ad_in_training_loop": false
+  },
+  "model": {
+    "genome": "default",
+    "attention": "differential_linear",
+    "spatial": "neighbor_mean",
+    "residual": "nbeats",
+    "flow": "mlp",
+    "development_condition": "life_stage_or_learned_null"
+  },
+  "optimizer": {
+    "name": "AdamW",
+    "weight_decay": 0.0001
+  },
+  "budget": {
+    "steps": 2,
+    "batch_size": 32,
+    "validation_batch_size": 256,
+    "device": "cpu"
+  },
+  "receipt": {
+    "path": "results/nanobrain/smoke/",
+    "records": [
+      "per_step_losses",
+      "validation_metrics",
+      "parameter_count",
+      "checkpoint",
+      "data_manifest"
+    ]
+  }
+}

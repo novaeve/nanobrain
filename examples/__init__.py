@@ -1,1 +1,0 @@
-"""Readable nanoBrain component examples."""

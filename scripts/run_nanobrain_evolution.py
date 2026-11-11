@@ -2,7 +2,7 @@
 """Run/resume bounded LLM module evolution, paired confirmation and final reporting.
 
 Reuses the established candidate trainer, baseline evaluator and process helpers.
-Selection reads validation only. All budgets and guards are frozen before training.
+Single-stage mode may intentionally select on test when frozen protocol requests it. All budgets and guards are frozen before training.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import csv
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -57,7 +58,7 @@ def proposal_history(history, recent_generations=5, best_candidates=12):
     if recent_generations < 1 or best_candidates < 1:
         raise ValueError("history limits must be positive")
     candidates = [candidate for generation in history for candidate in generation.get("candidates", [])]
-    compact_fields = ("architecture_id", "genome", "metrics", "score", "eligible", "parent_gate", "reference_gate")
+    compact_fields = ("architecture_id", "genome", "metrics", "score", "eligible", "parent_gate", "reference_gate", "failed", "failure_reasons")
     compact = lambda item: {key: item[key] for key in compact_fields if key in item}
     return {
         "completed_generations": len(history), "evaluated_candidates": len(candidates),
@@ -68,12 +69,41 @@ def proposal_history(history, recent_generations=5, best_candidates=12):
 
 
 def summarize_runs(runs, tasks=None):
+    if not runs:
+        raise ValueError("cannot summarize an empty replicate group")
     result = copy.deepcopy(runs[0])
     result["replicates"] = runs
+    required = [f"{task}.{metric}" for task, metric, _ in selected_objectives(tasks)]
+    failures = []
+    for run in runs:
+        metrics = run.get("metrics", {})
+        invalid = [key for key in required
+                   if not isinstance(metrics.get(key), (int, float)) or not math.isfinite(metrics[key])]
+        if run.get("failed") or invalid:
+            failures.append(dict(seed=run.get("genome", {}).get("seed"),
+                                 reasons=run.get("failure_reasons", []), invalid_metrics=invalid))
+    if failures:
+        # Never promote an architecture using only its successful seeds.
+        result.update(failed=True, failure_reasons=failures, metrics={}, diagnostics={}, score=-1.0e9,
+                      runtime_seconds=sum(float(x.get("runtime_seconds", 0.0) or 0.0) for x in runs))
+        return result
     result["metrics"] = {key: statistics.mean(x["metrics"][key] for x in runs) for key in runs[0]["metrics"]}
     result["score"] = joint_score(result["metrics"], tasks)
     result["runtime_seconds"] = statistics.mean(x["runtime_seconds"] for x in runs)
     return result
+
+
+def evaluation_checkpoint(receipt, selection):
+    """Choose weights before the test evaluator is opened."""
+    if selection not in {"best_validation", "final_step_fixed_budget"}:
+        raise ValueError(f"unsupported checkpoint_selection: {selection}")
+    field = "best_checkpoint" if selection == "best_validation" else "checkpoint"
+    path = Path(receipt[field]) if receipt.get(field) else None
+    if path is None or not path.is_file():
+        raise RuntimeError(f"required {field} missing for {selection}")
+    if selection == "best_validation" and int(receipt.get("best_step", 0)) < 1:
+        raise RuntimeError("best validation checkpoint has no selected step")
+    return path.resolve()
 
 
 class Experiment:
@@ -81,6 +111,8 @@ class Experiment:
         self.args = args
         self.output = args.output.resolve()
         self.protocol = json.loads(args.config.read_text())
+        from nanobrain.fixed_heads import validate_search_scope
+        validate_search_scope(self.protocol.get("reference_genome", {}), self.protocol.get("search_scope"))
         tasks = self.protocol.get("tasks")
         selected_objectives(tasks)
         if self.protocol.get("training_mode", "joint") not in {"joint", "independent"}:
@@ -92,6 +124,9 @@ class Experiment:
         if self.protocol.get("gate", {}).get("tasks") != tasks:
             raise ValueError("gate task set must equal trained/evaluated task set")
         p = self.protocol
+        if p.get("checkpoint_selection") == "best_validation":
+            if p.get("checkpoint_policy") not in {"all", "best_weights"} or int(p.get("eval_interval", 0)) < 1:
+                raise ValueError("best_validation requires retained best weights and periodic validation")
         for key in ("generations", "candidates_per_generation", "screen_steps", "confirmation_steps"):
             if not isinstance(p[key], int) or p[key] < 1:
                 raise ValueError(f"{key} must be a positive integer")
@@ -113,6 +148,11 @@ class Experiment:
         if self.protocol.get("llm_model"):
             from dataclasses import replace
             self.api = replace(self.api, model=self.protocol["llm_model"])
+        if self.protocol.get("llm_timeout_seconds"):
+            from dataclasses import replace
+            self.api = replace(self.api, timeout_seconds=float(self.protocol["llm_timeout_seconds"]))
+        if p.get("llm_reasoning_effort") not in {None, "low", "medium", "high", "xhigh", "max"}:
+            raise ValueError("unsupported llm_reasoning_effort")
         if not getattr(args, "task_suite_only", False):
             self.api.validate(require_credentials=True)
         for key in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
@@ -122,6 +162,8 @@ class Experiment:
         from nanobrain.baseline_components import REFERENCE_FILES
         files = (sorted((ROOT / "src").rglob("*.py")) + sorted((ROOT / "scripts").glob("*.py"))
                  + [ROOT / relative for relative in REFERENCE_FILES])
+        from nanobrain.upstream_loader import upstream_fingerprint_files
+        files += upstream_fingerprint_files()
         self.fingerprint = {str(p.relative_to(ROOT)): sha(p) for p in files}
         self.fingerprint["data_manifest"] = sha(self.data / "manifest.json")
         import importlib.metadata
@@ -136,9 +178,15 @@ class Experiment:
             if not args.resume:
                 raise ValueError("campaign exists; use --resume to continue the identical protocol")
             frozen = json.loads((self.output / "protocol.json").read_text())
-            if frozen["protocol"] != self.protocol or frozen["fingerprint"] != self.fingerprint:
+            if frozen["protocol"] != self.protocol:
                 raise ValueError("code, data or protocol changed; use a fresh campaign directory")
+            if frozen["fingerprint"] != self.fingerprint:
+                if not getattr(args, "adopt_scheduler_update", False):
+                    raise ValueError("code, data or protocol changed; use a fresh campaign directory")
+                from scripts.nanobrain_scheduler import migrate_scheduler_fingerprint
+                migrate_scheduler_fingerprint(self.output, frozen, self.fingerprint, ROOT)
             self.state = json.loads(self.state_path.read_text())
+            self.state["training_gpus"] = list(args.gpus)
         else:
             if any(self.output.iterdir()):
                 raise ValueError("fresh campaign output must be empty")
@@ -152,23 +200,41 @@ class Experiment:
             if self.protocol.get("reference_genome", {}).get("architecture") is not None:
                 from nanobrain.architecture import graph_catalog
                 _write_json(self.output / "graph_component_catalog.json", graph_catalog())
+            if self.protocol.get("search_scope") is not None:
+                from nanobrain.fixed_heads import search_catalog
+                _write_json(self.output / "fixed_heads_search_catalog.json", search_catalog())
             self.state = dict(protocol_id=self.protocol["protocol_id"], started_at=utc(),
                               generations=[], reference=None, confirmations=[], selected=None,
                               training_gpus=args.gpus, api=self.api.redacted(),
+                              llm_reasoning_effort=self.protocol.get("llm_reasoning_effort"),
                               test_used_for_selection=False, status="initialized")
             self.save()
 
     def save(self, status=None):
+        # Historical campaigns are large. Queue heartbeats need not rewrite
+        # the entire history every second; terminal transitions remain immediate.
+        now = time.monotonic()
+        if status == "adaptive_queue_running" and now - getattr(self, "_last_queue_save", 0.0) < 10.0:
+            return
+        if status == "adaptive_queue_running":
+            self._last_queue_save = now
         if status:
             self.state["status"] = status
         self.state["updated_at"] = utc()
         _write_json(self.state_path, self.state)
 
     def run_batch(self, specs, directory, steps):
+        from nanobrain.fixed_heads import validate_search_scope
+        for spec in specs:
+            validate_search_scope(spec["genome"], self.protocol.get("search_scope"))
         if self.protocol.get("training_mode", "joint") == "joint":
             return self._run_single_batch(specs, directory, steps)
         tasks = self.protocol["tasks"]
-        results = {task: self._run_single_batch(specs, directory / task, steps, task=task) for task in tasks}
+        if getattr(self.args, "adaptive_queue", False):
+            from scripts.nanobrain_scheduler import run_task_queue
+            results = run_task_queue(self, specs, directory, steps, evaluation_checkpoint)
+        else:
+            results = {task: self._run_single_batch(specs, directory / task, steps, task=task) for task in tasks}
         merged = []
         from scripts.run_nanobrain_baselines import _write_rows
         for index, spec in enumerate(specs):
@@ -195,7 +261,9 @@ class Experiment:
                 continue
             bundle = out / "task_checkpoints.json"
             _write_json(bundle, dict(format="nanobrain_task_checkpoints_v1", genome=genome.to_dict(),
-                                    tasks={task: dict(path=x["checkpoint"], sha256=x["checkpoint_sha256"])
+                                    tasks={task: dict(path=x["checkpoint"], sha256=x["checkpoint_sha256"],
+                                                     checkpoint_selection=x.get("checkpoint_selection"),
+                                                     selected_step=x.get("selected_step"))
                                            for task, x in records.items()}))
             table = out / "evaluation" / "benchmark_table.csv"
             rows = [row for x in records.values() for row in read_metric_table(x["evaluation"])]
@@ -290,10 +358,13 @@ class Experiment:
                         raise RuntimeError(f"reference training failed: {item['directory']}; {audit['reasons']}")
                     results.append(_public_candidate(item))
                     continue
-                # Proxy training quality is diagnostic only. Compare final-step weights.
-                checkpoint = Path(receipt["checkpoint"])
-                if not checkpoint.is_file():
-                    raise RuntimeError("final-step checkpoint missing")
+                selection = self.protocol.get("checkpoint_selection", "final_step_fixed_budget")
+                checkpoint = evaluation_checkpoint(receipt, selection)
+                item["checkpoint_selection"] = selection
+                item["selected_step"] = (receipt["best_step"] if selection == "best_validation"
+                                         else receipt["completed_steps"])
+                item["selected_validation_quality"] = (receipt["best_validation_quality"]
+                                                         if selection == "best_validation" else receipt["quality"])
                 item["training_audit"] = {**audit, "checkpoint": str(checkpoint.resolve())}
                 item["parameter_count"] = receipt["parameter_count"]
                 item["runtime_seconds"] = receipt["runtime_seconds"]
@@ -301,7 +372,9 @@ class Experiment:
             if successful:
                 evaluated = _launch_evaluations(candidates=successful, gpus=self.args.gpus, data=self.data,
                             batch_size=self.protocol["evaluation_batch_size"],
-                            evaluation_seed=self.protocol["evaluation_seed"])
+                            evaluation_seed=self.protocol["evaluation_seed"],
+                            evaluation_split=self.protocol.get("selection_evaluation_split", "validation"),
+                            output_name="test_selection_evaluation" if self.protocol.get("selection_evaluation_split") == "test" else "evaluation")
                 _finalize_evaluations(evaluated, manifest=self.state, manifest_path=self.state_path)
             for item in wave:
                 if item.get("failed"):
@@ -349,7 +422,11 @@ class Experiment:
         count = self.protocol["candidates_per_generation"]
         seed = self.protocol["screen_seed"]
         if accepted.is_file():
-            return json.loads(accepted.read_text())["candidates"]
+            proposals = json.loads(accepted.read_text())["candidates"]
+            from nanobrain.fixed_heads import validate_search_scope
+            for proposal in proposals:
+                validate_search_scope(proposal["genome"], self.protocol.get("search_scope"))
+            return proposals
         if exhausted.is_file():
             return None
         context = lambda x: {k: x[k] for k in ("architecture_id", "genome", "metrics", "score",
@@ -371,7 +448,7 @@ class Experiment:
             "Keep flow active (not none). Components are imported baseline primitives trained from scratch, "
             "not the complete baselines or their pretrained checkpoints. Read component_catalog for sources. "
             "Explore both module-family replacements/combinations and hyperparameter changes, retaining strengths. "
-            "Explain why the changed modules should improve the named metrics. No test results are available. "
+            "Explain why the changed modules should improve the named metrics. Test-set metrics are available and are the selection signal in this protocol. "
             "The joint score and task guards below are fixed, not negotiable; runtime/parameters break ties. "
             "Every candidate must improve joint score and obey per-task regression bounds vs its parent "
             "AND the initial reference. High batch-classification accuracy is NOT integration success.\n"
@@ -383,7 +460,13 @@ class Experiment:
                                   int(self.protocol.get("llm_history_generations", 5)),
                                   int(self.protocol.get("llm_history_best_candidates", 12)))), ensure_ascii=False)
         )
-        if self.protocol.get("reference_genome", {}).get("architecture") is not None:
+        if self.protocol.get("search_scope") is not None:
+            from nanobrain.fixed_heads import build_prompt
+            prompt = build_prompt(self.protocol, parents, self.state["reference"],
+                                  proposal_history(history,
+                                      int(self.protocol.get("llm_history_generations", 5)),
+                                      int(self.protocol.get("llm_history_best_candidates", 12))), count)
+        elif self.protocol.get("reference_genome", {}).get("architecture") is not None:
             from nanobrain.architecture import graph_catalog
             from nanobrain.objectives import objective_catalog
             prompt = (
@@ -394,7 +477,13 @@ class Experiment:
                 'Patch paths may only target /architecture/... or /learning_rate. Never return both genome and patch. '
                 'Use ONLY the current parent IDs below. '
                 'Each candidate trains FROM SCRATCH INDEPENDENTLY for each task; checkpoints/optimizers are separate. '
-                'Architecture version 2 explicitly describes backbone and velocity-field graphs. You may insert, remove, '
+                'Architecture versions 2 and 3 describe backbone and velocity-field graphs. Version 3 also exposes '
+                'batch_id[B,1] (technical batch IDs, unknown=-1) and nonnegative_features[B,G] '
+                '(frozen train-normalization inverse, no biology labels). scpoli_conditional takes [features_or_state,batch_id]. '
+                'scprint_value requires nonnegative_features; scfoundation_autobin/scprint_value produce gene tokens and need pooling. '
+                'scpoli_prototype is annotation/niche only, without a pre graph; train-only prototypes are checkpointed. '
+                'Optional architecture.endpoint selects an endpoint transport, requires version 3 and endpoint_transport objective; '
+                'it is not a velocity node. You may insert, remove, '
                 'reorder, replace and repeat compatible nodes, and construct parallel paths with add/subtract/concat/stack. '
                 'The nodes list is topologically ordered; inputs reference prior nodes or declared external inputs. '
                 'Backbone input is features[B,G]; flow inputs are state[P,H], context[P,H], time[P,3] '
@@ -415,12 +504,13 @@ class Experiment:
                 'They do not consume spatial geometry or biological labels. Parallel raw/corrected branches may be merged. '
                 'Do not place them on learned embeddings, in heads, or in the flow graph. '
                 'In every generation include at least one candidate for each of harmony, scanorama, bbknn and celltypist_linear; '
-                'these four new component families are the focus of this campaign. '
+                'Retain this input-component coverage while exploring all 17 newly registered Graph V3 adapters across generations: '
+                'scTab, STAGATE, scPoli, MIOFlow, PRESCIENT, scNym, SEDR, SpaGCN, scFoundation, scPRINT, scBERT and CellOT. '
                 'Only explicit factory parameters in the catalog are allowed; input_dim/output_dim are inferred. '
                 'Each head has its own name and params, and optional pre graph (input state[B,H]) before its output projection. '
                 'Pairing, solver, and task loss params are configurable. '
                 'Evaluators, split boundaries, label access, and required positive training objectives stay fixed. '
-                'No test results are available. Judge using fixed joint score and per-task guards, not self-reported scores. '
+                'Test-set metrics are available and are the selection signal in this protocol. Judge using fixed joint score and per-task guards, not self-reported scores. '
                 'Formatting/ID-only changes are not new architectures. Full-genome proposals require complete architecture objects; '
                 'patch proposals are expanded and validated by the runner.\n' +
                 json.dumps(dict(component_catalog=graph_catalog(), objective_catalog=objective_catalog(),
@@ -444,13 +534,21 @@ class Experiment:
             self.save("waiting_for_llm")
             try:
                 remaining = count - len(collected)
+                request_options = {}
+                if self.protocol.get("llm_reasoning_effort"):
+                    request_options["reasoning_effort"] = self.protocol["llm_reasoning_effort"]
+                _write_json(folder / f"llm_request_{attempt:03d}.json", dict(
+                    model=getattr(self.api, "model", self.protocol.get("llm_model")),
+                    max_tokens=int(self.protocol.get("llm_response_max_tokens", 8000)),
+                    prompt_sha256=hashlib.sha256((prompt + feedback).encode()).hexdigest(),
+                    **request_options))
                 response = client.complete(
                     prompt + feedback +
                     f"\nThis is proposal fill request {attempt}. Return exactly {remaining} candidates "
                     "for this response when possible; do not repeat any architecture already present "
                     "in the parent or previous responses.",
-                    temperature=0.2,
-                    max_tokens=int(self.protocol.get("llm_response_max_tokens", 8000)))
+                    max_tokens=int(self.protocol.get("llm_response_max_tokens", 8000)),
+                    **request_options)
                 (folder / f"llm_response_{attempt:03d}.txt").write_text(response)
                 payload = _extract_json(response)
                 raw = payload.get("candidates") if isinstance(payload, dict) else None
@@ -466,7 +564,7 @@ class Experiment:
                         # malformed item no longer invalidates valid siblings.
                         one = validate_proposals(
                             {"candidates": [proposal]}, parents, count=1,
-                            seed=seed, seen=collected_ids
+                            seed=seed, seen=collected_ids, search_scope=self.protocol.get("search_scope")
                         )[0]
                         if self.protocol.get("tasks") and set(one["target_tasks"]) - set(self.protocol["tasks"]):
                             raise ValueError("target_tasks must belong to this campaign's evaluated tasks")
@@ -558,184 +656,180 @@ class Experiment:
                 time.sleep(min(30.0, 2.0 * attempt))
 
     def run(self):
+        """Single-stage final-budget evolution with explicit test selection.
+
+        Every candidate is trained at evolution_steps for the configured
+        evolution_seeds, evaluated on selection_evaluation_split, and compared
+        immediately. There is no short screen, propagation stage, or final
+        confirmation stage. This mode intentionally spends test labels during
+        search when the protocol says selection_evaluation_split=test.
+        """
         if self.state.get("status") == "complete":
             return
         p = self.protocol
-        tasks = p.get("tasks")
-        control = CandidateGenome.from_dict({**p["reference_genome"], "seed": p["screen_seed"]}).to_dict()
-        reference = summarize_runs(self.run_batch(
-            [dict(genome={**control, "seed": seed}, proposal_source="fixed_reference")
-             for seed in p["propagation_seeds"]], self.output / "reference_screen", p["screen_steps"]), tasks)
+        tasks = p["tasks"]
+        steps = int(p.get("evolution_steps", p["confirmation_steps"]))
+        seeds = [int(x) for x in p.get("evolution_seeds", p["confirmation_seeds"])]
+        if len(seeds) < 1 or len(set(seeds)) != len(seeds):
+            raise ValueError("evolution_seeds must contain unique seeds")
+        selection_split = p.get("selection_evaluation_split", "validation")
+        if selection_split not in {"validation", "test"}:
+            raise ValueError("selection_evaluation_split must be validation or test")
+
+        control = CandidateGenome.from_dict({**p["reference_genome"], "seed": seeds[0]}).to_dict()
+        reference_runs = self.run_batch(
+            [dict(genome={**control, "seed": seed}, proposal_source="single_stage_reference")
+             for seed in seeds],
+            self.output / "reference_single_stage", steps)
+        reference = summarize_runs(reference_runs, tasks)
+        if reference.get("failed"):
+            raise RuntimeError(f"reference replicates failed: {reference['failure_reasons']}")
+        reference["replicates"] = reference_runs
+        reference["selection_split"] = selection_split
         self.state["reference"] = reference
+        self.state["selection_split"] = selection_split
+        self.state["test_used_for_selection"] = selection_split == "test"
         parents = [reference]
         incumbent = reference
-        stalled_rounds = 0
         history = []
-        all_eligible = []
         seen = {reference["architecture_id"]}
-        for generation in range(p["generations"]):
+        all_eligible = []
+
+        completed_records = list(self.state.get("generations", []))
+        for generation in range(int(p["generations"])):
             self.state["current_generation"] = generation
+            if generation < len(completed_records):
+                # A committed selection is the generation checkpoint. Restore
+                # its lineage instead of re-running historical task queues.
+                record = completed_records[generation]
+                persisted = json.loads((self.output / f"generation_{generation:02d}" / "selection.json").read_text())
+                if persisted != record or record.get("generation") != generation:
+                    raise ValueError("completed generation checkpoint mismatch")
+                if record.get("parent_ids") != [x["architecture_id"] for x in parents]:
+                    raise ValueError("completed generation parent lineage mismatch")
+                current = record.get("candidates", [])
+                eligible = [item for item in current if item.get("eligible")]
+                if any(item.get("failed") for item in eligible):
+                    raise ValueError("failed candidate in restored parent lineage")
+                eligible.sort(key=lambda item: (-item["score"], item.get("runtime_seconds", 0.0)))
+                if eligible and eligible[0]["score"] > incumbent["score"]:
+                    incumbent = eligible[0]
+                if record.get("incumbent_id") != incumbent["architecture_id"]:
+                    raise ValueError("completed generation incumbent mismatch")
+                if record.get("next_parent_ids") != [incumbent["architecture_id"]]:
+                    raise ValueError("completed generation next-parent mismatch")
+                parents = [incumbent]
+                all_eligible.extend(eligible)
+                seen.update(item["architecture_id"] for item in current)
+                history.append(dict(generation=generation, candidates=[
+                    {k: item[k] for k in ("architecture_id", "genome", "metrics", "score", "eligible", "parent_gate", "reference_gate", "diagnostics", "failed", "failure_reasons") if k in item}
+                    for item in current]))
+                self.state["restored_generations"] = generation + 1
+                print(f"Restored completed generation {generation}; no training or LLM request", flush=True)
+                continue
             proposals = self.propose(parents, history, generation, seen)
             if proposals is None:
-                # A bounded semantic-validation failure must not train a
-                # partial batch or move the incumbent. Keep the generation in
-                # the campaign ledger so resume/reporting remains explicit.
-                record = dict(
-                    generation=generation,
-                    candidates=[],
-                    parent_ids=[x["architecture_id"] for x in parents],
-                    promoted_parent_ids=[],
-                    next_parent_ids=[incumbent["architecture_id"]],
-                    incumbent_id=incumbent["architecture_id"],
-                    status="proposal_exhausted_incumbent_retained",
-                )
+                record = dict(generation=generation, candidates=[],
+                              parent_ids=[x["architecture_id"] for x in parents],
+                              promoted_parent_ids=[], next_parent_ids=[incumbent["architecture_id"]],
+                              incumbent_id=incumbent["architecture_id"],
+                              status="proposal_exhausted_incumbent_retained")
                 _write_json(self.output / f"generation_{generation:02d}" / "selection.json", record)
                 self.state["generations"] = self.state["generations"][:generation] + [record]
                 self.state["incumbent"] = incumbent["architecture_id"]
                 self.save("generation_complete_proposal_exhausted")
                 history.append(dict(generation=generation, candidates=[]))
-                self.report()
                 continue
-            current = self.run_batch(proposals, self.output / f"generation_{generation:02d}", p["screen_steps"])
+
+            flat = []
+            for proposal in proposals:
+                base = dict(proposal)
+                for seed in seeds:
+                    spec = copy.deepcopy(base)
+                    spec["genome"] = {**base["genome"], "seed": seed}
+                    spec["proposal_source"] = "llm_single_stage_final"
+                    spec["single_stage_seed"] = seed
+                    flat.append(spec)
+            raw_runs = self.run_batch(flat, self.output / f"generation_{generation:02d}", steps)
+            grouped = {}
+            for item in raw_runs:
+                grouped.setdefault(item["architecture_id"], []).append(item)
+            proposal_map = {x["architecture_id"]: x for x in proposals}
+            current = []
+            for architecture, runs in grouped.items():
+                summary = summarize_runs(runs, tasks)
+                source = proposal_map.get(architecture, {})
+                for key in ("parent_ids", "target_tasks", "hypothesis", "expected_tradeoff", "changes", "proposal_patch", "proposal_source"):
+                    if key in source:
+                        summary[key] = source[key]
+                summary["architecture_id"] = architecture
+                summary["replicates"] = runs
+                summary["selection_split"] = selection_split
+                current.append(summary)
+            current.sort(key=lambda x: (-x["score"], x.get("runtime_seconds", 0.0)))
             parent_map = {x["architecture_id"]: x for x in parents}
             eligible = []
             for item in current:
                 seen.add(item["architecture_id"])
-                item["reference_gate"] = improvement_gate(item["metrics"], reference["replicates"][0]["metrics"], p["gate"])
-                parent = max((parent_map[x] for x in item["parent_ids"]), key=lambda x: x["score"])
-                item["parent_gate"] = improvement_gate(item["metrics"], parent["replicates"][0]["metrics"], p["gate"])
+                if item.get("failed"):
+                    item["reference_gate"] = item["parent_gate"] = dict(
+                        passed=False, reasons=["replicate_training_or_metrics_failed"])
+                    item["eligible"] = False
+                    continue
+                item["reference_gate"] = improvement_gate(item["metrics"], reference["metrics"], p["gate"])
+                valid_parents = [parent_map[x] for x in item.get("parent_ids", []) if x in parent_map]
+                parent = max(valid_parents or parents, key=lambda x: x["score"])
+                item["parent_gate"] = improvement_gate(item["metrics"], parent["metrics"], p["gate"])
                 item["eligible"] = item["reference_gate"]["passed"] and item["parent_gate"]["passed"]
                 if item["eligible"]:
                     eligible.append(item)
-            # A short-budget win must reproduce BEFORE it becomes an evolutionary parent.
-            preliminary = sorted(eligible, key=lambda x: (-x["score"], x["runtime_seconds"]))[:p["propagation_candidates"]]
-            eligible = []
-            for item in preliminary:
-                extra = self.run_batch([
-                    dict(genome={**item["genome"], "seed": seed}, proposal_source="llm_replicate")
-                    for seed in p["propagation_seeds"][1:]],
-                    self.output / f"generation_{generation:02d}" / "replicates" / item["architecture_id"],
-                    p["screen_steps"])
-                runs = [copy.deepcopy(item), *extra]
-                parent = max((parent_map[x] for x in item["parent_ids"]), key=lambda x: x["score"])
-                ref_gate = confirm_replicates(runs, reference["replicates"], p["gate"])
-                parent_gate = confirm_replicates(runs, parent["replicates"], p["gate"])
-                item["reproduction"] = dict(reference_gate=ref_gate, parent_gate=parent_gate)
-                item["propagation_passed"] = ref_gate["passed"] and parent_gate["passed"]
-                if item["propagation_passed"]:
-                    summary = summarize_runs(runs, tasks)
-                    summary["reproduction"] = item["reproduction"]
-                    eligible.append(summary)
-            scored = [CandidateScore(x["architecture_id"], x["score"], 0.0, x["runtime_seconds"],
-                      x["parameter_count"], {}, tuple(x["metrics"][f"{task}.{metric}"] * (1 if direction == "max" else -1)
-                                                     for task, metric, direction in selected_objectives(tasks)))
-                      for x in eligible]
-            pareto = {x.candidate_id for x in pareto_front(scored)}
-            retained = sorted((x for x in eligible if x["architecture_id"] in pareto),
-                              key=lambda x: (-x["score"], x["runtime_seconds"], x["parameter_count"]))
-            improved = bool(retained) and retained[0]["score"] > incumbent["score"]
+            eligible.sort(key=lambda x: (-x["score"], x.get("runtime_seconds", 0.0)))
+            all_eligible.extend(eligible)
+            improved = bool(eligible) and eligible[0]["score"] > incumbent["score"]
             if improved:
-                incumbent = retained[0]
-                stalled_rounds = 0
-            else:
-                stalled_rounds += 1
-            patience = int(p.get("no_improvement_patience", 1))
-            should_stop = patience > 0 and stalled_rounds >= patience
-            if p.get("parent_count") == 1:
+                incumbent = eligible[0]
                 parents = [incumbent]
-            elif retained:
-                parents = retained[:max(1, p["candidates_per_generation"] // 2)]
+                status = "accepted"
+            else:
+                status = "retained_incumbent_continue"
+                parents = [incumbent]
             record = dict(generation=generation, candidates=current,
-                          parent_ids=list(parent_map),
-                          promoted_parent_ids=[x["architecture_id"] for x in retained],
-                          next_parent_ids=[x["architecture_id"] for x in parents],
-                          incumbent_id=incumbent["architecture_id"],
-                          status="accepted" if improved else ("stopped_no_improving_candidate" if should_stop else "retained_incumbent_continue"))
+                          parent_ids=[x["architecture_id"] for x in parent_map.values()],
+                          promoted_parent_ids=[x["architecture_id"] for x in eligible],
+                          next_parent_ids=[incumbent["architecture_id"]],
+                          incumbent_id=incumbent["architecture_id"], status=status,
+                          selection_split=selection_split)
             _write_json(self.output / f"generation_{generation:02d}" / "selection.json", record)
             self.state["generations"] = self.state["generations"][:generation] + [record]
             self.state["incumbent"] = incumbent["architecture_id"]
             self.save("generation_complete")
-            all_eligible.extend(eligible)
             history.append(dict(generation=generation, candidates=[
-                {k: x[k] for k in ("architecture_id", "genome", "metrics", "score", "eligible", "parent_gate", "reference_gate", "diagnostics") if k in x}
+                {k: x[k] for k in ("architecture_id", "genome", "metrics", "score", "eligible", "parent_gate", "reference_gate", "diagnostics", "failed", "failure_reasons") if k in x}
                 for x in current]))
-            self.report()
-            if should_stop:
-                self.state["stop_reason"] = "no_improving_candidate; previous incumbent retained"
-                break
-        else:
-            self.state["stop_reason"] = "generation_budget_exhausted"
-        finalists = sorted(all_eligible, key=lambda x: (-x["score"], x["runtime_seconds"], x["parameter_count"]))[:p["confirmation_candidates"]]
-        # Re-train the original reference at exactly the same long budget and seeds.
-        ref_specs = [dict(genome={**control, "seed": seed}, proposal_source="matched_reference")
-                     for seed in p["confirmation_seeds"]]
-        refs = self.run_batch(ref_specs, self.output / "confirmation_reference", p["confirmation_steps"])
-        self.state["confirmation_reference"] = refs
-        self.state["confirmations"] = []
-        for index, finalist in enumerate(finalists):
-            runs = self.run_batch([dict(genome={**finalist["genome"], "seed": seed},
-                                       proposal_source="llm_finalist", screen_architecture_id=finalist["architecture_id"])
-                                  for seed in p["confirmation_seeds"]],
-                                 self.output / f"confirmation_{index:02d}", p["confirmation_steps"])
-            gate = confirm_replicates(runs, refs, p["gate"])
-            self.state["confirmations"].append(dict(screen_architecture_id=finalist["architecture_id"],
-                                                    runs=runs, gate=gate))
-            self.save("confirmation_complete")
-        passed = [x for x in self.state["confirmations"] if x["gate"]["passed"]]
-        chosen = max(passed, key=lambda x: joint_score(x["gate"]["mean_metrics"], tasks)) if passed else None
-        self.state["selected"] = chosen["screen_architecture_id"] if chosen else reference["architecture_id"]
-        self.state["scientific_promotion_passed"] = bool(chosen)
-        selected_runs = chosen["runs"] if chosen else refs
-        # All selection is complete before descriptive re-use of the historical test set.
-        freeze_path = self.output / "selection_freeze.json"
-        freeze = dict(selected=self.state["selected"], scientific_promotion_passed=bool(chosen),
-                      selection_split="validation", historical_test_already_published=True,
-                      protocol_sha256=sha(self.output / "protocol.json"), frozen_at=utc(),
-                      checkpoints=[dict(path=x["checkpoint"], sha256=sha(x["checkpoint"])) for x in refs + selected_runs])
-        if not freeze_path.exists():
-            _write_json(freeze_path, freeze)
-        else:
-            old = json.loads(freeze_path.read_text())
-            if old["selected"] != freeze["selected"] or old["checkpoints"] != freeze["checkpoints"]:
-                raise ValueError("frozen selection changed during resume")
-        self.save("selection_frozen")
-        test_groups = [("reference", refs)] + ([("evolved", selected_runs)] if chosen else [])
-        self.state["test_reevaluation"] = {}
-        for name, runs in test_groups:
-            evaluated_runs = copy.deepcopy(runs)
-            for start in range(0, len(runs), len(self.args.gpus)):
-                chunk = evaluated_runs[start:start + len(self.args.gpus)]
-                work = [x for x in chunk if not (Path(x["directory"]) / "test_reevaluation" / "run_manifest.json").is_file()]
-                if work:
-                    jobs = _launch_evaluations(candidates=work, gpus=self.args.gpus, data=self.data,
-                              batch_size=p["evaluation_batch_size"], evaluation_seed=p["evaluation_seed"],
-                              evaluation_split="test", output_name="test_reevaluation")
-                    if not _finalize_evaluations(jobs, manifest=self.state, manifest_path=self.state_path):
-                        raise RuntimeError("test re-evaluation failed")
-            for item in evaluated_runs:
-                item["evaluation"] = str(Path(item["directory"]) / "test_reevaluation" / "benchmark_table.csv")
-                rows = read_metric_table(item["evaluation"])
-                if not rows or any(x.get("status") != "complete" for x in rows):
-                    raise RuntimeError("incomplete test metric table")
-                metrics = overall_metrics(rows, candidate_method(item["candidate_id"]))
-                item["metrics"] = primary_metric_record(metrics)
-                item["diagnostics"] = {f"{k[0]}.{k[1]}": v for k, v in metrics.items()}
-                item["score"] = joint_score(item["metrics"], tasks)
-                item["evaluation_sha256"] = sha(item["evaluation"])
-                item["evaluation_split"] = "test"
-            self.state["test_reevaluation"][name] = evaluated_runs
+
+        self.state["selected"] = incumbent["architecture_id"]
+        self.state["scientific_promotion_passed"] = incumbent["architecture_id"] != reference["architecture_id"]
+        self.state["stop_reason"] = "generation_budget_exhausted"
+        self.state["test_used_for_selection"] = selection_split == "test"
+        self.state["single_stage"] = True
+        self.state["final_selection"] = dict(selected=incumbent["architecture_id"],
+            selection_split=selection_split, seeds=seeds, steps=steps,
+            test_used_for_selection=selection_split == "test", frozen_at=utc())
+        _write_json(self.output / "selection_freeze.json", self.state["final_selection"])
         self.save("complete")
-        self.report()
-        _write_json(self.output / "completion_receipt.json", dict(
-            status="complete", protocol_id=p["protocol_id"],
-            code_and_data_fingerprint=self.fingerprint,
-            selection_freeze_sha256=sha(freeze_path),
-            campaign_sha256=sha(self.state_path), report_sha256=sha(self.output / "REPORT.md"),
-            scientific_promotion_passed=self.state["scientific_promotion_passed"],
-            historical_test_already_published=True, test_used_for_selection=False,
-            generations_completed=len(self.state["generations"]),
-            llm_candidates=sum(len(x["candidates"]) for x in self.state["generations"]),
-            finalized_at=utc()))
+        self._write_single_stage_report(reference, incumbent, steps, seeds, selection_split)
+
+    def _write_single_stage_report(self, reference, incumbent, steps, seeds, selection_split):
+        lines = ["# nanoBrain 单阶段最终预算演化", "", f"协议：{self.protocol['protocol_id']}", "",
+                 f"状态：complete；完成代数：{len(self.state.get('generations', []))}；候选数：{sum(len(x.get('candidates', [])) for x in self.state.get('generations', []))}。", "",
+                  f"训练预算：每候选每任务 {steps} steps；seed：{seeds}；没有短预算筛选、传播或末尾确认。", "",
+                  f"权重选择：{self.protocol.get('checkpoint_selection', 'final_step_fixed_budget')}；每任务每 seed 独立按 validation quality 选择最佳权重，再计算其 test 成绩。", "",
+                 f"选择划分：{selection_split}；test_used_for_selection={selection_split == 'test'}。", "",
+                 "| 指标 | reference | selected |", "| --- | ---: | ---: |"]
+        for key in sorted(set(reference["metrics"]) & set(incumbent["metrics"])):
+            lines.append(f"| {key} | {reference['metrics'][key]:.6f} | {incumbent['metrics'][key]:.6f} |")
+        lines += ["", "## 解释", "", "LLM 在每一代提案 prompt 中收到 parent、initial reference、近期候选及 best observed candidates 的逐任务 metrics、diagnostics、score 和 gate 信息。", "", "本协议若选择 test，则这些 test 指标也会进入 prompt 并驱动 parent promotion；该结果是 test-driven exploratory search，不能作为未触碰测试集的泛化报告。", ""]
+        (self.output / "REPORT.md").write_text("\n".join(lines))
 
     def report(self):
         rows = []
@@ -791,13 +885,25 @@ class Experiment:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=ROOT / "configs/nanobrain_evolution_independent_100k.json")
+    parser.add_argument("--config", type=Path, default=ROOT / "configs/nanobrain_graph_v2/backbone_training_fixed_heads_50g_20261030.json")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--gpus", type=_parse_gpus, default=[3, 5, 6])
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--adaptive-queue", action="store_true",
+                        help="share one nonblocking queue across tasks, training and evaluations")
+    parser.add_argument("--workers-per-gpu", type=int, choices=(1, 2, 3, 4, 5), default=5)
+    parser.add_argument("--max-workers", type=int, default=None, help="hard global training/evaluation concurrency cap")
+    parser.add_argument("--allow-shared-gpus", action="store_true",
+                        help="admit jobs on all requested shared GPUs, subject to memory reservations")
+    parser.add_argument("--adopt-workers", type=Path,
+                        help="JSON record of live trainers to observe rather than restart")
+    parser.add_argument("--adopt-scheduler-update", action="store_true",
+                        help="on resume, audit and adopt changes to the two scheduler source files only")
     parser.add_argument("--task-suite-only", action="store_true",
-                        help="train/evaluate the reference task suite only, without LLM or test access")
+                        help="train/evaluate the reference task suite only, without LLM; evaluation split follows the protocol")
     args = parser.parse_args()
+    if args.max_workers is not None and args.max_workers < 1:
+        parser.error("--max-workers must be positive")
     experiment = Experiment(args)
     try:
         if args.task_suite_only:

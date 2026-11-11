@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "checked_at": "2026-11-06T06:02:41.862959+00:00",
+  "pid": 1341352,
+  "maximum_workers": 5,
+  "active_processes": 5,
+  "paused_processes": 0,
+  "completed_generations_preserved": 18,
+  "no_training_reset": true,
+  "scientific_protocol_unchanged": true,
+  "gpu_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "tests": "3 scheduler tests passed: downsizing, stable parking, automatic resume, per-GPU/global bounds"
+}

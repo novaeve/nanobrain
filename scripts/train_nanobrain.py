@@ -58,7 +58,7 @@ def main() -> None:
     parser.add_argument("--validation-development-groups", type=int, default=32)
     parser.add_argument("--eval-interval", type=int, default=0)
     parser.add_argument("--precision", choices=("fp32", "bf16"), default="bf16")
-    parser.add_argument("--checkpoint-policy", choices=("all", "final_weights"), default="all")
+    parser.add_argument("--checkpoint-policy", choices=("all", "final_weights", "best_weights"), default="all")
     parser.add_argument(
         "--loss-balance",
         choices=("ema_equal", "detached_max_equal", "fixed"),
