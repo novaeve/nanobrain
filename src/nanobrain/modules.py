@@ -329,5 +329,3 @@ _register()
 
 from .baseline_components import register_components
 register_components()
-
-from . import integration_components as _integration_components

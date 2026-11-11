@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""Run reproducible baseline and nanoBrain pilot evaluations.
+"""Evaluate nanoBrain and baselines on the frozen 100k four-task benchmark.
 
-The script deliberately targets the fixed ``nanobrain_v3_100k`` materialized
-subset.  Every fit uses train rows only and every reported value is computed
-on validation rows with the corresponding task mask.  It writes one standard
-NumPy prediction artifact per method/task, task metric receipts, and a
-long-format table.  These pilot results are kept separate from the formal
-42.8M-row benchmark until the same runners are promoted to the full corpus.
+Fitting uses train only. Evaluation defaults to validation and writes prediction
+artifacts, metric receipts, and a long-format table. Test re-evaluation is explicit
+and descriptive because the historical test split has already been opened.
 """
 
 from __future__ import annotations
@@ -14,6 +11,7 @@ from __future__ import annotations
 import argparse
 import csv
 from datetime import datetime, timezone
+import importlib
 import json
 import math
 import os
@@ -26,6 +24,7 @@ import warnings
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from brainwm_benchmark import evaluate  # noqa: E402
@@ -34,6 +33,7 @@ from nanobrain.data import DatasetSplits, NanoDataset, load_v3_subset, verify_su
 
 SPLIT_ID = "BRAINWM-HUMAN-GLOBAL-6-2-2-V3"
 TASKS = ("annotation", "integration", "spatial_niche", "spatial_completion", "development")
+PUBLIC_TASKS = ("annotation", "integration", "spatial_niche", "development")
 METRIC_DIRECTION: dict[str, str] = {
     "rmse": "min", "mae": "min", "nonzero_rmse": "min",
     "heldout_rmse": "min", "heldout_mae": "min", "row_mse": "min", "row_mae": "min",
@@ -636,7 +636,7 @@ def _find_default_checkpoint() -> Path | None:
 
 def _run_nanobrain(
     splits: DatasetSplits, checkpoint: Path, output: Path, device: str, batch_size: int,
-    *, evaluation_seed: int | None = None,
+    *, evaluation_seed: int | None = None, selected_public_tasks: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     import torch
     from nanobrain.genome import CandidateGenome
@@ -655,7 +655,9 @@ def _run_nanobrain(
             task_payload = torch.load(path, map_location="cpu", weights_only=False)
             if task_payload.get("train", {}).get("task") != task or task_payload["genome"] != bundle["genome"]:
                 raise ValueError("task checkpoint provenance mismatch")
-            rows.extend(_run_nanobrain(splits, path, output, device, batch_size, evaluation_seed=evaluation_seed))
+            rows.extend(_run_nanobrain(splits, path, output, device, batch_size,
+                                      evaluation_seed=evaluation_seed,
+                                      selected_public_tasks=selected_public_tasks))
         return rows
     payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
     training_task = payload.get("train", {}).get("task", "joint")
@@ -663,11 +665,13 @@ def _run_nanobrain(
     if training_task not in ("joint", *TASKS):
         raise ValueError("invalid checkpoint training task")
     selected_tasks = set(TASKS) if training_task == "joint" else {training_task}
+    if selected_public_tasks is not None:
+        selected_tasks &= selected_public_tasks
+    if not selected_tasks:
+        return []
     regime = "joint_from_scratch" if training_task == "joint" else "independent_task_from_scratch"
     config = NanoBrainModelConfig(**payload["config"])
     genome = CandidateGenome.from_dict(payload["genome"])
-    from nanobrain.integration_components import prepare_component_views
-    prepare_component_views(splits, genome)
     population_seed = genome.seed if evaluation_seed is None else int(evaluation_seed)
     model = NanoBrainModel(config, genome)
     model.load_state_dict(payload["model"])
@@ -799,9 +803,27 @@ def _write_rows(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
+def _checkpoint_from_run(run_dir: Path) -> Path:
+    receipts = sorted(run_dir.glob("receipt-*.json"))
+    if len(receipts) != 1:
+        raise ValueError("--run-dir must contain exactly one completed training receipt")
+    receipt = json.loads(receipts[0].read_text(encoding="utf-8"))
+    if receipt.get("status") != "complete" or not receipt.get("stability", {}).get("passed"):
+        raise ValueError("training run is incomplete or failed stability checks")
+    value = receipt.get("best_checkpoint") or receipt.get("checkpoint")
+    if not value:
+        raise ValueError("training receipt does not name a checkpoint")
+    path = Path(value)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    return path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", type=Path, default=ROOT / "assets" / "nanobrain_v3_100k")
+    parser.add_argument("--data", type=Path, default=ROOT / "assets" / "nanobrain_v3_100k_metadata_v2")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=20260915)
     parser.add_argument("--population-evaluation-seed", type=int, default=None,
@@ -816,7 +838,12 @@ def main() -> None:
         help="update the global LATEST_PILOT pointer after a standalone run",
     )
     parser.add_argument("--checkpoint", type=Path, default=None)
-    parser.add_argument("--device", default="cuda:5")
+    parser.add_argument("--run-dir", type=Path, help="directory of one completed training run")
+    parser.add_argument("--plugin", action="append", default=[],
+                        help="explicit component plugin import, matching the training run")
+    parser.add_argument("--tasks", default=",".join(PUBLIC_TASKS),
+                        help="comma-separated subset of the four public tasks")
+    parser.add_argument("--device", default="cpu")
     parser.add_argument("--batch-size", type=int, default=1024)
     parser.add_argument("--methods", default="all", help="comma-separated method names or all")
     parser.add_argument(
@@ -827,9 +854,24 @@ def main() -> None:
     parser.add_argument(
         "--allow-test",
         action="store_true",
-        help="required for the single frozen-protocol test evaluation",
+        help="required for an explicit descriptive re-evaluation of the published test split",
     )
     args = parser.parse_args()
+    requested_tasks = {item.strip() for item in args.tasks.split(",") if item.strip()}
+    if not requested_tasks or requested_tasks - set(PUBLIC_TASKS):
+        parser.error(f"--tasks must select from {PUBLIC_TASKS}")
+    if args.run_dir and args.checkpoint:
+        parser.error("choose --run-dir or --checkpoint")
+    if args.run_dir:
+        try:
+            args.checkpoint = _checkpoint_from_run(args.run_dir)
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+    for name in args.plugin:
+        try:
+            importlib.import_module(name)
+        except (ImportError, ValueError) as exc:
+            parser.error(f"cannot import plugin {name!r}: {exc}")
     if args.batch_size < 1:
         parser.error("--batch-size must be positive")
     if args.evaluation_split == "test" and not args.allow_test:
@@ -875,15 +917,19 @@ def main() -> None:
     started = time.perf_counter()
     if not args.skip_baselines:
         # Use explicit task prefixes to keep similarly named methods unambiguous.
-        rows.extend(_run_annotation(splits.train, splits.validation, output, args.seed, methods, args.include_slow))
-        rows.extend(_run_integration(splits.train, splits.validation, output, args.seed, methods))
-        rows.extend(_run_spatial(splits.train, splits.validation, output, args.seed, methods))
-        rows.extend(_run_completion(splits.train, splits.validation, output, methods))
-        rows.extend(_run_development(splits, output, args.seed, methods))
+        if "annotation" in requested_tasks:
+            rows.extend(_run_annotation(splits.train, splits.validation, output, args.seed, methods, args.include_slow))
+        if "integration" in requested_tasks:
+            rows.extend(_run_integration(splits.train, splits.validation, output, args.seed, methods))
+        if "spatial_niche" in requested_tasks:
+            rows.extend(_run_spatial(splits.train, splits.validation, output, args.seed, methods))
+        if "development" in requested_tasks:
+            rows.extend(_run_development(splits, output, args.seed, methods))
     checkpoint = None if args.skip_nanobrain else (args.checkpoint or _find_default_checkpoint())
     if not args.skip_nanobrain and checkpoint is not None and checkpoint.is_file():
         rows.extend(_run_nanobrain(splits, checkpoint.resolve(), output, args.device, args.batch_size,
-                                   evaluation_seed=args.population_evaluation_seed))
+                                   evaluation_seed=args.population_evaluation_seed,
+                                   selected_public_tasks=requested_tasks))
     elif not args.skip_nanobrain:
         warnings.warn("no nanoBrain checkpoint found; baseline-only pilot", RuntimeWarning)
     _write_rows(output / "benchmark_table.csv", rows)
@@ -897,6 +943,8 @@ def main() -> None:
         "test_opened": args.evaluation_split == "test",
         "population_evaluation_seed": args.population_evaluation_seed,
         "graph_metric_version": "graph_metrics_v2",
+        "tasks_requested": sorted(requested_tasks),
+        "plugins": args.plugin,
         "tasks_evaluated": sorted({row["task"] for row in rows}),
         "training_regimes": sorted({row["training_regime"] for row in rows}),
         "methods_requested": sorted(methods), "checkpoint": str(checkpoint.resolve()) if checkpoint and checkpoint.is_file() else None,
