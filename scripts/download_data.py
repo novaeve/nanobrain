@@ -9,7 +9,6 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = ROOT.parents[1]
 

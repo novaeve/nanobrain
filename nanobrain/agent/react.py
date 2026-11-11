@@ -136,7 +136,12 @@ class ToolSession:
                     "optimizer": "build(parameters, lr, weight_decay, **declared) -> Optimizer covering each parameter once",
                 },
                 "source_budget": {"per_file_bytes": 32768, "total_bytes": 131072, "full_parameters": 200000000},
-                "protocol": "all five joint objectives; fixed 10k checkpoint on 30k schedule; single Cajal seed 0; Cajal unified_1m data",
+                "protocol": (
+                    f"all {len(DEFINITION['objectives']['names'])} joint objectives; fixed "
+                    f"{DEFINITION['budget']['stop_at']}-step checkpoint on a "
+                    f"{DEFINITION['budget']['schedule_steps']}-step schedule; "
+                    f"seeds {DEFINITION['budget']['seeds']}; data as frozen in the campaign lock"
+                ),
                 "weight_policy": "random initialization; resume only this candidate's own same-seed checkpoint; no historical/pretrained teachers",
             }
         if name == "list_components":

@@ -39,7 +39,9 @@ def setup_release(tmp_path, unsafe=False):
         "datasets": {
             "unified_1m": {"rows": 3, "manifest_sha256": hashlib.sha256(files["unified_1m/manifest.json"]).hexdigest()}
         },
-        "files": {name: {"bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()} for name, value in files.items()},
+        "files": {
+            name: {"bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()} for name, value in files.items()
+        },
         "parts": [],
     }
     for index, start in enumerate(range(0, len(compressed), 64)):
@@ -52,7 +54,9 @@ def setup_release(tmp_path, unsafe=False):
 
 
 def run(module, cache, destination, monkeypatch, *options):
-    monkeypatch.setattr(sys, "argv", ["download_data", "--archive-dir", str(cache), "--destination", str(destination), *options])
+    monkeypatch.setattr(
+        sys, "argv", ["download_data", "--archive-dir", str(cache), "--destination", str(destination), *options]
+    )
     module.main()
 
 
@@ -80,7 +84,7 @@ def test_undeclared_archive_path_is_rejected(tmp_path, monkeypatch):
 
 def test_corrupt_download_does_not_replace_cached_part(tmp_path, monkeypatch):
     module, cache, destination = setup_release(tmp_path)
-    first = sorted(cache.iterdir())[0]
+    first = min(cache.iterdir())
     first.write_bytes(b"corrupted")
     monkeypatch.setattr(module.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(b"also-corrupted"))
     with pytest.raises(ValueError, match="part checksum mismatch"):

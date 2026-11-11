@@ -1,7 +1,7 @@
-# nanoBrain Evolve
+# nanoBrain
 
 <p align="center">
-  <strong>An evolutionary research edition of nanoBrain, starting from the Cajal seed model</strong>
+  <strong>LLM-driven evolution of virtual-cell models: definition is open, evolution is frozen</strong>
 </p>
 
 <p align="center">
@@ -21,11 +21,11 @@
 ![Tasks](https://img.shields.io/badge/joint%20tasks-5-0969da)
 ![Evolution](https://img.shields.io/badge/evolution-ReAct-8250df)
 
-nanoBrain Evolve is an evolution-focused edition developed from nanoBrain. It carries forward nanoBrain's composable models, explicit experiment contracts, common evaluation, and reproducible records, and connects them through an LLM-driven research loop. The LLM proposes architectures, objectives, and training strategies. The experiment system validates, trains, evaluates, and selects those proposals. [Upstream nanoBrain](https://github.com/novaeve/nanobrain/tree/main)
+nanoBrain lets an LLM evolve virtual-cell models inside a controlled experiment. The LLM proposes architectures, objectives, and training strategies; the system validates, trains, evaluates, and selects them and keeps the evidence for every step. **Definition is open, evolution is frozen**: before a campaign starts, its data, tasks, metrics, opponents, and search space are yours to define; once it is frozen, all of that is locked, and any change is a new campaign. The [whitepaper](docs/whitepaper.md) is the user manual for this lifecycle. The earlier 100k-cell nanoBrain is preserved at tag [`nanobrain-v1-final`](https://github.com/novaeve/nanobrain/tree/nanobrain-v1-final).
 
 The current seed model is **Cajal v1**, a shared virtual-cell model trained jointly on five tasks. Evolution starts from its architecture and training recipe. Every new candidate is initialized with random weights and evaluated through one shared checkpoint.
 
-The nanoBrain website presents bounded experiments as a way to investigate model designs before larger Brain World Model training campaigns. nanoBrain Evolve develops that research workflow around Cajal, retaining the evidence behind each proposed change. [Project website](https://novaeve.github.io/nanobrain/)
+The nanoBrain website presents bounded experiments as a way to investigate model designs before larger Brain World Model training campaigns. nanoBrain develops that research workflow around Cajal, retaining the evidence behind each proposed change. [Project website](https://novaeve.github.io/nanobrain/)
 
 > [!IMPORTANT]
 > The current experiment uses 1,015,388 pretraining cells, a 65,918-gene vocabulary, and three disjoint research evaluation sets. Its fixed budget is 30 generations × 10 candidates, seed=0, and 10,000 training steps per candidate.
@@ -37,28 +37,23 @@ The nanoBrain website presents bounded experiments as a way to investigate model
 The data downloader requires Python 3.12+. Downloaded files are checked against the published SHA-256 manifest.
 
 ```bash
-git clone --branch research/nanobrain-evolve https://github.com/novaeve/nanobrain.git nanobrain-evolve
-cd nanobrain-evolve
-python variants/cajal-react/scripts/download_data.py
+git clone https://github.com/novaeve/nanobrain.git
+cd nanobrain
+python scripts/download_data.py
 ```
 
 The default data directory is `assets/cajal/`. The extracted datasets occupy about 16 GB. Allow approximately 35 GB for download, archive assembly, and extraction. [Data release](https://github.com/novaeve/nanobrain/releases/tag/cajal-react-data-20261106)
 
-### 2. Prepare the evolution workspace
+### 2. Install and freeze the campaign
 
-The full evolution workflow runs from an independent Git root on Linux with an NVIDIA GPU environment. Export the packaged Cajal implementation from the repository root.
+The full workflow runs on Linux with NVIDIA GPUs and bubblewrap.
 
 ```bash
-mkdir -p /work/nanobrain-evolve
-git archive HEAD:variants/cajal-react | tar -x -C /work/nanobrain-evolve
-cd /work/nanobrain-evolve
-git init
-git add .
-git commit -m "Import nanoBrain Evolve source"
-python -m pip install -e '.[dev]'
+pip install -e '.[eval,scvi,dev]'
+nanobrain --freeze      # lock campaigns/cajal-v1 (already frozen in this repository)
 ```
 
-Prepare the matching PyTorch/CUDA extensions, component dependencies, Linux bwrap, fixed data paths, Cajal reference artifacts, integration evaluation cache, and controller API credentials using the deployment instructions. These inputs are verified by the experiment contract. [Deployment instructions](variants/cajal-react/README.md) · [Component dependencies](variants/cajal-react/component_library/dependencies.json)
+Prepare the matching PyTorch/CUDA extensions, component dependencies, fixed data paths, Cajal reference artifacts, integration evaluation cache, and controller API credentials using the deployment instructions. The campaign lock and the run contract verify these inputs. [Deployment instructions](docs/seed-cajal.md) · [Component dependencies](component_library/dependencies.json)
 
 ### 3. Inspect the plan and launch evolution
 
@@ -87,7 +82,7 @@ Cajal v1 supplies the initial model architecture and joint-training recipe. It r
 | Negative-binomial expression decoder | Models measured counts for expression reconstruction |
 | Neighborhood model | Uses visible spatial neighbors for spatial imputation |
 
-The seed recipe uses gradient-norm loss balancing and grouped Muon + AdamW. The frozen `cajal_v1@10000` checkpoint and its recorded scores provide the comparison reference. Candidate inheritance carries architecture, source code, and hyperparameters. Each new candidate trains from random initialization, and an interrupted candidate may resume its own identified checkpoint. [Seed recipe](variants/cajal-react/configs/experiments/cajal_v1.toml) · [Reference record](variants/cajal-react/reference/existing_cajal_v1_10k.json)
+The seed recipe uses gradient-norm loss balancing and grouped Muon + AdamW. The frozen `cajal_v1@10000` checkpoint and its recorded scores provide the comparison reference. Candidate inheritance carries architecture, source code, and hyperparameters. Each new candidate trains from random initialization, and an interrupted candidate may resume its own identified checkpoint. [Seed recipe](configs/experiments/cajal_v1.toml) · [Reference record](reference/existing_cajal_v1_10k.json)
 
 ## Evolution workflow
 
@@ -107,7 +102,7 @@ flowchart LR
 3. **Train and evaluate.** Accepted candidates train one shared model on all five objectives. The fixed-stop checkpoint produces all six report metrics through the common evaluation pipeline.
 4. **Select and retain evidence.** Promotion checks improvements and regressions. Quality, Pareto, and structural-exploration archives guide subsequent proposals, while failed and unselected branches remain in the research history.
 
-Promotion requires a target-metric improvement greater than 0.005 over both the parent and the fixed reference, a regression of at most 0.005 on every metric relative to the parent, and a better joint-frontier ordering. That ordering prioritizes the weakest relative margin against the baselines, then the average relative margin. [Selection implementation](variants/cajal-react/cajal_research/selection.py)
+Promotion requires a target-metric improvement greater than 0.005 over both the parent and the fixed reference, a regression of at most 0.005 on every metric relative to the parent, and a better joint-frontier ordering. That ordering prioritizes the weakest relative margin against the baselines, then the average relative margin. [Selection implementation](nanobrain/infra/gate.py)
 
 ## Five joint tasks
 
@@ -119,7 +114,7 @@ Promotion requires a target-metric improvement greater than 0.005 over both the 
 | Gene imputation | Reconstruct masked measured gene expression | Median per-cell Pearson correlation ↑ |
 | Spatial imputation | Reconstruct hidden expression using visible neighbors | Median per-cell Pearson correlation ↑ |
 
-All task scores come from the same candidate checkpoint. Frozen Cajal records provide the reference and 13 complete-method baselines. Evaluation scores are reused as exploratory feedback during evolution, with `seed_count=1` and null standard deviations. [Evaluation protocol](variants/cajal-react/reference/evaluation_protocol.json) · [Baselines](variants/cajal-react/reference/opponents.json)
+All task scores come from the same candidate checkpoint. Frozen Cajal records provide the reference and 13 complete-method baselines. Evaluation scores are reused as exploratory feedback during evolution, with `seed_count=1` and null standard deviations. [Evaluation protocol](reference/evaluation_protocol.json) · [Baselines](reference/opponents.json)
 
 ## Data and scale
 
@@ -130,12 +125,12 @@ All task scores come from the same candidate checkpoint. Frozen Cajal records pr
 | `eval_integration_10k` | 9,867 | Integration evaluation |
 | `eval_spatial` | 40,789 | Spatial-imputation evaluation |
 
-The data retain raw counts, measured panels, label hierarchies, spatial neighbors, and source-row identity. Each research evaluation set is disjoint from pretraining. Dataset paths, masks, identities, and evaluation definitions are fixed by the protocol. [Data definition](variants/cajal-react/data_build/UNIFIED_1M.md) · [Release manifest](variants/cajal-react/reference/data-release.json)
+The data retain raw counts, measured panels, label hierarchies, spatial neighbors, and source-row identity. Each research evaluation set is disjoint from pretraining. Dataset paths, masks, identities, and evaluation definitions are fixed by the protocol. [Data definition](data_build/UNIFIED_1M.md) · [Release manifest](reference/data-release.json)
 
 To verify an existing download, run this command from the repository root.
 
 ```bash
-python variants/cajal-react/scripts/download_data.py --verify-only
+python scripts/download_data.py --verify-only
 ```
 
 ## Evolution search and budget
@@ -148,7 +143,7 @@ python variants/cajal-react/scripts/download_data.py --verify-only
 | Sampling | Expression cells, spatial groups, nonzero-token limits, measured-zero sampling |
 | Source extensions | Declared PyTorch modules, losses, and optimizers within the candidate interfaces |
 
-The component catalog contains 111 entries. The source snapshot records 52 structural components verified across 67 applicable slot interfaces. Candidate models are limited to 200M parameters. Source files are limited to 32 KiB each and 128 KiB in total. [Component catalog](variants/cajal-react/component_library/catalog.json) · [Candidate schema](variants/cajal-react/schemas/cajal-candidate.schema.json)
+The component catalog contains 111 entries. The source snapshot records 52 structural components verified across 67 applicable slot interfaces. Candidate models are limited to 200M parameters. Source files are limited to 32 KiB each and 128 KiB in total. [Component catalog](component_library/catalog.json) · [Candidate schema](schemas/cajal-candidate.schema.json)
 
 | Protocol setting | Current source configuration |
 |---|---|
@@ -158,14 +153,14 @@ The component catalog contains 111 entries. The source snapshot records 52 struc
 | Seed | Training and evaluation seed=0 |
 | Training budget | 30,000-step learning-rate schedule, fixed stop at step 10,000 |
 | Weight policy | `random_init_self_contained` |
-| GPU scheduling | GPU 0–7, at most 16 concurrent stages and 3 workers per GPU |
+| GPU scheduling | GPU 0–4, at most 16 concurrent stages and 3 workers per GPU |
 | Acceptance and evaluation | Up to 4 CPU acceptance workers and 2 task-evaluation pipelines per candidate |
 
-Memory reservations and available host memory further constrain concurrency. Same-generation parent pools are frozen, promotion decisions follow candidate order, and controller handoff adopts running stages. [Campaign configuration](variants/cajal-react/configs/cajal_react.json) · [Detailed protocol](variants/cajal-react/README_CAJAL_REACT.md)
+Memory reservations and available host memory further constrain concurrency. Same-generation parent pools are frozen, promotion decisions follow candidate order, and controller handoff adopts running stages. [Campaign configuration](configs/cajal_react.json) · [Detailed protocol](docs/react-protocol.md)
 
 ## Commercial value and applications
 
-nanoBrain Evolve targets the R&D work between a model idea and a larger training commitment. Its potential commercial value comes from comparing designs under bounded budgets, making experiment evidence reusable, and preparing selected model artifacts for downstream research workflows. This application framing builds on the nanoBrain website's role for controlled experimentation ahead of larger Brain World Model campaigns. [Project website](https://novaeve.github.io/nanobrain/)
+nanoBrain targets the R&D work between a model idea and a larger training commitment. Its potential commercial value comes from comparing designs under bounded budgets, making experiment evidence reusable, and preparing selected model artifacts for downstream research workflows. This application framing builds on the nanoBrain website's role for controlled experimentation ahead of larger Brain World Model campaigns. [Project website](https://novaeve.github.io/nanobrain/)
 
 | Team | Supported workflow | Potential value |
 |---|---|---|
@@ -195,19 +190,21 @@ Artifacts are stored under the independent workspace's `research-runs/cajal-reac
 ## Repository layout
 
 ```text
-variants/cajal-react/
-  brainwm_unified/    Cajal seed model, data loading, joint objectives, training
-  cajal_research/     ReAct tools, acceptance, scheduling, lineage, selection, resume
-  component_library/ Components, upstream sources, licenses, dependencies
-  configs/           Seed recipe, search budget, experiment configurations
-  schemas/           Candidate configuration and source contracts
-  reference/         Evaluation protocol, baselines, release and provenance records
-  scripts/           Data download, prediction, scoring, evolution entry points
-  tests/             Contract, independent-training, concurrency, recovery checks
-assets/cajal/        Downloaded pretraining and research evaluation datasets
+campaigns/cajal-v1/   Campaign definition (campaign.toml, agent_brief.md) and its lock
+nanobrain/infra/      Sealed infrastructure: contracts, validation, sandbox, scheduling, lineage, gate, freeze
+nanobrain/agent/      ReAct agent and LLM client
+brainwm_unified/      Cajal seed model, data loading, joint objectives, training
+component_library/    Components, upstream sources, licenses, dependencies
+configs/              Seed recipe and execution configuration
+schemas/              Candidate configuration and source contracts
+reference/            Evaluation protocol, baselines, release and provenance records
+scripts/              Data download, prediction, scoring, retirement check
+tests/                Contract, freeze, independent-training, concurrency, recovery checks
+docs/                 Whitepaper, seed model, detailed protocol
+assets/cajal/         Downloaded pretraining and research evaluation datasets
 ```
 
-The research implementation is packaged in `variants/cajal-react/`. Its committed source snapshot is `3891dc162cd9be5aa25876b948e02372ac86318e`, and the GitHub branch is `research/nanobrain-evolve`. [Source provenance](variants/cajal-react/reference/source_snapshot.json)
+The Cajal ReAct source was imported from snapshot `3891dc162cd9be5aa25876b948e02372ac86318e` and its later commits through `e00fb1d`; all earlier branches are merged into `main`. [Source provenance](reference/source_snapshot.json)
 
 ## Contributing
 
@@ -220,11 +217,12 @@ The research implementation is packaged in `variants/cajal-react/`. Its committe
 <summary>Protocol and implementation references</summary>
 
 - [中文介绍](README_zh-CN.md)
-- [Deployment instructions](variants/cajal-react/README.md)
-- [Detailed evolution protocol](variants/cajal-react/README_CAJAL_REACT.md)
-- [Candidate contracts](variants/cajal-react/cajal_research/contracts.py)
-- [Selection and promotion](variants/cajal-react/cajal_research/selection.py)
-- [Data release manifest](variants/cajal-react/reference/data-release.json)
-- [Source provenance](variants/cajal-react/reference/source_snapshot.json)
+- [Whitepaper / user manual](docs/whitepaper.md)
+- [Deployment instructions](docs/seed-cajal.md)
+- [Detailed evolution protocol](docs/react-protocol.md)
+- [Candidate contracts](nanobrain/infra/contracts.py)
+- [Selection and promotion](nanobrain/infra/gate.py)
+- [Data release manifest](reference/data-release.json)
+- [Source provenance](reference/source_snapshot.json)
 
 </details>

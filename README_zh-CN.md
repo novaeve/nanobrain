@@ -1,7 +1,7 @@
-# nanoBrain Evolve
+# nanoBrain
 
 <p align="center">
-  <strong>基于 nanoBrain 的演化研究版，从 Cajal 种子模型出发探索虚拟细胞架构</strong>
+  <strong>LLM 驱动的虚拟细胞模型演化：定义开放，演化冻结</strong>
 </p>
 
 <p align="center">
@@ -21,11 +21,11 @@
 ![Tasks](https://img.shields.io/badge/joint%20tasks-5-0969da)
 ![Evolution](https://img.shields.io/badge/evolution-ReAct-8250df)
 
-nanoBrain Evolve 是在 nanoBrain 基础上改造而成的演化研究版。它延续 nanoBrain 的可组合模型、显式实验契约、统一评估和可复现记录，将这些能力连接为 LLM 驱动的自动研究流程。LLM 提出架构、目标函数与训练策略，实验系统负责验收、训练、评估和选择。[上游 nanoBrain](https://github.com/novaeve/nanobrain/tree/main)
+nanoBrain 让 LLM 在受控实验中演化虚拟细胞模型：LLM 提出架构、目标函数与训练策略，系统负责验收、训练、评估和选择，并保留每一步的证据。**定义是开放的，演化是冻结的**：campaign 开始之前，数据、任务、指标、对手和搜索空间都由你定义；一旦冻结，这些全部锁死，任何改动都是一个新的 campaign。[白皮书](docs/whitepaper_zh-CN.md)是这套生命周期的使用手册。早期的 10 万细胞版 nanoBrain 保存在标签 [`nanobrain-v1-final`](https://github.com/novaeve/nanobrain/tree/nanobrain-v1-final)。
 
 当前采用 **Cajal v1 作为种子模型**。它是一份联合学习五项任务的虚拟细胞共享模型，演化从其架构和训练配方出发。每个新候选使用随机初始化的权重训练，并用同一个共享 checkpoint 接受全部评估。
 
-nanoBrain 官网将受控实验定位为大规模 Brain World Model 训练之前的模型设计验证环节。nanoBrain Evolve 围绕 Cajal 扩展这条研究流程，保留每一次改动背后的提案与实验证据。[项目网站](https://novaeve.github.io/nanobrain/)
+nanoBrain 官网将受控实验定位为大规模 Brain World Model 训练之前的模型设计验证环节。nanoBrain 围绕 Cajal 扩展这条研究流程，保留每一次改动背后的提案与实验证据。[项目网站](https://novaeve.github.io/nanobrain/)
 
 > [!IMPORTANT]
 > 当前实验使用 1,015,388 个预训练细胞、65,918 基因词表及三个独立研究评估集。固定预算为 30 代 × 10 候选，seed=0，每候选训练 10,000 步。
@@ -37,28 +37,23 @@ nanoBrain 官网将受控实验定位为大规模 Brain World Model 训练之前
 数据下载器要求 Python 3.12+，下载文件按发布清单进行 SHA-256 校验。
 
 ```bash
-git clone --branch research/nanobrain-evolve https://github.com/novaeve/nanobrain.git nanobrain-evolve
-cd nanobrain-evolve
-python variants/cajal-react/scripts/download_data.py
+git clone https://github.com/novaeve/nanobrain.git
+cd nanobrain
+python scripts/download_data.py
 ```
 
 默认数据目录为 `assets/cajal/`。完整解压体积约 16 GB，下载、归档合并和解压过程建议预留约 35 GB 空间。[数据发布](https://github.com/novaeve/nanobrain/releases/tag/cajal-react-data-20261106)
 
-### 2. 准备演化工作目录
+### 2. 安装并冻结 campaign
 
-完整演化流程在 Linux NVIDIA GPU 环境中的独立 Git 根目录下运行。在仓库根目录导出已发布的 Cajal 实现。
+完整流程在 Linux NVIDIA GPU 环境中运行，需要 bubblewrap。
 
 ```bash
-mkdir -p /work/nanobrain-evolve
-git archive HEAD:variants/cajal-react | tar -x -C /work/nanobrain-evolve
-cd /work/nanobrain-evolve
-git init
-git add .
-git commit -m "Import nanoBrain Evolve source"
-python -m pip install -e '.[dev]'
+pip install -e '.[eval,scvi,dev]'
+nanobrain --freeze      # 锁定 campaigns/cajal-v1（本仓库中已冻结）
 ```
 
-按部署说明准备匹配的 PyTorch/CUDA 扩展、组件依赖、Linux bwrap、固定数据路径、Cajal 参考工件、整合评估缓存及控制器 API 凭据。实验契约会核对这些输入。[部署说明](variants/cajal-react/README.md) · [组件依赖](variants/cajal-react/component_library/dependencies.json)
+按部署说明准备匹配的 PyTorch/CUDA 扩展、组件依赖、固定数据路径、Cajal 参考工件、整合评估缓存及控制器 API 凭据。campaign 锁和运行契约会核对这些输入。[部署说明](docs/seed-cajal_zh-CN.md) · [组件依赖](component_library/dependencies.json)
 
 ### 3. 查看计划与启动演化
 
@@ -87,7 +82,7 @@ Cajal v1 提供初始模型架构和联合训练配方。它共同表示基因�
 | 负二项表达解码器 | 对测量到的 counts 建模，承担表达重建 |
 | 邻域模型 | 利用可见空间邻居进行空间插补 |
 
-种子配方采用梯度范数损失均衡和分组 Muon + AdamW。固定的 `cajal_v1@10000` checkpoint 与已有成绩作为比较参考。候选继承架构、源码和超参数，每个新候选从随机权重开始训练，中断后可恢复自身经过身份核验的 checkpoint。[种子配方](variants/cajal-react/configs/experiments/cajal_v1.toml) · [参考记录](variants/cajal-react/reference/existing_cajal_v1_10k.json)
+种子配方采用梯度范数损失均衡和分组 Muon + AdamW。固定的 `cajal_v1@10000` checkpoint 与已有成绩作为比较参考。候选继承架构、源码和超参数，每个新候选从随机权重开始训练，中断后可恢复自身经过身份核验的 checkpoint。[种子配方](configs/experiments/cajal_v1.toml) · [参考记录](reference/existing_cajal_v1_10k.json)
 
 ## 演化工作流
 
@@ -107,7 +102,7 @@ flowchart LR
 3. **训练与评估。** 通过验收的候选联合训练一份共享模型，在固定停止点用同一 checkpoint 经统一评估流程输出六项报告指标。
 4. **选择与保留证据。** 晋级判断同时检查改善与退化。质量、Pareto 和结构探索档案指导后续提案，失败与未入选分支进入研究历史。
 
-晋级要求目标指标相对父代和固定参考均提升超过 0.005，任一指标相对父代的退化不超过 0.005，同时改善 joint-frontier 排序。排序优先比较相对基线最弱的一项，再比较平均相对增益。[选择实现](variants/cajal-react/cajal_research/selection.py)
+晋级要求目标指标相对父代和固定参考均提升超过 0.005，任一指标相对父代的退化不超过 0.005，同时改善 joint-frontier 排序。排序优先比较相对基线最弱的一项，再比较平均相对增益。[选择实现](nanobrain/infra/gate.py)
 
 ## 五项联合任务
 
@@ -119,7 +114,7 @@ flowchart LR
 | 基因插补 | 重建被遮蔽的测量基因表达 | 每细胞 Pearson 相关中位数 ↑ |
 | 空间插补 | 利用可见邻居重建隐藏表达 | 每细胞 Pearson 相关中位数 ↑ |
 
-所有任务成绩来自同一个候选 checkpoint。已有 Cajal 记录提供固定参考和 13 个整方法基线。评估成绩反复参与演化反馈，属于探索性研究结果，记录 `seed_count=1` 和 null 标准差。[评估协议](variants/cajal-react/reference/evaluation_protocol.json) · [参考基线](variants/cajal-react/reference/opponents.json)
+所有任务成绩来自同一个候选 checkpoint。已有 Cajal 记录提供固定参考和 13 个整方法基线。评估成绩反复参与演化反馈，属于探索性研究结果，记录 `seed_count=1` 和 null 标准差。[评估协议](reference/evaluation_protocol.json) · [参考基线](reference/opponents.json)
 
 ## 数据与规模
 
@@ -130,12 +125,12 @@ flowchart LR
 | `eval_integration_10k` | 9,867 | 整合评估 |
 | `eval_spatial` | 40,789 | 空间插补评估 |
 
-数据保留原始 counts、测量面板、标签层级、空间邻居和来源行身份。各研究评估集与预训练细胞独立，数据路径、遮罩、行身份和评估定义由协议固定。[数据定义](variants/cajal-react/data_build/UNIFIED_1M.md) · [发布清单](variants/cajal-react/reference/data-release.json)
+数据保留原始 counts、测量面板、标签层级、空间邻居和来源行身份。各研究评估集与预训练细胞独立，数据路径、遮罩、行身份和评估定义由协议固定。[数据定义](data_build/UNIFIED_1M.md) · [发布清单](reference/data-release.json)
 
 已有数据可在仓库根目录执行以下校验命令。
 
 ```bash
-python variants/cajal-react/scripts/download_data.py --verify-only
+python scripts/download_data.py --verify-only
 ```
 
 ## 演化搜索与预算
@@ -148,7 +143,7 @@ python variants/cajal-react/scripts/download_data.py --verify-only
 | 训练采样 | 表达细胞数、空间组数、非零 token 上限、测量零值采样 |
 | 源码扩展 | 候选接口范围内声明的 PyTorch 模块、损失函数和优化器 |
 
-组件目录登记 111 项，源快照记录了 52 个结构组件、67 个适用插槽接口的合成核验。候选模型上限为 200M 参数，源码每文件上限 32 KiB、合计上限 128 KiB。[组件目录](variants/cajal-react/component_library/catalog.json) · [候选 schema](variants/cajal-react/schemas/cajal-candidate.schema.json)
+组件目录登记 111 项，源快照记录了 52 个结构组件、67 个适用插槽接口的合成核验。候选模型上限为 200M 参数，源码每文件上限 32 KiB、合计上限 128 KiB。[组件目录](component_library/catalog.json) · [候选 schema](schemas/cajal-candidate.schema.json)
 
 | 协议设置 | 当前源码配置 |
 |---|---|
@@ -158,14 +153,14 @@ python variants/cajal-react/scripts/download_data.py --verify-only
 | 随机种子 | 训练与评估 seed=0 |
 | 训练预算 | 30,000 步学习率日程，固定在 10,000 步停止 |
 | 权重策略 | `random_init_self_contained` |
-| GPU 调度 | GPU 0–7，最多 16 个并行阶段，每卡最多 3 个 worker |
+| GPU 调度 | GPU 0–4，最多 16 个并行阶段，每卡最多 3 个 worker |
 | 验收与评估 | 最多 4 个 CPU 验收 worker，每候选最多 2 条任务评估流水线 |
 
-显存预留和可用主存进一步限制实际并发。同代父代池冻结，晋级判断按候选序号应用，控制器交接接管已运行的阶段。[演化配置](variants/cajal-react/configs/cajal_react.json) · [详细协议](variants/cajal-react/README_CAJAL_REACT.md)
+显存预留和可用主存进一步限制实际并发。同代父代池冻结，晋级判断按候选序号应用，控制器交接接管已运行的阶段。[演化配置](configs/cajal_react.json) · [详细协议](docs/react-protocol.md)
 
 ## 商业价值与应用方向
 
-nanoBrain Evolve 面向从模型想法走向更大规模训练的研发环节。其潜在商业价值在于以受控预算比较设计、复用实验证据，并将选中的模型工件交给下游研究流程。这一应用定位延续了官网提出的先做受控实验、再进入更大规模 Brain World Model 训练的研究路径。[项目网站](https://novaeve.github.io/nanobrain/)
+nanoBrain 面向从模型想法走向更大规模训练的研发环节。其潜在商业价值在于以受控预算比较设计、复用实验证据，并将选中的模型工件交给下游研究流程。这一应用定位延续了官网提出的先做受控实验、再进入更大规模 Brain World Model 训练的研究路径。[项目网站](https://novaeve.github.io/nanobrain/)
 
 | 团队 | 可支持的工作流 | 潜在价值 |
 |---|---|---|
@@ -195,19 +190,21 @@ nanoBrain Evolve 面向从模型想法走向更大规模训练的研发环节。
 ## 仓库结构
 
 ```text
-variants/cajal-react/
-  brainwm_unified/    Cajal 种子模型、数据加载、联合目标与训练
-  cajal_research/     ReAct 工具、验收、调度、谱系、选择与恢复
-  component_library/ 组件、上游源码、许可和依赖
-  configs/           种子配方、搜索预算和实验配置
-  schemas/           候选配置与源码契约
-  reference/         评估协议、基线、数据发布与来源记录
-  scripts/           数据下载、预测、评分和演化入口
-  tests/             契约、独立训练、并发和恢复检查
-assets/cajal/        下载后的预训练数据与研究评估集
+campaigns/cajal-v1/   campaign 定义（campaign.toml、agent_brief.md）及其锁文件
+nanobrain/infra/      封死的基础设施：契约、校验、沙箱、调度、谱系、晋级门槛、冻结
+nanobrain/agent/      ReAct 智能体与 LLM 客户端
+brainwm_unified/      Cajal 种子模型、数据加载、联合目标与训练
+component_library/    组件、上游源码、许可和依赖
+configs/              种子配方与执行配置
+schemas/              候选配置与源码契约
+reference/            评估协议、基线、数据发布与来源记录
+scripts/              数据下载、预测、评分、退役检查
+tests/                契约、冻结、独立训练、并发和恢复检查
+docs/                 白皮书、种子模型、详细协议
+assets/cajal/         下载后的预训练数据与研究评估集
 ```
 
-研究实现发布在 `variants/cajal-react/`，已提交的源码快照为 `3891dc162cd9be5aa25876b948e02372ac86318e`，GitHub 分支为 `research/nanobrain-evolve`。[源码来源](variants/cajal-react/reference/source_snapshot.json)
+Cajal ReAct 源码导入自快照 `3891dc162cd9be5aa25876b948e02372ac86318e` 及其后直到 `e00fb1d` 的提交；此前所有分支均已合并进 `main`。[源码来源](reference/source_snapshot.json)
 
 ## 开发与贡献
 
@@ -220,11 +217,11 @@ assets/cajal/        下载后的预训练数据与研究评估集
 <summary>协议与实现参考</summary>
 
 - [English overview](README.md)
-- [部署说明](variants/cajal-react/README.md)
-- [详细演化协议](variants/cajal-react/README_CAJAL_REACT.md)
-- [候选契约](variants/cajal-react/cajal_research/contracts.py)
-- [选择与晋级](variants/cajal-react/cajal_research/selection.py)
-- [数据发布清单](variants/cajal-react/reference/data-release.json)
-- [源码来源](variants/cajal-react/reference/source_snapshot.json)
+- [部署说明](docs/seed-cajal_zh-CN.md)
+- [详细演化协议](docs/react-protocol.md)
+- [候选契约](nanobrain/infra/contracts.py)
+- [选择与晋级](nanobrain/infra/gate.py)
+- [数据发布清单](reference/data-release.json)
+- [源码来源](reference/source_snapshot.json)
 
 </details>

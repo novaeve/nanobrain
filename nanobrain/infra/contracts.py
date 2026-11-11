@@ -69,15 +69,21 @@ def load_config(path=None):
     if cfg.get("weight_policy") != DEFINITION["campaign"]["weight_policy"] or cfg.get("trusted_teachers"):
         raise ValueError("candidates must train independently without historical or pretrained teacher weights")
     if cfg["reference_recipe"] != DEFINITION["campaign"]["reference_recipe"]:
-        raise ValueError("reference must be the frozen existing Cajal v1 recipe")
+        raise ValueError(f"reference must be the campaign recipe {DEFINITION['campaign']['reference_recipe']}")
     if cfg["reference_evaluation"] != DEFINITION["campaign"]["reference_evaluation"]:
-        raise ValueError("reuse the existing Cajal reference result; never silently refit it")
-    if cfg["schedule_steps"] != DEFINITION["budget"]["schedule_steps"] or cfg["stop_at"] != DEFINITION["budget"]["stop_at"]:
-        raise ValueError("this protocol uses the Cajal 30k schedule stopped at 10k")
+        raise ValueError("reuse the campaign reference result; never silently refit it")
+    if (
+        cfg["schedule_steps"] != DEFINITION["budget"]["schedule_steps"]
+        or cfg["stop_at"] != DEFINITION["budget"]["stop_at"]
+    ):
+        raise ValueError("schedule and stop step must match the campaign budget")
     if cfg["seeds"] != DEFINITION["budget"]["seeds"]:
-        raise ValueError("this revision uses the existing Cajal seed 0 only")
-    if cfg["checkpoint_selection"] != DEFINITION["budget"]["checkpoint_selection"] or bool(cfg["scaling_enabled"]) != DEFINITION["budget"]["scaling_enabled"]:
-        raise ValueError("fixed-stop Cajal evaluation; no automatic scaling in this protocol")
+        raise ValueError("seeds must match the campaign budget")
+    if (
+        cfg["checkpoint_selection"] != DEFINITION["budget"]["checkpoint_selection"]
+        or bool(cfg["scaling_enabled"]) != DEFINITION["budget"]["scaling_enabled"]
+    ):
+        raise ValueError("checkpoint selection and scaling must match the campaign budget")
     if not cfg["gpu_ids"] or any(type(g) is not int or g not in GPU_WHITELIST for g in cfg["gpu_ids"]):
         raise ValueError(GPU_REASON)
     if len(set(cfg["gpu_ids"])) != len(cfg["gpu_ids"]):
