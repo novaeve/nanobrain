@@ -16,16 +16,16 @@ from cajal_research.resources import ResourcePool
 from cajal_research.store import Store
 
 
-def test_sixteen_atomic_gpu_leases_stay_on_eight_cards():
+def test_ten_training_leases_stay_on_five_cards():
     cfg = C.load_config()
     pool = ResourcePool(cfg["gpu_ids"], cfg["per_gpu_workers"], cfg["resources"])
     pool.snapshot = {g: {"free_mib": 100000} for g in cfg["gpu_ids"]}
     pool.snapshot_at = time.monotonic()
-    with ThreadPoolExecutor(max_workers=16) as executor:
-        cards = list(executor.map(lambda i: pool.acquire(str(i), 32768, 0), range(16)))
-    assert Counter(cards) == dict.fromkeys(range(8), 2)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        cards = list(executor.map(lambda i: pool.acquire(str(i), 32768, 0), range(10)))
+    assert Counter(cards) == dict.fromkeys(range(5), 2)
     assert pool.choose(32768, 0) is None
-    for i in range(16):
+    for i in range(10):
         pool.release(str(i))
     assert pool.leases == {}
 
@@ -53,13 +53,13 @@ def test_refresh_ignores_unauthorized_gpus_and_counts_own_descendants(monkeypatc
 
     def query(args, **kwargs):
         if "index,uuid,memory.free" in args[1]:
-            return "\n".join(f"{i}, GPU-{i}, 50000" for i in range(9))
-        return "GPU-0, 101, 27000\nGPU-0, 200, 10000\nGPU-8, 300, 10000"
+            return "\n".join(f"{i}, GPU-{i}, 50000" for i in range(8))
+        return "GPU-0, 101, 27000\nGPU-0, 200, 10000\nGPU-7, 300, 10000"
 
     monkeypatch.setattr(resources.subprocess, "check_output", query)
     monkeypatch.setattr(resources, "parent_pid", lambda pid: 100 if pid == 101 else 0)
     pool.refresh()
-    assert set(pool.snapshot) == set(range(8))
+    assert set(pool.snapshot) == set(range(5))
     assert pool.leases["own"]["observed_mib"] == 27000
 
 

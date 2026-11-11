@@ -50,7 +50,7 @@ def test_an_adopted_worker_occupies_a_global_slot_until_its_receipt(tmp_path, mo
         "mode": "train",
         "pid": 123,
         "process_start": "original",
-        "gpu": 7,
+        "gpu": 4,
         "reservation_mb": 32768,
         "attempt": 1,
         "bundle": str(bundle),

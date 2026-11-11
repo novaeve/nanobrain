@@ -26,10 +26,7 @@
     1,
     2,
     3,
-    4,
-    5,
-    6,
-    7
+    4
   ],
   "max_workers": 16,
   "minimum_free_gpu_mb": 32768,
