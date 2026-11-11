@@ -53,9 +53,7 @@ def atomic_torch_save(path: Path, payload):
         ) as stream:
             temporary = Path(stream.name)
         torch.save(payload, temporary)
-        # Windows fsync requires a writable descriptor; opening for update is
-        # also valid on POSIX and does not alter the serialized bytes.
-        with temporary.open("r+b") as stream:
+        with temporary.open("rb") as stream:
             os.fsync(stream.fileno())
         os.replace(temporary, path)
     except BaseException:

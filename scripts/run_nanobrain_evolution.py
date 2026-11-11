@@ -2,7 +2,7 @@
 """Run/resume bounded LLM module evolution, paired confirmation and final reporting.
 
 Reuses the established candidate trainer, baseline evaluator and process helpers.
-Selection reads validation only. All budgets and guards are frozen before training.
+Single-stage mode may intentionally select on test when frozen protocol requests it. All budgets and guards are frozen before training.
 """
 from __future__ import annotations
 
@@ -301,7 +301,9 @@ class Experiment:
             if successful:
                 evaluated = _launch_evaluations(candidates=successful, gpus=self.args.gpus, data=self.data,
                             batch_size=self.protocol["evaluation_batch_size"],
-                            evaluation_seed=self.protocol["evaluation_seed"])
+                            evaluation_seed=self.protocol["evaluation_seed"],
+                            evaluation_split=self.protocol.get("selection_evaluation_split", "validation"),
+                            output_name="test_selection_evaluation" if self.protocol.get("selection_evaluation_split") == "test" else "evaluation")
                 _finalize_evaluations(evaluated, manifest=self.state, manifest_path=self.state_path)
             for item in wave:
                 if item.get("failed"):
@@ -371,7 +373,7 @@ class Experiment:
             "Keep flow active (not none). Components are imported baseline primitives trained from scratch, "
             "not the complete baselines or their pretrained checkpoints. Read component_catalog for sources. "
             "Explore both module-family replacements/combinations and hyperparameter changes, retaining strengths. "
-            "Explain why the changed modules should improve the named metrics. No test results are available. "
+            "Explain why the changed modules should improve the named metrics. Test-set metrics are available and are the selection signal in this protocol. "
             "The joint score and task guards below are fixed, not negotiable; runtime/parameters break ties. "
             "Every candidate must improve joint score and obey per-task regression bounds vs its parent "
             "AND the initial reference. High batch-classification accuracy is NOT integration success.\n"
@@ -420,7 +422,7 @@ class Experiment:
                 'Each head has its own name and params, and optional pre graph (input state[B,H]) before its output projection. '
                 'Pairing, solver, and task loss params are configurable. '
                 'Evaluators, split boundaries, label access, and required positive training objectives stay fixed. '
-                'No test results are available. Judge using fixed joint score and per-task guards, not self-reported scores. '
+                'Test-set metrics are available and are the selection signal in this protocol. Judge using fixed joint score and per-task guards, not self-reported scores. '
                 'Formatting/ID-only changes are not new architectures. Full-genome proposals require complete architecture objects; '
                 'patch proposals are expanded and validated by the runner.\n' +
                 json.dumps(dict(component_catalog=graph_catalog(), objective_catalog=objective_catalog(),
@@ -558,184 +560,142 @@ class Experiment:
                 time.sleep(min(30.0, 2.0 * attempt))
 
     def run(self):
+        """Single-stage final-budget evolution with explicit test selection.
+
+        Every candidate is trained at evolution_steps for the configured
+        evolution_seeds, evaluated on selection_evaluation_split, and compared
+        immediately. There is no short screen, propagation stage, or final
+        confirmation stage. This mode intentionally spends test labels during
+        search when the protocol says selection_evaluation_split=test.
+        """
         if self.state.get("status") == "complete":
             return
         p = self.protocol
-        tasks = p.get("tasks")
-        control = CandidateGenome.from_dict({**p["reference_genome"], "seed": p["screen_seed"]}).to_dict()
-        reference = summarize_runs(self.run_batch(
-            [dict(genome={**control, "seed": seed}, proposal_source="fixed_reference")
-             for seed in p["propagation_seeds"]], self.output / "reference_screen", p["screen_steps"]), tasks)
+        tasks = p["tasks"]
+        steps = int(p.get("evolution_steps", p["confirmation_steps"]))
+        seeds = [int(x) for x in p.get("evolution_seeds", p["confirmation_seeds"])]
+        if len(seeds) < 1 or len(set(seeds)) != len(seeds):
+            raise ValueError("evolution_seeds must contain unique seeds")
+        selection_split = p.get("selection_evaluation_split", "validation")
+        if selection_split not in {"validation", "test"}:
+            raise ValueError("selection_evaluation_split must be validation or test")
+
+        control = CandidateGenome.from_dict({**p["reference_genome"], "seed": seeds[0]}).to_dict()
+        reference_runs = self.run_batch(
+            [dict(genome={**control, "seed": seed}, proposal_source="single_stage_reference")
+             for seed in seeds],
+            self.output / "reference_single_stage", steps)
+        reference = summarize_runs(reference_runs, tasks)
+        reference["replicates"] = reference_runs
+        reference["selection_split"] = selection_split
         self.state["reference"] = reference
+        self.state["selection_split"] = selection_split
+        self.state["test_used_for_selection"] = selection_split == "test"
         parents = [reference]
         incumbent = reference
-        stalled_rounds = 0
         history = []
-        all_eligible = []
         seen = {reference["architecture_id"]}
-        for generation in range(p["generations"]):
+        all_eligible = []
+
+        for generation in range(int(p["generations"])):
             self.state["current_generation"] = generation
             proposals = self.propose(parents, history, generation, seen)
             if proposals is None:
-                # A bounded semantic-validation failure must not train a
-                # partial batch or move the incumbent. Keep the generation in
-                # the campaign ledger so resume/reporting remains explicit.
-                record = dict(
-                    generation=generation,
-                    candidates=[],
-                    parent_ids=[x["architecture_id"] for x in parents],
-                    promoted_parent_ids=[],
-                    next_parent_ids=[incumbent["architecture_id"]],
-                    incumbent_id=incumbent["architecture_id"],
-                    status="proposal_exhausted_incumbent_retained",
-                )
+                record = dict(generation=generation, candidates=[],
+                              parent_ids=[x["architecture_id"] for x in parents],
+                              promoted_parent_ids=[], next_parent_ids=[incumbent["architecture_id"]],
+                              incumbent_id=incumbent["architecture_id"],
+                              status="proposal_exhausted_incumbent_retained")
                 _write_json(self.output / f"generation_{generation:02d}" / "selection.json", record)
                 self.state["generations"] = self.state["generations"][:generation] + [record]
                 self.state["incumbent"] = incumbent["architecture_id"]
                 self.save("generation_complete_proposal_exhausted")
                 history.append(dict(generation=generation, candidates=[]))
-                self.report()
                 continue
-            current = self.run_batch(proposals, self.output / f"generation_{generation:02d}", p["screen_steps"])
+
+            flat = []
+            for proposal in proposals:
+                base = dict(proposal)
+                for seed in seeds:
+                    spec = copy.deepcopy(base)
+                    spec["genome"] = {**base["genome"], "seed": seed}
+                    spec["proposal_source"] = "llm_single_stage_final"
+                    spec["single_stage_seed"] = seed
+                    flat.append(spec)
+            raw_runs = self.run_batch(flat, self.output / f"generation_{generation:02d}", steps)
+            grouped = {}
+            for item in raw_runs:
+                grouped.setdefault(item["architecture_id"], []).append(item)
+            proposal_map = {x["architecture_id"]: x for x in proposals}
+            current = []
+            for architecture, runs in grouped.items():
+                summary = summarize_runs(runs, tasks)
+                source = proposal_map.get(architecture, {})
+                for key in ("parent_ids", "target_tasks", "hypothesis", "expected_tradeoff", "changes", "proposal_patch", "proposal_source"):
+                    if key in source:
+                        summary[key] = source[key]
+                summary["architecture_id"] = architecture
+                summary["replicates"] = runs
+                summary["selection_split"] = selection_split
+                current.append(summary)
+            current.sort(key=lambda x: (-x["score"], x.get("runtime_seconds", 0.0)))
             parent_map = {x["architecture_id"]: x for x in parents}
             eligible = []
             for item in current:
                 seen.add(item["architecture_id"])
-                item["reference_gate"] = improvement_gate(item["metrics"], reference["replicates"][0]["metrics"], p["gate"])
-                parent = max((parent_map[x] for x in item["parent_ids"]), key=lambda x: x["score"])
-                item["parent_gate"] = improvement_gate(item["metrics"], parent["replicates"][0]["metrics"], p["gate"])
+                item["reference_gate"] = improvement_gate(item["metrics"], reference["metrics"], p["gate"])
+                valid_parents = [parent_map[x] for x in item.get("parent_ids", []) if x in parent_map]
+                parent = max(valid_parents or parents, key=lambda x: x["score"])
+                item["parent_gate"] = improvement_gate(item["metrics"], parent["metrics"], p["gate"])
                 item["eligible"] = item["reference_gate"]["passed"] and item["parent_gate"]["passed"]
                 if item["eligible"]:
                     eligible.append(item)
-            # A short-budget win must reproduce BEFORE it becomes an evolutionary parent.
-            preliminary = sorted(eligible, key=lambda x: (-x["score"], x["runtime_seconds"]))[:p["propagation_candidates"]]
-            eligible = []
-            for item in preliminary:
-                extra = self.run_batch([
-                    dict(genome={**item["genome"], "seed": seed}, proposal_source="llm_replicate")
-                    for seed in p["propagation_seeds"][1:]],
-                    self.output / f"generation_{generation:02d}" / "replicates" / item["architecture_id"],
-                    p["screen_steps"])
-                runs = [copy.deepcopy(item), *extra]
-                parent = max((parent_map[x] for x in item["parent_ids"]), key=lambda x: x["score"])
-                ref_gate = confirm_replicates(runs, reference["replicates"], p["gate"])
-                parent_gate = confirm_replicates(runs, parent["replicates"], p["gate"])
-                item["reproduction"] = dict(reference_gate=ref_gate, parent_gate=parent_gate)
-                item["propagation_passed"] = ref_gate["passed"] and parent_gate["passed"]
-                if item["propagation_passed"]:
-                    summary = summarize_runs(runs, tasks)
-                    summary["reproduction"] = item["reproduction"]
-                    eligible.append(summary)
-            scored = [CandidateScore(x["architecture_id"], x["score"], 0.0, x["runtime_seconds"],
-                      x["parameter_count"], {}, tuple(x["metrics"][f"{task}.{metric}"] * (1 if direction == "max" else -1)
-                                                     for task, metric, direction in selected_objectives(tasks)))
-                      for x in eligible]
-            pareto = {x.candidate_id for x in pareto_front(scored)}
-            retained = sorted((x for x in eligible if x["architecture_id"] in pareto),
-                              key=lambda x: (-x["score"], x["runtime_seconds"], x["parameter_count"]))
-            improved = bool(retained) and retained[0]["score"] > incumbent["score"]
+            eligible.sort(key=lambda x: (-x["score"], x.get("runtime_seconds", 0.0)))
+            all_eligible.extend(eligible)
+            improved = bool(eligible) and eligible[0]["score"] > incumbent["score"]
             if improved:
-                incumbent = retained[0]
-                stalled_rounds = 0
-            else:
-                stalled_rounds += 1
-            patience = int(p.get("no_improvement_patience", 1))
-            should_stop = patience > 0 and stalled_rounds >= patience
-            if p.get("parent_count") == 1:
+                incumbent = eligible[0]
                 parents = [incumbent]
-            elif retained:
-                parents = retained[:max(1, p["candidates_per_generation"] // 2)]
+                status = "accepted"
+            else:
+                status = "retained_incumbent_continue"
+                parents = [incumbent]
             record = dict(generation=generation, candidates=current,
-                          parent_ids=list(parent_map),
-                          promoted_parent_ids=[x["architecture_id"] for x in retained],
-                          next_parent_ids=[x["architecture_id"] for x in parents],
-                          incumbent_id=incumbent["architecture_id"],
-                          status="accepted" if improved else ("stopped_no_improving_candidate" if should_stop else "retained_incumbent_continue"))
+                          parent_ids=[x["architecture_id"] for x in parent_map.values()],
+                          promoted_parent_ids=[x["architecture_id"] for x in eligible],
+                          next_parent_ids=[incumbent["architecture_id"]],
+                          incumbent_id=incumbent["architecture_id"], status=status,
+                          selection_split=selection_split)
             _write_json(self.output / f"generation_{generation:02d}" / "selection.json", record)
             self.state["generations"] = self.state["generations"][:generation] + [record]
             self.state["incumbent"] = incumbent["architecture_id"]
             self.save("generation_complete")
-            all_eligible.extend(eligible)
             history.append(dict(generation=generation, candidates=[
                 {k: x[k] for k in ("architecture_id", "genome", "metrics", "score", "eligible", "parent_gate", "reference_gate", "diagnostics") if k in x}
                 for x in current]))
-            self.report()
-            if should_stop:
-                self.state["stop_reason"] = "no_improving_candidate; previous incumbent retained"
-                break
-        else:
-            self.state["stop_reason"] = "generation_budget_exhausted"
-        finalists = sorted(all_eligible, key=lambda x: (-x["score"], x["runtime_seconds"], x["parameter_count"]))[:p["confirmation_candidates"]]
-        # Re-train the original reference at exactly the same long budget and seeds.
-        ref_specs = [dict(genome={**control, "seed": seed}, proposal_source="matched_reference")
-                     for seed in p["confirmation_seeds"]]
-        refs = self.run_batch(ref_specs, self.output / "confirmation_reference", p["confirmation_steps"])
-        self.state["confirmation_reference"] = refs
-        self.state["confirmations"] = []
-        for index, finalist in enumerate(finalists):
-            runs = self.run_batch([dict(genome={**finalist["genome"], "seed": seed},
-                                       proposal_source="llm_finalist", screen_architecture_id=finalist["architecture_id"])
-                                  for seed in p["confirmation_seeds"]],
-                                 self.output / f"confirmation_{index:02d}", p["confirmation_steps"])
-            gate = confirm_replicates(runs, refs, p["gate"])
-            self.state["confirmations"].append(dict(screen_architecture_id=finalist["architecture_id"],
-                                                    runs=runs, gate=gate))
-            self.save("confirmation_complete")
-        passed = [x for x in self.state["confirmations"] if x["gate"]["passed"]]
-        chosen = max(passed, key=lambda x: joint_score(x["gate"]["mean_metrics"], tasks)) if passed else None
-        self.state["selected"] = chosen["screen_architecture_id"] if chosen else reference["architecture_id"]
-        self.state["scientific_promotion_passed"] = bool(chosen)
-        selected_runs = chosen["runs"] if chosen else refs
-        # All selection is complete before descriptive re-use of the historical test set.
-        freeze_path = self.output / "selection_freeze.json"
-        freeze = dict(selected=self.state["selected"], scientific_promotion_passed=bool(chosen),
-                      selection_split="validation", historical_test_already_published=True,
-                      protocol_sha256=sha(self.output / "protocol.json"), frozen_at=utc(),
-                      checkpoints=[dict(path=x["checkpoint"], sha256=sha(x["checkpoint"])) for x in refs + selected_runs])
-        if not freeze_path.exists():
-            _write_json(freeze_path, freeze)
-        else:
-            old = json.loads(freeze_path.read_text())
-            if old["selected"] != freeze["selected"] or old["checkpoints"] != freeze["checkpoints"]:
-                raise ValueError("frozen selection changed during resume")
-        self.save("selection_frozen")
-        test_groups = [("reference", refs)] + ([("evolved", selected_runs)] if chosen else [])
-        self.state["test_reevaluation"] = {}
-        for name, runs in test_groups:
-            evaluated_runs = copy.deepcopy(runs)
-            for start in range(0, len(runs), len(self.args.gpus)):
-                chunk = evaluated_runs[start:start + len(self.args.gpus)]
-                work = [x for x in chunk if not (Path(x["directory"]) / "test_reevaluation" / "run_manifest.json").is_file()]
-                if work:
-                    jobs = _launch_evaluations(candidates=work, gpus=self.args.gpus, data=self.data,
-                              batch_size=p["evaluation_batch_size"], evaluation_seed=p["evaluation_seed"],
-                              evaluation_split="test", output_name="test_reevaluation")
-                    if not _finalize_evaluations(jobs, manifest=self.state, manifest_path=self.state_path):
-                        raise RuntimeError("test re-evaluation failed")
-            for item in evaluated_runs:
-                item["evaluation"] = str(Path(item["directory"]) / "test_reevaluation" / "benchmark_table.csv")
-                rows = read_metric_table(item["evaluation"])
-                if not rows or any(x.get("status") != "complete" for x in rows):
-                    raise RuntimeError("incomplete test metric table")
-                metrics = overall_metrics(rows, candidate_method(item["candidate_id"]))
-                item["metrics"] = primary_metric_record(metrics)
-                item["diagnostics"] = {f"{k[0]}.{k[1]}": v for k, v in metrics.items()}
-                item["score"] = joint_score(item["metrics"], tasks)
-                item["evaluation_sha256"] = sha(item["evaluation"])
-                item["evaluation_split"] = "test"
-            self.state["test_reevaluation"][name] = evaluated_runs
+
+        self.state["selected"] = incumbent["architecture_id"]
+        self.state["scientific_promotion_passed"] = incumbent["architecture_id"] != reference["architecture_id"]
+        self.state["stop_reason"] = "generation_budget_exhausted"
+        self.state["test_used_for_selection"] = selection_split == "test"
+        self.state["single_stage"] = True
+        self.state["final_selection"] = dict(selected=incumbent["architecture_id"],
+            selection_split=selection_split, seeds=seeds, steps=steps,
+            test_used_for_selection=selection_split == "test", frozen_at=utc())
+        _write_json(self.output / "selection_freeze.json", self.state["final_selection"])
         self.save("complete")
-        self.report()
-        _write_json(self.output / "completion_receipt.json", dict(
-            status="complete", protocol_id=p["protocol_id"],
-            code_and_data_fingerprint=self.fingerprint,
-            selection_freeze_sha256=sha(freeze_path),
-            campaign_sha256=sha(self.state_path), report_sha256=sha(self.output / "REPORT.md"),
-            scientific_promotion_passed=self.state["scientific_promotion_passed"],
-            historical_test_already_published=True, test_used_for_selection=False,
-            generations_completed=len(self.state["generations"]),
-            llm_candidates=sum(len(x["candidates"]) for x in self.state["generations"]),
-            finalized_at=utc()))
+        self._write_single_stage_report(reference, incumbent, steps, seeds, selection_split)
+
+    def _write_single_stage_report(self, reference, incumbent, steps, seeds, selection_split):
+        lines = ["# nanoBrain 单阶段最终预算演化", "", f"协议：{self.protocol['protocol_id']}", "",
+                 f"状态：complete；完成代数：{len(self.state.get('generations', []))}；候选数：{sum(len(x.get('candidates', [])) for x in self.state.get('generations', []))}。", "",
+                 f"训练预算：每候选每任务 {steps} steps；seed：{seeds}；没有短预算筛选、传播或末尾确认。", "",
+                 f"选择划分：{selection_split}；test_used_for_selection={selection_split == 'test'}。", "",
+                 "| 指标 | reference | selected |", "| --- | ---: | ---: |"]
+        for key in sorted(set(reference["metrics"]) & set(incumbent["metrics"])):
+            lines.append(f"| {key} | {reference['metrics'][key]:.6f} | {incumbent['metrics'][key]:.6f} |")
+        lines += ["", "## 解释", "", "LLM 在每一代提案 prompt 中收到 parent、initial reference、近期候选及 best observed candidates 的逐任务 metrics、diagnostics、score 和 gate 信息。", "", "本协议若选择 test，则这些 test 指标也会进入 prompt 并驱动 parent promotion；该结果是 test-driven exploratory search，不能作为未触碰测试集的泛化报告。", ""]
+        (self.output / "REPORT.md").write_text("\n".join(lines))
 
     def report(self):
         rows = []

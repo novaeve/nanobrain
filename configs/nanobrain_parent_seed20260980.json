@@ -1,0 +1,21 @@
+{
+  "attention": "sdpa",
+  "attention_heads": 2,
+  "dropout": 0.05,
+  "encoder": "residual_mlp",
+  "encoder_depth": 2,
+  "flow": "none",
+  "flow_depth": 1,
+  "hidden_dim": 96,
+  "learning_rate": 0.0005,
+  "loss_weights": {
+    "annotation": 1.0,
+    "completion": 1.0,
+    "development": 1.0,
+    "integration": 1.0,
+    "niche": 1.0
+  },
+  "residual": "nbeats",
+  "seed": 20260980,
+  "spatial": "neighbor_mean"
+}
