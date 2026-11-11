@@ -3,194 +3,150 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>nanoBrain · 虚拟细胞架构演化</title>
-<meta name="description" content="nanoBrain：固定 10 万细胞、四个任务、一套评估器。LLM 在可组合计算图上提出新架构，只有可复现的改进才能晋级。">
+<title>nanoBrain</title>
+<meta name="description" content="nanoBrain 让 LLM 在受控实验中演化虚拟细胞模型：定义是开放的，演化是冻结的。">
 <link rel="icon" href="assets/logo.png">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="#"><img src="assets/logo.png" alt=""><span>nanoBrain</span></a>
     <nav class="nav" aria-label="主导航">
-      <a href="#how">原理</a>
-      <a href="#tasks">任务</a>
-      <a href="#board">排行榜</a>
-      <a href="#evolution">演化</a>
-      <a href="#news">进展</a>
-      <a href="#start">上手</a>
+      <a href="#what">是什么</a>
+      <a href="#lifecycle">生命周期</a>
+      <a href="#campaign">当前 campaign</a>
+      <a href="#evolve">演化</a>
+      <a href="#guarantees">保证</a>
+      <a href="#use">使用</a>
     </nav>
-    <a class="btn btn-sm" href="https://github.com/novaeve/nanobrain" target="_blank" rel="noopener">GitHub</a>
+    <a class="gh" href="https://github.com/novaeve/nanobrain" target="_blank" rel="noopener">GitHub</a>
   </div>
 </header>
 
-<main>
-<section class="hero">
-  <div class="wrap">
-    <p class="eyebrow">Canchen Tech AI Group · Brain World Model 的快速实验场</p>
-    <h1><span class="nw">十万个细胞，</span><br><em class="nw">一个不停进化的架构。</em></h1>
-    <p class="lede">固定的数据、四个任务、同一套评估器。LLM 在可组合计算图上提出新架构，程序负责训练、多 seed 复验和记账，只有可复现的改进才能晋级。</p>
-    <div class="cta">
-      <a class="btn" href="#board">查看排行榜</a>
-      <a class="btn btn-ghost" href="#start">五分钟跑通</a>
-    </div>
-    <figure class="hero-fig" aria-hidden="true">
-      <svg viewBox="0 0 760 300" class="cells" id="cells"></svg>
-      <figcaption class="hero-cap" id="cells-cap">两个批次的细胞，按细胞类型整合到一起</figcaption>
-    </figure>
-    <div class="stats" id="stats">
-      <div><b>100k</b><span>冻结细胞</span></div>
-      <div><b>60/20/20</b><span>train · val · test（千）</span></div>
-      <div><b>256</b><span>基因面板</span></div>
-      <div><b>4</b><span>独立训练的任务</span></div>
-      <div><b data-stat="methods">—</b><span>对照方法</span></div>
-      <div><b data-stat="rows">—</b><span>已发布指标</span></div>
-    </div>
+<main class="wrap">
+<h1>nanoBrain</h1>
+
+<section id="what">
+  <h2>nanoBrain 是什么</h2>
+  <p>nanoBrain 是一个让 LLM 在受控实验中演化虚拟细胞模型的系统。LLM 提出候选模型：架构、目标函数、训练配方和少量 PyTorch 插件代码；nanoBrain 负责校验候选、在隔离环境中从随机初始化训练、用同一套评估流程打分、按固定门槛决定是否晋级，并保存每一步的证据，包括失败和没有晋级的候选。</p>
+  <p>它的核心规则是：<strong>定义是开放的，演化是冻结的。</strong>演化开始之前，数据、任务、指标、对手和搜索空间都由使用者定义，nanoBrain 提供基础设施；一旦冻结并开始演化，这些就锁死，任何改动都意味着另一个 campaign。</p>
+  <p>nanoBrain 是 Brain World Model 的实验场：新的模型设计先在这里用有限预算、可复现的方式被验证或否定，再决定是否投入更大规模的训练。</p>
+  <div class="cols">
+    <div><b>开放的部分</b><p>一个 campaign 的全部选择写在一个 TOML 文件和一份给 LLM 的说明里：数据、目标、指标、预算、门槛、搜索空间。这部分代码很少，人可以直接读懂。</p></div>
+    <div><b>封死的部分</b><p>校验器、代码白名单、沙箱、GPU 调度、谱系记录、晋级门槛和冻结机制。这部分代码很多，每一条保证都有对应的测试。</p></div>
   </div>
 </section>
 
-<section id="how" class="block alt">
-  <div class="wrap">
-    <p class="kicker">原理</p>
-    <h2>提案、训练、复验、晋级。</h2>
-    <p class="sub">nanoBrain 不是 Brain World Model 的缩小版，而是它的试验台：新架构、新目标先在可控的数据上被证实或证伪，有用的想法再搬去大规模训练。</p>
-    <div class="steps">
-      <div class="card"><span class="n">01</span><b>架构即 JSON 图</b><p>主干、速度场、任务头都是 ≤32 节点的有向无环图，节点来自已注册组件，非法连接在构建前被拒绝。</p></div>
-      <div class="card"><span class="n">02</span><b>LLM 提案</b><p>读取父架构、各任务完整指标和历史成败，提交完整图或 JSON Patch，并写明改动假设与代价。</p></div>
-      <div class="card"><span class="n">03</span><b>独立训练</b><p>每个候选为四个任务各训一份权重、三颗配对 seed；不从不同候选拼接各任务的最好分数。</p></div>
-      <div class="card"><span class="n">04</span><b>晋级门槛</b><p>综合分须比父代和参考模型都高 ≥0.002，单任务退化不超上限，每个 seed 都成功。</p></div>
-    </div>
-    <figure class="card loop-fig" aria-label="演化闭环示意图">
-      <svg viewBox="0 0 960 200">
-        <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="ar" d="M0,0 L8,4 L0,8 z"/></marker></defs>
-        <g class="nd"><rect x="10" y="40" width="150" height="64" rx="12"/><text x="85" y="68">父架构</text><text class="s" x="85" y="88">JSON 计算图</text></g>
-        <g class="nd hot"><rect x="200" y="40" width="150" height="64" rx="12"/><text x="275" y="68">LLM 提案</text><text class="s" x="275" y="88">完整图 / JSON Patch</text></g>
-        <g class="nd"><rect x="390" y="40" width="150" height="64" rx="12"/><text x="465" y="68">构建前校验</text><text class="s" x="465" y="88">形状 · 连接 · 血缘</text></g>
-        <g class="nd"><rect x="580" y="40" width="160" height="64" rx="12"/><text x="660" y="68">4 任务 × 3 seeds</text><text class="s" x="660" y="88">独立权重，同一预算</text></g>
-        <g class="nd hot"><rect x="780" y="40" width="170" height="64" rx="12"/><text x="865" y="68">统一评估 + 门槛</text><text class="s" x="865" y="88">≥0.002 且无超限退化</text></g>
-        <path class="lk" d="M160 72 H198" marker-end="url(#ah)"/>
-        <path class="lk" d="M350 72 H388" marker-end="url(#ah)"/>
-        <path class="lk" d="M540 72 H578" marker-end="url(#ah)"/>
-        <path class="lk" d="M740 72 H778" marker-end="url(#ah)"/>
-        <path class="lk back" d="M865 104 V160 H85 V106" marker-end="url(#ah)"/>
-        <text class="s" x="475" y="182">通过：成为新的父代　·　未通过：保留父代，失败原因写进下一轮提示</text>
-      </svg>
-    </figure>
+<section id="lifecycle">
+  <h2>生命周期</h2>
+  <div class="table">
+  <table>
+    <thead><tr><th>阶段</th><th>谁来做</th><th>能改什么</th><th>命令或文件</th></tr></thead>
+    <tbody>
+      <tr><td>定义</td><td>人</td><td>数据、任务、指标、对手、预算、门槛、搜索空间、给 LLM 的说明</td><td><code>campaigns/&lt;id&gt;/campaign.toml</code></td></tr>
+      <tr><td>冻结</td><td>人</td><td>不能再改。锁定定义、种子模型、评估脚本与参考成绩、数据清单的哈希</td><td><code>nanobrain --freeze</code></td></tr>
+      <tr><td>演化</td><td>LLM 与系统</td><td>只有候选：搜索空间内的配置、组件和张量插件代码</td><td><code>nanobrain --execute</code></td></tr>
+      <tr><td>晋级</td><td>系统</td><td>不能改。按冻结的门槛判定</td><td><code>nanobrain/infra/gate.py</code></td></tr>
+      <tr><td>退役</td><td>人与工具</td><td>旧分支、旧目录只有在证明内容已完整保存后才能删除</td><td><code>scripts/retire_check.py</code></td></tr>
+    </tbody>
+  </table>
   </div>
+  <p>每次启动和续跑都会核对冻结锁文件：没有冻结，或任何被锁定的文件、数据发生变化，都会拒绝运行并列出变化的内容。同一个 campaign id 不能重新冻结成不同的内容。</p>
 </section>
 
-<section id="tasks" class="block">
-  <div class="wrap">
-    <p class="kicker">任务</p>
-    <h2>四个问题，覆盖虚拟细胞的核心能力。</h2>
-    <p class="sub">每个方法只在它原生适用的任务上参评。指标随协议演进，当前榜单与 V3 协议分别列出。</p>
-    <div class="table-wrap">
-      <table class="board tasks">
-        <thead><tr><th>任务</th><th>预测什么</th><th>当前榜单主指标</th><th class="hide-sm">V3 协议</th></tr></thead>
-        <tbody>
-          <tr><td>细胞注释</td><td>中心细胞的细胞类型（类别极不均衡）</td><td class="m">Macro F1 ↑</td><td class="hide-sm">Macro F1 ↑</td></tr>
-          <tr><td>数据整合</td><td>去除批次差异、同时保留生物信号的表征</td><td class="m">Integration composite ↑</td><td class="hide-sm">scIB 单项分别报告</td></tr>
-          <tr><td>发育预测</td><td>给定来源群体与年龄间隔，预测目标群体的分布</td><td class="m">Population MSE ↓</td><td class="hide-sm">W₂ 距离 ↓</td></tr>
-          <tr><td>空间生态位</td><td>细胞所处的空间邻域</td><td class="m">ARI ↑<small>以解剖区域作代理</small></td><td class="hide-sm">邻域组成 MAE ↓</td></tr>
-        </tbody>
-      </table>
-    </div>
+<section id="campaign">
+  <h2>当前 campaign：以 Cajal v1 为种子</h2>
+  <p>种子模型 Cajal v1 是一个共享编码器：它把每个细胞读成一组（基因，表达量）token，用注意力与循环混合专家块建立细胞表征，五个目标联合训练。演化从它的架构和训练配方出发，但每个候选都从随机初始化开始训练，不继承任何已训练的权重。</p>
+  <div class="table">
+  <table>
+    <thead><tr><th>任务</th><th>研究问题</th><th>评估指标</th></tr></thead>
+    <tbody>
+      <tr><td>细胞类型注释</td><td>从表达预测细粒度细胞类型</td><td>Cell type fine macro-F1</td></tr>
+      <tr><td>脑区注释</td><td>预测细粒度解剖脑区</td><td>Region fine macro-F1</td></tr>
+      <tr><td>批次整合</td><td>保留生物信号，同时去除批次效应</td><td>Integration bio、Integration batch</td></tr>
+      <tr><td>基因补全</td><td>重建被遮住的测量基因表达</td><td>每个细胞 Pearson 相关的中位数</td></tr>
+      <tr><td>空间补全</td><td>用可见邻居重建被隐藏细胞的表达</td><td>每个细胞 Pearson 相关的中位数</td></tr>
+    </tbody>
+  </table>
   </div>
+  <div class="table">
+  <table>
+    <thead><tr><th>数据集</th><th class="r">细胞数</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><code>unified_1m</code></td><td class="r">1,015,388</td><td>联合预训练</td></tr>
+      <tr><td><code>eval_10k</code></td><td class="r">9,960</td><td>细胞类型、脑区注释与基因补全评估</td></tr>
+      <tr><td><code>eval_integration_10k</code></td><td class="r">9,867</td><td>整合评估</td></tr>
+      <tr><td><code>eval_spatial</code></td><td class="r">40,789</td><td>空间补全评估</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>预算：30 代，每代 10 个候选；每个候选按 30,000 步的学习率调度训练，在第 10,000 步固定停止；单个种子。评估集与预训练细胞不重叠。</p>
 </section>
 
-<section id="board" class="block alt">
-  <div class="wrap">
-    <p class="kicker">排行榜</p>
-    <h2>同一份数据，同一套评估器。</h2>
-    <p class="sub">冻结测试集上的方法级结果。点击一行查看该方法的训练方式与评估说明。</p>
-    <div class="note"><b>如何读这张表</b>测试标签已于 2026-09-16 公开，这些是描述性的历史结果，不是新的盲测；各方法的训练方式与运行次数不同，比较前请看每行的说明。</div>
-    <div class="ctl">
-      <div class="seg" role="tablist" id="task-tabs"></div>
-      <label class="sel"><select id="metric-sel" aria-label="指标"></select></label>
-    </div>
-    <div class="table-wrap">
-      <table class="board" id="board-table">
-        <thead><tr><th class="r">#</th><th>方法</th><th class="hide-sm">类别 · 训练方式</th><th>分数</th><th class="r hide-sm">SD</th><th class="r hide-sm">Runs</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <p class="foot" id="board-foot"></p>
+<section id="evolve">
+  <h2>演化如何进行</h2>
+  <ol class="steps">
+    <li><b>提案。</b>LLM 查看合约、组件库、基线和完整的候选谱系，提交一个候选：父代、假设、目标指标、相对种子的完整配置，以及可选的插件源码。它没有 shell、网络或数据访问。</li>
+    <li><b>校验。</b>候选先过结构、取值范围和代码白名单检查，再在不挂载数据和 GPU 的 Linux 沙箱中做合成检查：张量接口、五个目标的梯度、参数更新和 checkpoint 重载。</li>
+    <li><b>训练与评估。</b>通过校验的候选在沙箱中从随机初始化训练一个共享模型，一个 checkpoint 产出全部六个指标。</li>
+    <li><b>晋级与留档。</b>按冻结的门槛判定是否晋级；所有候选，包括失败和未晋级的，都留在谱系中，可作为后续的父代。</li>
+  </ol>
+  <h3>插件接口</h3>
+  <div class="table">
+  <table>
+    <thead><tr><th>种类</th><th>签名</th></tr></thead>
+    <tbody>
+      <tr><td><code>token_transform</code></td><td><code>build(hidden_dim, **declared)</code>，输入一个细胞的 token 状态 [1, L, D]，输出同形状</td></tr>
+      <tr><td><code>gene_loss</code></td><td><code>compute(prediction[M], target[M], **declared)</code>，可微、非负</td></tr>
+      <tr><td><code>cell_type_loss</code> / <code>anatomy_loss</code></td><td><code>compute(logits[B, C], target[B], **declared)</code></td></tr>
+      <tr><td><code>optimizer</code></td><td><code>build(parameters, lr, weight_decay, **declared)</code></td></tr>
+    </tbody>
+  </table>
   </div>
+  <p>插件只能使用 <code>torch</code> 张量代码；单文件不超过 32 KiB，总计不超过 128 KiB，模型不超过 2 亿参数。</p>
+  <h3>两种演化方式</h3>
+  <p>训练阶段的演化已经实现：改架构、组件、损失、优化器和训练配方，通过反向传播训练。推理阶段的演化已预留、尚未实现：不做梯度更新，例如用对照样本提取表征方向、定向修改少量权重（steering）。它需要读取已训练的模型，因此会作为另一种权重策略的 campaign 出现，同样先定义、再冻结。</p>
 </section>
 
-<section id="evolution" class="block">
-  <div class="wrap">
-    <p class="kicker">演化</p>
-    <h2>参数量与性能。</h2>
-    <p class="sub">2026-09 首轮演化的候选在 validation 上的成绩：每个点是一次单 seed、150–300 步的短训练，蓝线连接 Pareto 前沿。</p>
-    <div class="note"><b>不要和排行榜直接比较</b>这些点来自 validation、短预算、单 seed，发育指标的尺度也与测试榜不同；它们说明搜索在探索什么，不说明谁更强。</div>
-    <div class="ctl"><div class="seg" role="tablist" id="fr-tabs"></div></div>
-    <div class="panel" id="frontier"></div>
-    <div class="facts">
-      <div><b>V1 联合训练</b><p>最好的候选只提高 0.0008，低于 0.002 门槛，按协议保留原模型。负结果同样入账。</p></div>
-      <div><b>V2 独立训练 + 计算图</b><p>四任务分别训练；架构从固定流水线改为可插入、删除、重排节点与跳连的 JSON 图。</p></div>
-      <div><b>输入组件</b><p>Harmony、Scanorama、BBKNN 作为冻结的输入组件，CellTypist 作为线性任务头，由 LLM 组合。</p></div>
-    </div>
-  </div>
+<section id="guarantees">
+  <h2>晋级规则与证据</h2>
+  <ul>
+    <li>任何指标相对父代的下降都不能超过 0.005。</li>
+    <li>目标指标取父代相对最强对手最弱的一项（不在候选声明的目标内时，取声明目标中最弱的一项），候选在它上面必须同时比父代和固定参考高出 0.005 以上。</li>
+    <li>联合前沿的排序必须变好：先比相对基线最弱的一项，再比平均相对增益。</li>
+  </ul>
+  <p>当前 campaign 只有一个种子，结果标记为单种子探索性结果，不报告标准差，也不声称显著性。评估集会反复用作演化反馈，因此结果不是新的盲测；密封的测试集不可访问。</p>
+  <h2>nanoBrain 不保证什么</h2>
+  <ul>
+    <li>不保证演化一定找到更好的模型；“没有改进”是合法且会被记录的结果。</li>
+    <li>冻结保证的是同一个 campaign 内规则不变，不保证规则本身合理；规则是否合理由人在定义阶段负责。</li>
+    <li>插件代码的静态检查加操作系统沙箱是隔离手段，不是对任意 Python 代码的安全证明。</li>
+  </ul>
 </section>
 
-<section id="news" class="block alt">
-  <div class="wrap">
-    <p class="kicker">进展</p>
-    <h2>阶段性进展，最新的在最上面。</h2>
-    <p class="sub">只追加，不改写；负结果和未完成的实验也照常记录。</p>
-    <div class="feed" id="feed"></div>
-  </div>
-</section>
+<section id="use">
+  <h2>使用</h2>
+<pre><code>git clone https://github.com/novaeve/nanobrain.git
+cd nanobrain
+python scripts/download_data.py        # 下载并校验数据
+pip install -e '.[eval,scvi,dev]'
 
-<section id="start" class="block">
-  <div class="wrap">
-    <p class="kicker">上手</p>
-    <h2>五分钟跑通一次实验。</h2>
-    <p class="sub">Linux x86_64 · Python 3.12 · uv。20 步只验证数据加载、反传与回执写出，不是 benchmark 预算。</p>
-    <div class="start">
-      <div class="term">
-        <div class="term-bar"><span></span><span></span><span></span><em class="t">zsh</em><button class="copy" type="button" data-copy="qs">复制</button></div>
-<pre id="qs"><code>git clone https://github.com/novaeve/nanobrain.git && cd nanobrain
-wget https://github.com/novaeve/nanobrain/releases/download/v1.0.0-data/nanobrain-v3-100k-metadata-v2.zip
-unzip nanobrain-v3-100k-metadata-v2.zip -d assets/
-cp .env.example .env && bash scripts/bootstrap.sh
-
-uv run python scripts/train_nanobrain.py \
-  --data assets/nanobrain_v3_100k_metadata_v2 \
-  --task annotation --steps 20 --batch-size 16 \
-  --device cpu --precision fp32 --output results/annotation-smoke</code></pre>
-      </div>
-      <div class="card">
-        <b>文档</b>
-        <p>从数据、任务到自定义模型。</p>
-        <ul class="links">
-          <li><a href="https://github.com/novaeve/nanobrain/blob/main/README_zh-CN.md" target="_blank" rel="noopener">中文 README</a></li>
-          <li><a href="https://github.com/novaeve/nanobrain/blob/main/NANOBRAIN_GRAPH_API.md" target="_blank" rel="noopener">计算图 API</a></li>
-          <li><a href="https://github.com/novaeve/nanobrain/blob/main/benchmarks/nanobrain_v3_100k/LEADERBOARD.md" target="_blank" rel="noopener">完整排行榜与 CSV</a></li>
-          <li><a href="https://github.com/novaeve/nanobrain/blob/main/docs/custom-model.md" target="_blank" rel="noopener">接入自己的模型</a></li>
-        </ul>
-      </div>
-      <div class="card">
-        <b>提交结果</b>
-        <p>训练回执推送到排行榜服务后，服务追加记录并原子重建 <code>leaderboard.json</code>。</p>
-<pre><code>python3 scripts/submit_leaderboard.py \
-  results/receipt.json \
-  --endpoint http://&lt;host&gt;:4173/api/submit</code></pre>
-      </div>
-    </div>
-  </div>
+nanobrain                              # 只打印计划，不调用 LLM、不训练
+nanobrain --freeze                     # 冻结 campaign，提交 campaign.lock.json
+nanobrain --execute                    # 开始或续跑演化</code></pre>
+  <p>完整流程需要 Linux、NVIDIA GPU 和 bubblewrap。定义新的 campaign、冻结规则、记录文件和退役检查的完整说明见白皮书。</p>
+  <ul class="links">
+    <li><a href="https://github.com/novaeve/nanobrain/blob/main/docs/whitepaper_zh-CN.md">白皮书 · 使用手册</a></li>
+    <li><a href="https://github.com/novaeve/nanobrain/blob/main/docs/whitepaper.md">Whitepaper (English)</a></li>
+    <li><a href="https://github.com/novaeve/nanobrain/blob/main/campaigns/cajal-v1/campaign.toml">Cajal v1 campaign 定义</a></li>
+    <li><a href="https://github.com/novaeve/nanobrain/tree/nanobrain-v1-final">早期版本：10 万细胞的 nanoBrain v1</a></li>
+  </ul>
 </section>
 </main>
 
-<footer class="foot-site">
-  <div class="wrap foot-in">
-    <span class="brand"><img src="assets/logo.png" alt=""><span>nanoBrain</span></span>
-    <span>Canchen Tech AI Group · 可读、可改、可复现的虚拟细胞实验入口</span>
-    <span id="gen-at"></span>
-  </div>
+<footer class="foot">
+  <div class="wrap">Canchen Tech AI Group · nanoBrain</div>
 </footer>
-
-<script src="app.js?v=3"></script>
 </body>
 </html>
