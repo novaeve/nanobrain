@@ -14,6 +14,7 @@ from pathlib import Path
 
 from . import gate as selection
 from .contracts import (
+    DATA_KEY,
     METRIC_GROUPS,
     METRICS,
     ROOT,
@@ -313,7 +314,7 @@ class Workflow:
         artifacts = {str(checkpoint): sha(checkpoint), str(train_receipt): sha(train_receipt)}
 
         def evaluate_task(task):
-            data_key = "annotation" if task == "genes" else task
+            data_key = DATA_KEY.get(task, task)
             pred_dir, score_dir = folder / (task + "-predict"), folder / (task + "-score")
             pred = pred_dir / "prediction.npz"
             if not (pred_dir / "receipt.json").exists():
@@ -324,11 +325,13 @@ class Workflow:
                 )
             self.verify_stage(pred_dir)
             if not (score_dir / "receipt.json").exists():
-                self.worker(
-                    score_dir,
-                    ["score", "--prediction", str(pred), "--task", task],
-                    [pred_dir, Path(self.cfg["data"][data_key]), Path(self.cfg["data"]["pretrain"])],
-                )
+                args, inputs = ["score", "--prediction", str(pred), "--task", task], [pred_dir]
+                if task == "age":
+                    holdout = train_dir / "train/age_holdout.npz"
+                    args += ["--holdout", str(holdout)]
+                    inputs.append(holdout)
+                inputs += [Path(self.cfg["data"][data_key]), Path(self.cfg["data"]["pretrain"])]
+                self.worker(score_dir, args, inputs)
             self.verify_stage(score_dir)
             summary = score_dir / "scores/summary.csv"
             with summary.open() as fh:
@@ -344,7 +347,7 @@ class Workflow:
         metrics = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.cfg.get("task_evaluation_workers", 1)) as pool:
             for task_metrics, task_artifacts in pool.map(
-                evaluate_task, ("annotation", "integration", "genes", "spatial")
+                evaluate_task, tuple(METRIC_GROUPS)
             ):
                 metrics.update(task_metrics)
                 artifacts.update(task_artifacts)

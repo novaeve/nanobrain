@@ -15,7 +15,9 @@ global ones (it can only read the dataset: a model at its level reads batch, not
 """
 
 import argparse
+import csv
 import json
+import os
 
 import numpy as np
 import torch
@@ -55,6 +57,28 @@ def scores(log_lo, log_hi, lo, hi, alpha):
     return out
 
 
+# Columns of summary.csv (--out): metric name -> (group/band, score). A campaign picks its metrics from these.
+SUMMARY = {
+    "Age interval score, held out (log days)": ("held_out/all", "interval_score_log"),
+    "Age coverage, held out": ("held_out/all", "coverage"),
+    "Age median error, held out (days)": ("held_out/all", "abs_err_days_median"),
+    "Age median width, held out (days)": ("held_out/all", "width_days_median"),
+    "Age median error, seen (days)": ("seen/all", "abs_err_days_median"),
+}
+
+
+def write_summary(out, folder, name):
+    """summary.csv with one row per method ("model" is written as `name`) and the SUMMARY columns."""
+    os.makedirs(folder, exist_ok=True)
+    with open(os.path.join(folder, "summary.csv"), "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["method", *SUMMARY])
+        for method, res in out.items():
+            if isinstance(res, dict):
+                row = [res.get(group, {}).get(score, float("nan")) for group, score in SUMMARY.values()]
+                w.writerow([name if method == "model" else method, *row])
+
+
 def report(log_lo, log_hi, lo, hi, hidden, alpha):
     c = age.label_center(lo, hi)
     groups = {"held_out": hidden, "seen": ~hidden}
@@ -91,6 +115,8 @@ def main():
     ap.add_argument("--holdout", required=True, help="the run's age_holdout.npz (unit, ids)")
     ap.add_argument("--train-root", default="/data/brainwm/unified_1m")
     ap.add_argument("--pred", action="append", default=[], help="NAME=npz with age_log_lo / age_log_hi")
+    ap.add_argument("--out", help="also write <out>/summary.csv (one row per method)")
+    ap.add_argument("--name", default="model", help="row name of the model's own prediction in summary.csv")
     args = ap.parse_args()
     z = np.load(args.npz)
     h = np.load(args.holdout)
@@ -108,6 +134,10 @@ def main():
         name, path = spec.split("=", 1)
         p = np.load(path)
         out[name] = report(p["age_log_lo"], p["age_log_hi"], lo, hi, hidden, alpha)
+    if args.out:
+        if "model" not in out:
+            raise ValueError(f"{args.npz} has no age prediction: the model has no age head")
+        write_summary(out, args.out, args.name)
     print(json.dumps(out, indent=1))
 
 

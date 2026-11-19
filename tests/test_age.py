@@ -243,3 +243,18 @@ def test_age_experiments_resolve():
                 mcfg.age_head in age.KINDS and dcfg.age_holdout_unit == "dataset" and run["status"] in experiment.STATUS
             )
             M.UnifiedModel(mcfg)
+
+
+def test_eval_age_summary_names_the_candidate_row(tmp_path):
+    import csv
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("eval_age", Path(__file__).parents[1] / "scripts/eval_age.py")
+    eval_age = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(eval_age)
+    held = {"held_out/all": {"interval_score_log": 1.5, "coverage": 0.9}}
+    eval_age.write_summary({"npz": "x", "model": held, "dataset_mean": held}, str(tmp_path), "candidate")
+    rows = list(csv.DictReader((tmp_path / "summary.csv").open()))
+    assert [r["method"] for r in rows] == ["candidate", "dataset_mean"]
+    assert float(rows[0]["Age interval score, held out (log days)"]) == 1.5
+    assert rows[0]["Age median error, seen (days)"] == "nan"

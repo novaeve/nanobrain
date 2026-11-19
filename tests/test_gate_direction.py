@@ -36,3 +36,8 @@ def test_definition_rejects_a_bad_direction(tmp_path):
     (tmp_path / "campaign.toml").write_text(text)
     with pytest.raises(ValueError, match="direction"):
         campaign.load(str(tmp_path))
+
+
+def test_cajal_evaluates_its_four_groups_in_order():
+    assert tuple(C.METRIC_GROUPS) == ("annotation", "integration", "genes", "spatial")
+    assert C.DATA_KEY == {"genes": "annotation", "age": "annotation"}

@@ -108,3 +108,12 @@ def test_declared_label_files_are_locked_with_their_data(tmp_path):
     assert freeze.snapshot(definition, cfg)["data"]["a"] != before
     with pytest.raises(ValueError, match="unknown data"):
         freeze.snapshot(definition, {"data": {"b": str(root)}})
+
+
+def test_age_draft_is_defined_but_not_frozen():
+    draft = campaign.load(str(ROOT / "campaigns/cajal-v1-age"))
+    assert not freeze.lock_path(draft).exists()
+    assert "age" in draft["objectives"]["names"] and draft["campaign"]["id"] != campaign.load()["campaign"]["id"]
+    age = [m for m in draft["metrics"] if m["group"] == "age"]
+    assert age and all(m["direction"] == "min" for m in age)
+    assert set(draft["freeze"]["data_files"]) <= {"pretrain", "annotation"}

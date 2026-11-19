@@ -79,10 +79,10 @@ tests/                                 每一条保证都有对应测试
 | `[budget]` | 学习率调度长度、固定停止步、种子、checkpoint 选择方式、是否自动扩展 | 30,000 步调度，第 10,000 步停止；seed 0；`fixed_stop`；不扩展 |
 | `[resources]` | 可用 GPU 白名单及理由 | GPU 0–4 |
 | `[objectives]` | 联合训练的目标名，必须与种子模型的损失一致 | gene、integration、cell_type、anatomy、spatial |
-| `[[metrics]]` | 每个评估指标的名字、所属任务组、合法范围 | 6 个指标，见下表 |
+| `[[metrics]]` | 每个评估指标的名字、所属任务组、合法范围；可选 `direction`（默认 `max`，误差类用 `min`）和 `tolerance`（指标自身单位，默认 `regression_floor`） | 6 个指标，见下表 |
 | `[gate]` | 晋级门槛的回退容差 | 0.005 |
 | `[search]` | 可搜索的模型字段与取值、训练/数据/优化器范围、插件种类 | 见 `campaign.toml` |
-| `[freeze]` | 冻结时额外锁定的任务与裁判文件、种子模型目录 | 评估脚本 4 个、参考记录 13 个、`brainwm_unified` |
+| `[freeze]` | 冻结时额外锁定的任务与裁判文件、种子模型目录；可选 `[freeze.data_files]`：数据集旁的标签文件，随数据一起锁定 | 评估脚本 4 个、参考记录 13 个、`brainwm_unified` |
 
 Cajal v1 的六个指标：
 
@@ -112,6 +112,30 @@ Cajal v1 的六个指标：
 
 > 保证：`tests/test_campaign_definition.py` 断言 Cajal 定义逐项等于重构前写在代码里的常量，
 > 目标与种子模型一致，LLM 说明与原提示词一致。
+
+### 示例：年龄任务
+
+种子模型带一个可选的年龄任务：输入一个细胞的表达，输出**受精后天数的区间**（始终为正；出生 = 266 天）。
+默认关闭（`model.age_head = ""`）；关闭时，现有的配方、参考和锁都不变。
+
+| 部分 | 位置 | 作用 |
+|---|---|---|
+| 标签 | `data_build/build_age.py` | 在数据集旁写 `age_lower_dpf.npy` / `age_upper_dpf.npy`：每个细胞的年龄是天数区间 `[lo, hi)`。报告的年龄按其分辨率覆盖（"73y" 是一年，"14pcw" 是一周）；范围或 "> 90 y" 就用给出的区间；只有阶段的标签用该生命阶段的区间 |
+| 模型 | `brainwm_unified/age.py`，`model.age_head = "logistic"`（或 `"gauss"`） | 共享隐变量上的头输出对数天数上的位置和尺度。标签是区间删失的：损失是标签区间概率的负对数。报告区间取中间 90%（`model.age_alpha = 0.1`） |
+| 留出 | `data.age_holdout = 0.15`，`data.age_holdout_unit = "dataset"` | 训练时隐藏 15% 数据集的年龄标签（存为 `age_holdout.npz`）。评估集的供体都在预训练里，头可以学到“数据集 → 平均年龄”；只有留出的数据集才检验从表达读年龄 |
+| 评估 | `scripts/eval_age.py` | 在留出组和已见组上、按年龄段（产前、0–18 岁、18–65 岁、> 65 岁）报告：覆盖率、宽度和中位误差（天），对数天数上的 interval score；`--out` 为 worker 写 `summary.csv` |
+| 基线 | `scripts/eval_age.py`、`scripts/fit_age_baseline.py` | 数据集均值先验（只读数据集；模型只到这个水平说明学到的是批次而不是生物学），以及表达上的 ridge 加 split conformal 区间 |
+| Campaign | `campaigns/cajal-v1-age/` | 草稿：年龄作为第六个目标，两个年龄指标（`direction = "min"`），年龄标签随数据一起锁定。未冻结，未运行 |
+
+现状：一万细胞的试验（2026-11-14）是负结果。在留出数据集上没有一个变体胜过数据集均值先验；在已见数据集上头读的是数据集身份；整合的 batch 指标下降。年龄应当作为需要对照两条基线和批次指标来检验的任务，而不是已经解决的输出。
+
+运行试验配方并评分：
+
+```bash
+.venv/bin/python -m brainwm_unified.train --config configs/experiments/age/logistic.toml
+.venv/bin/python scripts/predict_eval.py --checkpoint runs/age/logistic/latest.pt --data /data/brainwm/eval_10k --out runs/eval/age/logistic.npz --task embed
+.venv/bin/python scripts/eval_age.py runs/eval/age/logistic.npz --holdout runs/age/logistic/age_holdout.npz --train-root /data/brainwm/unified_1m
+```
 
 ## 5. 冻结：从这一刻起不能再改
 
@@ -186,7 +210,7 @@ nanobrain --execute         # 显式开始或续跑真实演化
 
 规则在 `nanobrain/infra/gate.py`，门槛参数来自定义：
 
-1. 任何指标相对父代的下降都不超过 `regression_floor`（0.005）。
+1. 任何指标相对父代变差都不超过它的 `tolerance`（默认 `regression_floor`，0.005）；“变差”按指标的 `direction` 判断。
 2. 目标指标取父代**相对最强对手最弱**的那一项；如果它不在候选声明的目标里，就取候选声明的目标中相对最弱的一项。候选在这项指标上相对父代和固定参考都必须提升超过 0.005。
 3. 联合前沿的排序变好：先比相对基线最弱的一项，再比平均相对增益。
 

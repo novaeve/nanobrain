@@ -7,7 +7,7 @@ import runpy
 import sys
 from pathlib import Path
 
-from .contracts import ROOT, TASKS, load_config, resolved_document, save, sha, validate_bundle
+from .contracts import DATA_KEY, ROOT, TASKS, load_config, resolved_document, save, sha, validate_bundle
 
 
 def synthetic(root):
@@ -182,7 +182,8 @@ def main():
     ap.add_argument("mode", choices=["probe", "train", "predict", "score"])
     ap.add_argument("--bundle")
     ap.add_argument("--seed", type=int)
-    ap.add_argument("--task", choices=["annotation", "integration", "genes", "spatial"])
+    ap.add_argument("--task", choices=["annotation", "integration", "genes", "spatial", "age"])
+    ap.add_argument("--holdout", help="age: the training run's age_holdout.npz")
     ap.add_argument("--checkpoint")
     ap.add_argument("--prediction")
     ap.add_argument("--config", default=str(ROOT / "configs/cajal_react.json"))
@@ -233,7 +234,7 @@ def main():
         }
     elif args.mode == "predict":
         cfg = load_config(args.config)
-        key = "annotation" if args.task == "genes" else args.task
+        key = DATA_KEY.get(args.task, args.task)
         script(
             "predict_eval.py",
             [
@@ -248,14 +249,14 @@ def main():
                 "--token-budget",
                 str(cfg["token_budget"]),
                 "--task",
-                "embed" if args.task in ("annotation", "integration") else args.task,
+                "embed" if args.task in ("annotation", "integration", "age") else args.task,
             ],
         )
         artifacts = {p.name: sha(p) for p in Path("/work").glob("*.npz")}
         result = {"status": "complete", "task": args.task, "prediction": "prediction.npz", "artifact_hashes": artifacts}
     else:
         cfg = load_config(args.config)
-        key = "annotation" if args.task == "genes" else args.task
+        key = DATA_KEY.get(args.task, args.task)
         common = [
             "--data",
             cfg["data"][key],
@@ -266,7 +267,22 @@ def main():
             "--out",
             "/work/scores",
         ]
-        if args.task in ("annotation", "integration"):
+        if args.task == "age":
+            script(
+                "eval_age.py",
+                [
+                    args.prediction,
+                    "--holdout",
+                    args.holdout,
+                    "--train-root",
+                    cfg["data"]["pretrain"],
+                    "--out",
+                    "/work/scores",
+                    "--name",
+                    "candidate",
+                ],
+            )
+        elif args.task in ("annotation", "integration"):
             script(
                 "eval_zero_shot.py",
                 [*common, "--cache", str(ROOT / "reference/baseline_cache"), "--predictions-only", "--task", args.task],

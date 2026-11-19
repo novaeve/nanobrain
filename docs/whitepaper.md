@@ -81,10 +81,10 @@ Using `campaigns/cajal-v1/campaign.toml` as the example:
 | `[budget]` | LR schedule length, fixed stop, seeds, checkpoint selection, automatic scaling | 30,000-step schedule stopped at 10,000; seed 0; `fixed_stop`; no scaling |
 | `[resources]` | GPU whitelist and reason | GPUs 0–4 |
 | `[objectives]` | joint training objectives; must equal the seed model's losses | gene, integration, cell_type, anatomy, spatial |
-| `[[metrics]]` | each metric's name, task group and valid range | six metrics, below |
+| `[[metrics]]` | each metric's name, task group, valid range; optional `direction` (`max` default, `min` for errors) and `tolerance` (in the metric's unit; default `regression_floor`) | six metrics, below |
 | `[gate]` | regression tolerance for promotion | 0.005 |
 | `[search]` | searchable model fields and values, train/data/optimizer ranges, plugin kinds | see `campaign.toml` |
-| `[freeze]` | extra task and judge files locked at freeze time, seed model directory | 4 evaluation scripts, 13 reference records, `brainwm_unified` |
+| `[freeze]` | extra task and judge files locked at freeze time, seed model directory; optional `[freeze.data_files]`: label files next to a dataset, locked with it | 4 evaluation scripts, 13 reference records, `brainwm_unified` |
 
 | Task group | Metrics | Range |
 |---|---|---|
@@ -114,6 +114,33 @@ unique with valid ranges; this is checked on load.
 > Guarantee: `tests/test_campaign_definition.py` asserts that the Cajal definition equals, value by value, the
 > constants that used to be hard-coded, that the objectives match the seed model, and that the brief is the
 > former prompt.
+
+### Example: an age task
+
+The seed model has an opt-in age task: input a cell's expression, output an **interval of age in days post
+fertilization** (always positive; birth = 266 days). It is off by default (`model.age_head = ""`), and while off
+every existing recipe, reference and lock is unchanged.
+
+| Piece | Where | What it does |
+|---|---|---|
+| Labels | `data_build/build_age.py` | writes `age_lower_dpf.npy` / `age_upper_dpf.npy` next to a dataset: each cell's age as an interval `[lo, hi)` in days. A reported age covers its resolution ("73y" is a year, "14pcw" a week); a range or "> 90 y" is the interval given; a stage-only label uses its life stage's interval |
+| Model | `brainwm_unified/age.py`, `model.age_head = "logistic"` (or `"gauss"`) | a head on the shared latent gives a location and scale on log days. The labels are interval-censored: the loss is minus the log probability of the label's interval. Reported interval: the central 90% (`model.age_alpha = 0.1`) |
+| Hold-out | `data.age_holdout = 0.15`, `data.age_holdout_unit = "dataset"` | 15% of datasets have their age labels hidden in training (saved as `age_holdout.npz`). Every evaluation donor is also in pretraining, so a head can learn "dataset → mean age"; only held-out datasets test age from expression |
+| Evaluation | `scripts/eval_age.py` | on held-out and seen groups, by band (prenatal, 0–18 y, 18–65 y, > 65 y): coverage, width and median error in days, interval score in log days; `--out` writes `summary.csv` for the worker |
+| Baselines | `scripts/eval_age.py`, `scripts/fit_age_baseline.py` | the dataset-mean prior (reads only the dataset; a model at its level has learned batch, not biology) and ridge on expression with a split-conformal interval |
+| Campaign | `campaigns/cajal-v1-age/` | draft: age as a sixth objective, two age metrics (`direction = "min"`), age labels locked with their data. Not frozen and not run |
+
+Status: a 10k-cell trial (2026-11-14) was negative. On held-out datasets no variant beat the dataset-mean
+prior, the head read dataset identity on seen datasets, and integration batch fell. Treat age as a task to test
+against both baselines and the batch metrics, not as a solved output.
+
+Run the trial recipe and score it:
+
+```bash
+.venv/bin/python -m brainwm_unified.train --config configs/experiments/age/logistic.toml
+.venv/bin/python scripts/predict_eval.py --checkpoint runs/age/logistic/latest.pt --data /data/brainwm/eval_10k --out runs/eval/age/logistic.npz --task embed
+.venv/bin/python scripts/eval_age.py runs/eval/age/logistic.npz --holdout runs/age/logistic/age_holdout.npz --train-root /data/brainwm/unified_1m
+```
 
 ## 5. Freeze: nothing changes from here on
 
@@ -193,7 +220,8 @@ frozen like any other.
 
 Rules live in `nanobrain/infra/gate.py`; parameters come from the definition:
 
-1. No metric drops below the parent by more than `regression_floor` (0.005).
+1. No metric is worse than the parent by more than its `tolerance` (default `regression_floor`, 0.005);
+   "worse" follows the metric's `direction`.
 2. The target metric is the parent's weakest metric relative to the best opponent; if the candidate did not
    declare it, the weakest of the candidate's declared targets. On it the candidate must beat both the parent
    and the fixed reference by more than 0.005.
