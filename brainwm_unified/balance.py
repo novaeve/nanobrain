@@ -90,7 +90,8 @@ class GradEqual:
         if step < self.norm_steps or not all(n in self.ema for n in losses):
             return base
         target = sum(base[t] * self.ema[t] for t in TASKS) / len(TASKS)
-        return {n: target / max(self.ema[n], 1e-12) for n in losses}
+        # a loss with no path to the encoder (e.g. a detached probe head) keeps its initial scale
+        return {n: target / self.ema[n] if self.ema[n] > 1e-12 else base.get(n, 1.0) for n in losses}
 
     def state_dict(self):
         return {"initial": self.initial.state_dict(), "ema": dict(self.ema)}

@@ -25,6 +25,7 @@ from torch.profiler import record_function
 from torch.utils.checkpoint import CheckpointPolicy, checkpoint, create_selective_checkpoint_contexts
 
 from . import deepinfra
+from .age import AgeHead
 from .config import ModelConfig
 
 _flex = flex_attention
@@ -474,6 +475,8 @@ class UnifiedModel(nn.Module):
             from nanobrain.infra.components import install_model
 
             install_model(self, cfg)
+        if cfg.age_head:  # opt-in age task (brainwm_unified.age)
+            self.age_head = AgeHead(cfg.z_dim, d, cfg.age_head)
         if cfg.compile_blocks:
             # Regional compilation (as in torchtitan): each encoder block is compiled on its own,
             # with dynamic shapes since token counts and cell lengths change every step.

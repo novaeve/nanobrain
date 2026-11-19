@@ -51,6 +51,11 @@ class ModelConfig:
     # no KL; pair with a train.objectives regulariser such as sigreg) or "mog" (KL to a learned mixture prior).
     latent_reg: str = "kl"
     mog_components: int = 32
+    # Age task (brainwm_unified.age): "" off, "logistic" or "gauss" (interval-censored AFT law on log days post
+    # fertilization); age_detach reads a detached latent (a probe that leaves the encoder alone).
+    age_head: str = ""
+    age_detach: bool = False
+    age_alpha: float = 0.1  # the reported interval is the central 1 - alpha one
     # > 0: hidden width of a batch discriminator on mu, behind gradient reversal (the batch_adversary
     # objective, DANN-style); 0 builds none.
     batch_adversary: int = 0
@@ -85,6 +90,13 @@ class DataConfig:
     gene_programs: str = ""  # gene -> program ids (.npy); default <root>/gene_programs.npy
     seed: int = 0
     cell_fraction: float = 1.0  # train on a fixed random fraction of the cells (data-scaling runs)
+    # model.age_head: the age labels of a seeded, age-stratified fraction of datasets (or donors) are masked in
+    # training (age_holdout.npz in the run directory); their evaluation cells measure ages never seen. Holding out
+    # whole datasets stops the head reading "dataset -> mean age" (a batch effect) as if it were biology.
+    age_holdout: float = 0.15
+    age_holdout_unit: str = "dataset"  # "dataset" or "donor"
+    age_holdout_seed: int = 0
+    age_donor_weight: bool = False  # every donor counts once in the age loss (age.group_weights)
 
 
 @dataclass

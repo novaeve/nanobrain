@@ -24,6 +24,18 @@ from brainwm_unified.config import DataConfig
 from brainwm_unified.data import Subset
 
 
+def age_arrays(res: dict, data: str, cfg) -> dict:
+    """The age head's two outputs and how to read them, plus the evaluation set's age labels and donors."""
+    if "age" not in res:
+        return {}
+    out = {"age_raw": res["age"], "age_kind": cfg.age_head, "age_alpha": cfg.age_alpha}
+    for name in ("age_lower_dpf", "age_upper_dpf", "donor"):
+        path = os.path.join(data, name + ".npy")
+        if os.path.exists(path):
+            out[name] = np.load(path)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
@@ -62,6 +74,7 @@ def main():
         **{k: np.load(os.path.join(args.data, k + ".npy")) for k in ("dataset", "technology", "assay")},
         step=state["step"],
         seconds=seconds,
+        **age_arrays(res, args.data, model.cfg),
     )
     print(f"{len(cells)} cells in {seconds:.1f} s (step {state['step']}) -> {args.out}")
 

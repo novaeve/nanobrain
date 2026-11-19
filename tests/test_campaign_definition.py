@@ -107,3 +107,12 @@ def test_objectives_match_the_seed_model():
 def test_agent_brief_is_the_former_system_prompt():
     assert react.SYSTEM.startswith("Evolve the existing Cajal v1 shared encoder")
     assert not react.SYSTEM.endswith("\n")
+
+
+def test_age_switched_off_keeps_the_reference_identity():
+    doc = C.resolved_document(C.reference_bundle(), C.load_config(), 0)
+    canonical = C.canonical_document(doc)
+    assert "age_head" not in canonical["model"] and "age_holdout" not in canonical["data"]
+    switched_on = C.canonical_document({**doc, "model": {**doc["model"], "age_head": "logistic"}})
+    assert switched_on["model"]["age_head"] == "logistic" and "age_holdout" in switched_on["data"]
+    assert C.digest(switched_on) != C.digest(canonical)

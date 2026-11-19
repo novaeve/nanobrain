@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from .contracts import ROOT, digest, reference_bundle, resolved_document, sha
+from .contracts import ROOT, canonical_document, digest, reference_bundle, resolved_document, sha
 from .gate import check_metrics
 
 
@@ -15,7 +15,9 @@ def load(cfg, seed=0):
         cfg["schedule_steps"],
     ):
         raise ValueError("existing Cajal reference must match the fixed seed and comparison budget")
-    if snapshot["resolved_config_sha256"] != digest(resolved_document(reference_bundle(), cfg, seed)):
+    if snapshot["resolved_config_sha256"] != digest(
+        canonical_document(resolved_document(reference_bundle(), cfg, seed))
+    ):
         raise ValueError("existing Cajal reference no longer matches the initial recipe")
     for name, expected in snapshot["data_fingerprints"].items():
         if (

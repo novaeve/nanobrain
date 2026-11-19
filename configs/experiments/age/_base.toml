@@ -1,0 +1,5 @@
+description = "Age as a sixth pretraining objective: an interval in days post fertilization from the latent (brainwm_unified.age; interval-censored log-logistic AFT law), on the grad_equal recipe at the 10k protocol; compare with balance_grad_equal and its seeds (B0)"
+extends = ["../integration/balance_grad_equal.toml"]
+
+[model]
+age_head = "logistic"

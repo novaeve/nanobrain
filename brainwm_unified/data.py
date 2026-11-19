@@ -59,6 +59,7 @@ class Subset:
         is_spatial = ~np.isnan(self.spatial[:, 0])
         self.dissociated = np.flatnonzero(~is_spatial)
         self.spatial_centers = np.flatnonzero(is_spatial & (self.neighbors[:, 0] >= 0))
+        self.age_lo = self.age_hi = self.age_w = self.donor = self.dataset = None  # load_age (model.age_head)
 
     def panel_genes(self, panel: int) -> np.ndarray:
         return self.panel_gene_index[self.panel_gene_ptr[panel] : self.panel_gene_ptr[panel + 1]]
@@ -87,6 +88,18 @@ def sample_cells(ds: Subset, cfg: DataConfig, rng: np.random.Generator):
     diss = rng.choice(ds.dissociated, size=min(cfg.dissociated_cells, len(ds.dissociated)), replace=False)
     centers = rng.choice(ds.spatial_centers, size=min(cfg.spatial_groups, len(ds.spatial_centers)), replace=False)
     return diss, centers
+
+
+def load_age(ds: Subset) -> Subset:
+    """Per-cell age labels in days post fertilization (data_build/build_age.py) and donors, for model.age_head."""
+    for name in ("age_lower_dpf", "age_upper_dpf"):
+        if not os.path.exists(os.path.join(ds.root, name + ".npy")):
+            raise FileNotFoundError(f"{ds.root}/{name}.npy: run data_build/build_age.py {ds.root}")
+    ds.age_lo = np.load(os.path.join(ds.root, "age_lower_dpf.npy")).astype(np.float32)
+    ds.age_hi = np.load(os.path.join(ds.root, "age_upper_dpf.npy")).astype(np.float32)
+    ds.donor = np.load(os.path.join(ds.root, "donor.npy")).astype(np.int64)
+    ds.dataset = np.load(os.path.join(ds.root, "dataset.npy")).astype(np.int64)
+    return ds
 
 
 def restrict(ds: Subset, fraction: float, seed: int = 20261104) -> Subset:
@@ -216,6 +229,8 @@ def build_batch(
         "anatomy": t(ds.anatomy[cells]),
         "batch": t(ds.integration_batch[cells]),
         "panel": t(ds.panel_id[cells]),
+        **({"age_lo": t(ds.age_lo[cells]), "age_hi": t(ds.age_hi[cells])} if ds.age_lo is not None else {}),
+        **({"age_w": t(ds.age_w[cells])} if ds.age_w is not None else {}),
         "grp_members": t(members),
         "grp_rel": t(rel),
         "grp_masked": t(neigh_masked),

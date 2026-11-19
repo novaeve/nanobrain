@@ -6,12 +6,15 @@ cell_type   residual hierarchical cross-entropy from z, every level
 anatomy     same, for brain region
 spatial     masked neighbours' expression and cell type predicted from the
             visible cells of their spatial group (spatial MAE)
+age         (opt-in, model.age_head) an interval in days post fertilization from z (brainwm_unified.age)
 """
 
 import math
 
 import torch
 import torch.nn.functional as F
+
+from . import age
 
 TASKS = ("gene", "integration", "cell_type", "anatomy", "spatial")
 
@@ -119,6 +122,14 @@ def compute_losses(
         sp_latent = F.mse_loss(pred.float(), out["mu"][target_cells].detach().float())
         losses["spatial"] = losses["spatial"] + cfg.spatial_latent * sp_latent
         metrics["spatial/latent_mse"] = sp_latent
+    if cfg.age_head:  # opt-in age task: an interval in days post fertilization (brainwm_unified.age)
+        raw = model.age_head(z.detach() if cfg.age_detach else z)
+        losses["age"] = age.loss(raw, b["age_lo"], b["age_hi"], cfg.age_head, b.get("age_w"))
+        lo, hi = age.bounds(raw.detach(), cfg.age_head, cfg.age_alpha)
+        closed = torch.isfinite(b["age_lo"]) & torch.isfinite(b["age_hi"])
+        c = 0.5 * (torch.log(b["age_lo"].clamp(min=1e-6)) + torch.log(b["age_hi"].clamp(min=1e-6)))
+        hit = ((lo <= c) & (c <= hi) & closed).float().sum() / closed.sum().clamp(min=1)
+        metrics["age/coverage"], metrics["age/log_width"] = hit, (hi - lo).mean()
     for name, fn in (extras or {}).items():
         losses[name] = fn(model, b, out)
     if model.cfg.research_plugins:

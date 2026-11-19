@@ -96,5 +96,9 @@ def verify(cfg, definition=None):
         if lock["data"].get(k) != current["data"].get(k)
     ]
     if changed:
-        raise ValueError("frozen campaign changed: " + ", ".join(changed[:20]))
+        raise ValueError(
+            "frozen campaign changed: "
+            + ", ".join(changed[:20])
+            + f"; a frozen campaign runs from its tag campaign/{Path(definition['directory']).name}"
+        )
     return digest({k: lock[k] for k in current})

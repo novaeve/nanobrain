@@ -17,9 +17,10 @@ import torch
 
 from . import experiment, record
 from . import model as M
+from .age import group_weights, holdout_groups
 from .balance import CapacityWeight, DualWeight, build_balancer
 from .config import DataConfig, TrainConfig, to_dict
-from .data import BatchStream, Subset, load_level_maps, restrict
+from .data import BatchStream, Subset, load_age, load_level_maps, restrict
 from .objectives import TASKS, compute_losses
 from .optim import GroupedMuon
 from .regularizers import OBJECTIVES
@@ -137,6 +138,19 @@ def main(argv=None):
         tcfg.compile = False
 
     ds = restrict(Subset(dcfg.root, args.value_scale), dcfg.cell_fraction)
+    held = None
+    if mcfg.age_head:  # opt-in age task: labels in days post fertilization; held-out groups' ages never seen
+        load_age(ds)
+        if dcfg.age_holdout_unit not in ("dataset", "donor"):
+            raise ValueError(f"data.age_holdout_unit {dcfg.age_holdout_unit!r}; valid: dataset, donor")
+        unit = getattr(ds, dcfg.age_holdout_unit)
+        held = holdout_groups(unit, ds.age_lo, ds.age_hi, dcfg.age_holdout, dcfg.age_holdout_seed)
+        hidden = np.isin(unit, held)
+        ds.age_lo[hidden], ds.age_hi[hidden] = np.nan, np.nan
+        labelled = np.isfinite(ds.age_lo) | np.isfinite(ds.age_hi)
+        if dcfg.age_donor_weight:
+            ds.age_w = group_weights(ds.donor, labelled)
+        print(f"age: {int(labelled.sum())} labelled cells; {len(held)} {dcfg.age_holdout_unit}s held out", flush=True)
     level_maps = {
         "cell_type": load_level_maps(os.path.join(dcfg.root, "cell_type_vocab.json")),
         "anatomy": load_level_maps(os.path.join(dcfg.root, "anatomy_vocab.json")),
@@ -151,6 +165,8 @@ def main(argv=None):
     os.makedirs(tcfg.out_dir, exist_ok=True)
     with open(os.path.join(tcfg.out_dir, "config.json"), "w") as fh:
         json.dump(to_dict(mcfg, dcfg, tcfg), fh, indent=2)
+    if held is not None:  # the evaluation of never-seen ages reads this
+        np.savez(os.path.join(tcfg.out_dir, "age_holdout.npz"), unit=dcfg.age_holdout_unit, ids=held)
     record.write(
         tcfg.out_dir,
         "train",
@@ -245,6 +261,8 @@ def main(argv=None):
             task_weights = task_weights_at(tcfg, step)
             total = sum(task_weights[t] * scales[t] * losses[t] for t in TASKS)
             total = total + sum(w * scales.get(name, 1.0) * losses[name] for name, w in weights.items())
+            if "age" in losses:  # opt-in age task (model.age_head), balanced like the five tasks
+                total = total + scales.get("age", 1.0) * losses["age"]
 
             if tcfg.grad_probe_every and step % tcfg.grad_probe_every == 0:
                 probe = grad_probe(model, losses)
@@ -273,7 +291,7 @@ def main(argv=None):
                     "kl_weight": kl_weight,
                     "total": total.item(),
                     "grad_norm": grad_norm.item(),
-                    **{f"loss/{t}": losses[t].item() for t in (*TASKS, *active)},
+                    **{f"loss/{t}": v.item() for t, v in losses.items()},  # the five tasks, extras, age
                     **{f"scale/{t}": v for t, v in scales.items()},
                     **{f"weight/{name}": w for name, w in weights.items()},
                     **{f"famo/{t}": v for t, v in getattr(balancer, "weights", dict)().items()},

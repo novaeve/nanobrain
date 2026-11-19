@@ -1,0 +1,8 @@
+description = "Donor weighting: every donor counts once in the age loss (labels are donor-level; the effective sample size is ~470 donors, not ~1M cells). Age task (registered 2026-11-13, before any run, after the design review). Labels: days post fertilization (data_build/build_age.py). 15% of datasets (age-stratified, seed 0) have their age labels masked in training, so the head cannot read dataset -> mean age. Evaluation: scripts/eval_age.py on eval_10k cells of the held-out datasets, against dataset_mean (falls back to the global age distribution there) and ridge on expression with a split-conformal interval (scripts/fit_age_baseline.py). Rule: useful if (i) held-out 90% coverage within 0.85-0.95 (no recalibration), (ii) held-out interval score in log days and median log error better than both baselines overall and per band no worse than ridge by more than 10%, and (iii) every other task inside the B0 spread (integration batch especially: age must not be bought with batch information)"
+status = "dropped"
+outcome = "Fails at 10k: held-out datasets (9, 1545 closed-label eval cells): ridge IS 7.69, dataset_mean IS 6.54; donor-weighted coverage 0.669, IS 6.93 (best of the four, still worse than dataset_mean); batch 0.286, region 0.627 below the B0 spread"
+extends = ["_base.toml"]
+run = { name = "age_donor_weighted", out = "runs/age/donor_weighted" }
+
+[data]
+age_donor_weight = true

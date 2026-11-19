@@ -68,12 +68,26 @@ def test_moved_data_root_is_refused(setup, tmp_path):
         freeze.verify({"data": {**cfg["data"], "pretrain": str(moved)}}, definition)
 
 
-def test_cajal_campaign_is_frozen_and_intact():
+def test_cajal_campaign_lock_matches_its_tag():
+    """A frozen campaign runs from campaign/<id>: every locked file there has the hash in the lock."""
+    import hashlib
+    import subprocess
+
     from nanobrain.infra.contracts import load_config
 
+    definition = campaign.load()
+    tag = f"campaign/{campaign.directory().name}"
+    if subprocess.run(
+        ["git", "-C", str(ROOT), "rev-parse", "-q", "--verify", tag], check=False, capture_output=True
+    ).returncode:
+        pytest.skip(f"{tag} is not in this clone")
+    lock = json.loads(
+        subprocess.check_output(["git", "-C", str(ROOT), "show", f"{tag}:campaigns/cajal-v1/{freeze.LOCK}"])
+    )
+    assert lock["campaign_id"] == definition["campaign"]["id"]
+    for path, expected in lock["files"].items():
+        blob = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{tag}:{path}"])
+        assert hashlib.sha256(blob).hexdigest() == expected, path
     cfg = load_config()
-    missing = [p for p in cfg["data"].values() if not (Path(p) / "manifest.json").is_file()]
-    if missing:
-        pytest.skip(f"campaign data not on this machine: {missing}")
-    assert (campaign.directory() / freeze.LOCK).is_file()
-    freeze.verify(cfg, campaign.load())
+    if all((Path(p) / "manifest.json").is_file() for p in cfg["data"].values()):
+        assert freeze.snapshot(definition, cfg)["data"] == lock["data"]

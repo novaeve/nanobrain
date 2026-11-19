@@ -126,6 +126,7 @@ def forward_batch(model, b: dict, loops: int) -> dict:
             "mu": mu,
             "cell_type": [x.float() for x in model.cell_type_head(mu)],
             "anatomy": [x.float() for x in model.anatomy_head(mu)],
+            **({"age": model.age_head(mu)} if model.cfg.age_head else {}),
         }
 
 
@@ -168,6 +169,7 @@ def predict(
         "cells": cells,
         "mu": gather(lambda o: o["mu"]),
         **{k: [gather(lambda o, k=k, i=i: o[k][i]) for i in range(n)] for k, n in n_levels.items()},
+        **({"age": gather(lambda o: o["age"])} if "age" in parts[0][1] else {}),
     }
 
 

@@ -42,6 +42,31 @@ GPU_REASON = f"GPU whitelist is {list(GPU_WHITELIST)}; {DEFINITION['resources'][
 GATE_FLOOR = DEFINITION["gate"]["regression_floor"]
 
 
+# Opt-in tasks of the seed model: (section, switch, inert fields per section). While a task's switch is off its
+# fields do nothing, so a document is identical to one written before the task existed (methods are switches).
+OPT_IN_TASKS = {
+    "age": (
+        "model",
+        "age_head",
+        {
+            "model": ("age_head", "age_detach", "age_alpha"),
+            "data": ("age_holdout", "age_holdout_unit", "age_holdout_seed", "age_donor_weight"),
+        },
+    ),
+}
+
+
+def canonical_document(document):
+    """The document without the fields of opt-in tasks that are switched off."""
+    doc = copy.deepcopy(document)
+    for section, switch, fields in OPT_IN_TASKS.values():
+        if not doc[section].get(switch):
+            for part, keys in fields.items():
+                for key in keys:
+                    doc[part].pop(key, None)
+    return doc
+
+
 def digest(value):
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, allow_nan=False, separators=(",", ":")).encode()
