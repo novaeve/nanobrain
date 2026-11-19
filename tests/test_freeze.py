@@ -91,3 +91,20 @@ def test_cajal_campaign_lock_matches_its_tag():
     cfg = load_config()
     if all((Path(p) / "manifest.json").is_file() for p in cfg["data"].values()):
         assert freeze.snapshot(definition, cfg)["data"] == lock["data"]
+
+
+def test_declared_label_files_are_locked_with_their_data(tmp_path):
+    definition = {**campaign.load(), "freeze": {**campaign.load()["freeze"], "data_files": {"a": ["age.npy"]}}}
+    root = tmp_path / "a"
+    root.mkdir()
+    (root / "manifest.json").write_text("{}")
+    cfg = {"data": {"a": str(root)}}
+    with pytest.raises(FileNotFoundError, match="age.npy"):
+        freeze.snapshot(definition, cfg)
+    (root / "age.npy").write_bytes(b"1")
+    before = freeze.snapshot(definition, cfg)["data"]["a"]
+    assert set(before["files"]) == {"age.npy"}
+    (root / "age.npy").write_bytes(b"2")
+    assert freeze.snapshot(definition, cfg)["data"]["a"] != before
+    with pytest.raises(ValueError, match="unknown data"):
+        freeze.snapshot(definition, {"data": {"b": str(root)}})

@@ -3,16 +3,16 @@
 import math
 import statistics
 
-from .contracts import GATE_FLOOR, METRIC_RANGES, METRICS, digest
+from .contracts import METRIC_RANGES, METRIC_SIGN, METRIC_TOLERANCE, METRICS, digest
 
 
 def check_metrics(metrics):
     if set(metrics) != set(METRICS):
-        raise ValueError("all six Cajal metric columns are required")
+        raise ValueError(f"all {len(METRICS)} metric columns of the campaign are required")
     for key, v in metrics.items():
         low, high = METRIC_RANGES[key]
         if type(v) not in (int, float) or not math.isfinite(v) or not low <= v <= high:
-            raise ValueError("invalid Cajal metric")
+            raise ValueError(f"invalid value for metric {key}")
 
 
 def aggregate(results, seeds):
@@ -33,8 +33,13 @@ def aggregate(results, seeds):
     }
 
 
+def better(a, b, k):
+    """How much a beats b on metric k, in its unit: positive is better whatever the metric's direction."""
+    return METRIC_SIGN[k] * (a - b)
+
+
 def margins(node, baselines):
-    return [(node["metrics"][k] - baselines[k]) / max(abs(baselines[k]), 1e-8) for k in METRICS]
+    return [better(node["metrics"][k], baselines[k], k) / max(abs(baselines[k]), 1e-8) for k in METRICS]
 
 
 def quality(node, baselines):
@@ -42,15 +47,15 @@ def quality(node, baselines):
     return min(v), sum(v) / len(v)
 
 
-def promote(candidate, parent, reference, baselines, targets, floor=GATE_FLOOR):
-    tolerance = {k: floor for k in METRICS}
-    regressions = [k for k in METRICS if candidate["metrics"][k] < parent["metrics"][k] - tolerance[k]]
+def promote(candidate, parent, reference, baselines, targets):
+    tolerance = dict(METRIC_TOLERANCE)
+    regressions = [k for k in METRICS if better(candidate["metrics"][k], parent["metrics"][k], k) < -tolerance[k]]
     # Always require improvement on the incumbent's weakest frontier dimension.
     weakest = METRICS[min(range(len(METRICS)), key=lambda i: margins(parent, baselines)[i])]
     target = weakest if weakest in targets else min(targets, key=lambda k: margins(parent, baselines)[METRICS.index(k)])
     gains = [
-        candidate["metrics"][target] - parent["metrics"][target],
-        candidate["metrics"][target] - reference["metrics"][target],
+        better(candidate["metrics"][target], parent["metrics"][target], target),
+        better(candidate["metrics"][target], reference["metrics"][target], target),
     ]
     passed = (
         not regressions
@@ -75,8 +80,8 @@ def parents(nodes, store, baseline, limit=12):
         n
         for n in ordered
         if not any(
-            all(o["metrics"][k] >= n["metrics"][k] for k in METRICS)
-            and any(o["metrics"][k] > n["metrics"][k] for k in METRICS)
+            all(better(o["metrics"][k], n["metrics"][k], k) >= 0 for k in METRICS)
+            and any(better(o["metrics"][k], n["metrics"][k], k) > 0 for k in METRICS)
             for o in ordered
         )
     ]

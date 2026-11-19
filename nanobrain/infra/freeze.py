@@ -3,7 +3,8 @@
 Before a campaign starts its definition is open: users write the data, tasks, metrics, budget and search
 space. Freezing records the SHA-256 of every file the campaign depends on and of each dataset manifest
 in campaign.lock.json, which is committed next to the definition. Every start and resume verifies the
-lock; any difference makes it a different campaign, which needs its own id.
+lock; any difference makes it a different campaign, which needs its own id. Task labels that live next to
+a dataset (e.g. age_lower_dpf.npy) are declared in [freeze.data_files] and locked by hash with that data.
 
 The lock covers the campaign's identity (definition, agent brief, reference recipe, seed model, the task
 and judge files the definition declares, and the data). Infrastructure code is pinned per run by the
@@ -52,10 +53,19 @@ def snapshot(definition, cfg):
         if not path.is_file():
             raise FileNotFoundError(f"locked file is missing: {_key(path)}")
         files[_key(path)] = sha(path)
-    data = {
-        name: {"path": str(Path(root).resolve()), "manifest_sha256": sha(Path(root) / "manifest.json")}
-        for name, root in sorted(cfg["data"].items())
-    }
+    labels = definition["freeze"].get("data_files", {})
+    unknown = sorted(set(labels) - set(cfg["data"]))
+    if unknown:
+        raise ValueError(f"freeze.data_files names unknown data: {unknown}")
+    data = {}
+    for name, root in sorted(cfg["data"].items()):
+        entry = {"path": str(Path(root).resolve()), "manifest_sha256": sha(Path(root) / "manifest.json")}
+        if name in labels:
+            missing = [f for f in labels[name] if not (Path(root) / f).is_file()]
+            if missing:
+                raise FileNotFoundError(f"locked data files are missing in {name}: {missing}")
+            entry["files"] = {f: sha(Path(root) / f) for f in sorted(labels[name])}
+        data[name] = entry
     return {"campaign_id": definition["campaign"]["id"], "files": files, "data": data}
 
 

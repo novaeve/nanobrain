@@ -33,6 +33,14 @@ def load(path=None):
         low, high = m["range"]
         if not low < high:
             raise ValueError(f"invalid range for metric {m['name']}")
+        if m.get("direction", "max") not in ("max", "min"):
+            raise ValueError(f"direction of metric {m['name']} must be 'max' or 'min'")
+        tolerance = m.get("tolerance", doc["gate"]["regression_floor"])
+        if type(tolerance) not in (int, float) or not 0 <= tolerance < float("inf"):
+            raise ValueError(f"invalid tolerance for metric {m['name']}")
+    for name, files in doc["freeze"].get("data_files", {}).items():
+        if not files or any(not f or "/" in f or f.startswith(".") for f in files):
+            raise ValueError(f"freeze.data_files.{name} must list file names inside that data root")
     doc["directory"] = str(folder)
     return doc
 

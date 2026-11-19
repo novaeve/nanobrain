@@ -40,6 +40,10 @@ REGULARIZERS = tuple(_search["regularizers"])
 GPU_WHITELIST = tuple(DEFINITION["resources"]["gpu_whitelist"])
 GPU_REASON = f"GPU whitelist is {list(GPU_WHITELIST)}; {DEFINITION['resources']['reason']}"
 GATE_FLOOR = DEFINITION["gate"]["regression_floor"]
+# +1 when larger is better (the default), -1 when smaller is better, e.g. an error measured in days.
+METRIC_SIGN = {m["name"]: -1 if m.get("direction", "max") == "min" else 1 for m in DEFINITION["metrics"]}
+# Largest allowed regression against the parent, in the metric's own unit (default: gate.regression_floor).
+METRIC_TOLERANCE = {m["name"]: m.get("tolerance", GATE_FLOOR) for m in DEFINITION["metrics"]}
 
 
 # Opt-in tasks of the seed model: (section, switch, inert fields per section). While a task's switch is off its
