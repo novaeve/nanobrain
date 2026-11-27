@@ -65,12 +65,21 @@ def test_a_foreign_or_unidentified_checkpoint_cannot_be_used_to_warm_start(tmp_p
     assert not (tmp_path / "training-identity.json").exists()
 
 
-def test_recipe_changes_cannot_relabel_an_existing_own_checkpoint(tmp_path):
+def test_recipe_changes_cannot_relabel_an_existing_own_checkpoint(tmp_path, monkeypatch):
     cfg, bundle = C.load_config(), C.reference_bundle()
     prepare_training(tmp_path, bundle, cfg, 0)
-    changed = dict(cfg, protocol_id=cfg["protocol_id"] + "-other")
+    (tmp_path / "train").mkdir()
+    (tmp_path / "train/latest.pt").write_bytes(b"own checkpoint")
+    reference_document = C.reference_document
+
+    def revised_recipe(config=None):
+        document = reference_document(config)
+        document["TrainConfig"]["lr"] *= 2
+        return document
+
+    monkeypatch.setattr(C, "reference_document", revised_recipe)
     with pytest.raises(ValueError, match="training recipe"):
-        prepare_training(tmp_path, bundle, changed, 0)
+        prepare_training(tmp_path, bundle, cfg, 0)
 
 
 def test_runtime_checks_reject_legacy_teacher_bundles_before_any_launch(tmp_path):
