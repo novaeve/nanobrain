@@ -104,8 +104,8 @@ def test_objectives_match_the_seed_model():
     assert C.TASKS == tuple(SEED_TASKS)
 
 
-def test_agent_brief_is_the_former_system_prompt():
-    assert react.SYSTEM.startswith("Evolve the existing Cajal v1 shared encoder")
+def test_agent_brief_describes_the_v3_seed():
+    assert react.SYSTEM.startswith("Evolve the existing Cajal v3 shared encoder")
     assert not react.SYSTEM.endswith("\n")
 
 

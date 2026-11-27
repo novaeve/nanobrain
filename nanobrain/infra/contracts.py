@@ -12,6 +12,7 @@ from . import campaign
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFINITION = campaign.load()
+CONFIG_PATH = ROOT / DEFINITION["campaign"].get("execution_config", "configs/cajal_react.json")
 _search = DEFINITION["search"]
 
 
@@ -96,7 +97,9 @@ def save(path, value):
 
 
 def load_config(path=None):
-    cfg = json.loads(Path(path or ROOT / "configs/cajal_react.json").read_text())
+    cfg = json.loads(Path(path or CONFIG_PATH).read_text())
+    if cfg["protocol_id"] != DEFINITION["campaign"]["id"]:
+        raise ValueError("execution config must match the selected campaign id")
     if cfg.get("weight_policy") != DEFINITION["campaign"]["weight_policy"] or cfg.get("trusted_teachers"):
         raise ValueError("candidates must train independently without historical or pretrained teacher weights")
     if cfg["reference_recipe"] != DEFINITION["campaign"]["reference_recipe"]:
@@ -152,7 +155,9 @@ def reference_bundle():
         "schema_version": "cajal.research.candidate.v2",
         "parent_ids": ["0" * 64],
         "target_metrics": list(METRICS),
-        "hypothesis": "Existing Cajal v1 architecture and grad_equal joint recipe, unchanged.",
+        "hypothesis": DEFINITION["campaign"].get(
+            "reference_hypothesis", "Existing Cajal v1 architecture and grad_equal joint recipe, unchanged."
+        ),
         "model": {},
         "train": {},
         "data": {},
@@ -498,6 +503,8 @@ def semantic_id(bundle):
 
 def resolved_document(bundle, cfg, seed):
     validate_bundle(bundle)
+    if cfg["protocol_id"] != DEFINITION["campaign"]["id"]:
+        raise ValueError("execution config must match the selected campaign id")
     if cfg.get("weight_policy") != DEFINITION["campaign"]["weight_policy"] or cfg.get("trusted_teachers"):
         raise ValueError("historical weight dependencies are outside this research protocol")
     base = reference_document(cfg)

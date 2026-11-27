@@ -2,7 +2,7 @@
 
 A campaign directory holds campaign.toml (data, objectives, metrics, budget, resources, gate and search
 space) and the agent brief. One process runs one campaign, chosen by NANOBRAIN_CAMPAIGN (a directory)
-and defaulting to campaigns/cajal-v1.
+and defaulting to campaigns/cajal-v3.
 """
 
 import os
@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT = ROOT / "campaigns/cajal-v1"
+DEFAULT = ROOT / "campaigns/cajal-v3"
 SECTIONS = ("campaign", "budget", "resources", "objectives", "gate", "metrics", "search", "freeze")
 
 

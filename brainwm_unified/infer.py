@@ -180,7 +180,22 @@ def load_model(checkpoint: str, device="cuda", **overrides):
     below 64 (FA3's minimum) run SDPA varlen attention, uncompiled (nested tensors do not compile).
     """
     state = torch.load(checkpoint, map_location="cpu", weights_only=False)
-    saved = state["config"]["ModelConfig"]
+    saved = dict(state["config"]["ModelConfig"])
+    # Upstream Cajal checkpoints also record controls whose default values use the
+    # same model implemented here. Keep non-default controls subject to validation.
+    compatible_defaults = {
+        "router_fp32": False,
+        "swiglu_limit": 0.0,
+        "ffn": "moe",
+        "moe_diagnostics": False,
+        "recompute_skip_loops": 0,
+        "latent_prior": {},
+        "spatial_mixture": False,
+        "niche_head": False,
+    }
+    for key, default in compatible_defaults.items():
+        if key in saved and saved[key] == default:
+            del saved[key]
     if saved["d_model"] // saved["n_heads"] < 64 and "attention_backend" not in overrides:
         overrides = {**overrides, "attention_backend": "jagged", "compile_blocks": False}
     cfg = ModelConfig(**{**saved, **overrides})

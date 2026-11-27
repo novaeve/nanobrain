@@ -13,7 +13,7 @@ from nanobrain.infra.contracts import ROOT
 @pytest.fixture
 def setup(tmp_path):
     folder = tmp_path / "campaign"
-    shutil.copytree(ROOT / "campaigns/cajal-v1", folder, ignore=shutil.ignore_patterns(freeze.LOCK))
+    shutil.copytree(campaign.directory(), folder, ignore=shutil.ignore_patterns(freeze.LOCK))
     data = {}
     for name in ("pretrain", "annotation"):
         root = tmp_path / "data" / name
@@ -82,7 +82,7 @@ def test_cajal_campaign_lock_matches_its_tag():
     ).returncode:
         pytest.skip(f"{tag} is not in this clone")
     lock = json.loads(
-        subprocess.check_output(["git", "-C", str(ROOT), "show", f"{tag}:campaigns/cajal-v1/{freeze.LOCK}"])
+        subprocess.check_output(["git", "-C", str(ROOT), "show", f"{tag}:{freeze.lock_path(definition).relative_to(ROOT).as_posix()}"])
     )
     assert lock["campaign_id"] == definition["campaign"]["id"]
     for path, expected in lock["files"].items():

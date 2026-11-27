@@ -448,6 +448,44 @@ class MoGPrior(nn.Module):
         return torch.logsumexp(comp + torch.log_softmax(self.logits, 0), dim=1)
 
 
+def neighbour_weights(members: torch.Tensor, n_cells: int, dtype=torch.float32) -> torch.Tensor:
+    """(n_cells x n_cells) W with W @ x = per cell, the mean of x over the other members of its spatial groups,
+    averaged over its groups (rows of cells in no group are zero). members: (groups, k), -1 for padding."""
+    w = torch.zeros(n_cells, n_cells, dtype=dtype, device=members.device)
+    if members.numel() == 0:
+        return w
+    valid = members >= 0
+    n = valid.sum(1, keepdim=True)
+    pair = valid.unsqueeze(2) & valid.unsqueeze(1) & ~torch.eye(members.shape[1], dtype=torch.bool, device=w.device)
+    g, i, j = pair.nonzero(as_tuple=True)
+    w.index_put_((members[g, i], members[g, j]), (1.0 / (n[g, 0] - 1).clamp(min=1)).to(dtype), accumulate=True)
+    groups = torch.zeros(n_cells, dtype=dtype, device=w.device)
+    active = members[valid]
+    groups.index_add_(0, active, torch.ones_like(active, dtype=dtype))
+    return w / groups.clamp(min=1).unsqueeze(1)
+
+
+def neighbour_gene_values(b: dict, members: torch.Tensor, n_genes: int) -> torch.Tensor:
+    """Per masked token (cell c, gene g): the mean log1p CP10K of g over c's spatial group mates (0 if undetected
+    or c is in no group): the neighbour-mean imputation, as an input to the gene head."""
+    n_cells = len(b["cnt_ptr"]) - 1
+    masked = b["tok_masked"]
+    cell, gene = b["tok_doc"][masked], b["tok_gene"][masked]
+    if members.numel() == 0:
+        return torch.zeros(len(cell), device=cell.device)
+    used = torch.unique(members[members >= 0])
+    lengths = b["cnt_ptr"].diff()
+    rows = torch.repeat_interleave(torch.arange(n_cells, device=lengths.device), lengths)
+    lib = torch.zeros(n_cells, device=rows.device).index_add_(0, rows, b["cnt_val"].float()).clamp(min=1.0)
+    keep = torch.isin(rows, used)
+    pos = torch.full((n_cells,), -1, dtype=torch.long, device=rows.device)
+    pos[used] = torch.arange(len(used), device=rows.device)
+    x = torch.zeros(len(used), n_genes, device=rows.device)
+    x[pos[rows[keep]], b["cnt_gene"][keep]] = torch.log1p(b["cnt_val"][keep].float() / lib[rows[keep]] * 1e4)
+    w = neighbour_weights(members, n_cells)[:, used]
+    return (w[cell] * x[:, gene].T).sum(-1)
+
+
 class UnifiedModel(nn.Module):
     def __init__(self, cfg: ModelConfig):
         super().__init__()
@@ -477,6 +515,12 @@ class UnifiedModel(nn.Module):
             install_model(self, cfg)
         if cfg.age_head:  # opt-in age task (brainwm_unified.age)
             self.age_head = AgeHead(cfg.z_dim, d, cfg.age_head)
+        if cfg.impute_context not in ("", "neighbour_genes"):
+            raise ValueError(f"unsupported impute_context {cfg.impute_context!r}")
+        if cfg.impute_context == "neighbour_genes":  # (neighbour value, has-neighbours) -> token state, zero output
+            self.impute_gctx = nn.Sequential(nn.Linear(2, d), nn.SiLU(), nn.Linear(d, d))
+            nn.init.zeros_(self.impute_gctx[2].weight)
+            nn.init.zeros_(self.impute_gctx[2].bias)
         if cfg.compile_blocks:
             # Regional compilation (as in torchtitan): each encoder block is compiled on its own,
             # with dynamic shapes since token counts and cell lengths change every step.
@@ -500,8 +544,15 @@ class UnifiedModel(nn.Module):
         logvar = logvar.clamp(-10, 10)
         stochastic = self.training and self.cfg.latent_reg != "none"
         z = mu + torch.randn_like(mu) * torch.exp(0.5 * logvar) if stochastic else mu
+        ctx = None
+        if self.cfg.impute_context == "neighbour_genes":
+            members = b["grp_members"]
+            means = neighbour_gene_values(b, members, self.cfg.n_genes)
+            in_group = torch.zeros(len(b["cnt_ptr"]) - 1, dtype=torch.bool, device=means.device)
+            in_group[members[members >= 0]] = True
+            ctx = torch.stack([means, in_group[b["tok_doc"][b["tok_masked"]]].float()], -1)
         out = {
-            "gene_pred": self.impute(h, b),
+            "gene_pred": self.impute(h, b, ctx),
             "mu": mu,
             "logvar": logvar,
             "z": z,
@@ -510,13 +561,19 @@ class UnifiedModel(nn.Module):
             out["residual"] = self.to_residual(cls).float()
         return out
 
-    def impute(self, h, b) -> torch.Tensor:
-        """Predicted values of the masked tokens, from the encoder's token states `h`."""
+    def impute(self, h, b, ctx: torch.Tensor | None = None) -> torch.Tensor:
+        """Predict masked values with optional per-token neighbour mean and group membership."""
         masked = b["tok_masked"]
+        h_m = h[masked]
+        if self.cfg.impute_context == "neighbour_genes":
+            if ctx is None:
+                # The learned projection biases also apply to cells without a spatial context.
+                ctx = h_m.new_zeros((len(h_m), 2), dtype=torch.float32)
+            h_m = h_m + self.impute_gctx(ctx.to(self.impute_gctx[0].weight.dtype)).to(h_m.dtype)
         if self.cfg.decoder == "separate":
-            return self.gene_head(h[masked]).squeeze(-1).float()
+            return self.gene_head(h_m).squeeze(-1).float()
         cell_batch = b["batch"][b["tok_doc"][masked]]
-        return self.decoder.impute(h[masked], cell_batch, b["tok_gene"][masked]).float()
+        return self.decoder.impute(h_m, cell_batch, b["tok_gene"][masked]).float()
 
     def recon_input(self, out: dict) -> torch.Tensor:
         """What the expression decoder reads: z, or detached mu, plus the residual latent if any."""

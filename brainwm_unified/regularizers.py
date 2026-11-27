@@ -11,6 +11,7 @@ Each is a dataclass called as fn(model, batch, out) -> scalar loss on the latent
   sigreg        isotropic-Gaussian latent via random-projection Epps-Pulley tests    LeJEPA (SIGReg)
   batch_swap    counterfactual: decode under another batch, re-encode, match mu     sysVI cycle, CFGen, JEPA
   teacher_gram  match a frozen teacher's pairwise latent geometry                  REPA / VA-VAE / DINOv3 Gram
+  self_gram     the same Gram match, target from the model's own cell-type head     RKD / self-distillation
   batch_adversary  a batch discriminator on mu behind gradient reversal            DANN, DIRAC, scDREAMER
 """
 
@@ -143,6 +144,28 @@ class TeacherGram:
             t_mu = self._teacher(b, layout, self._teacher.cfg.loops)["mu"].float()
         s, t = F.normalize(out["mu"].float(), dim=-1), F.normalize(t_mu, dim=-1)
         return ((s @ s.T - t @ t.T) ** 2).mean()
+
+
+@OBJECTIVES.register("self_gram")
+@dataclass
+class SelfGram:
+    """Match latent cosine similarities to those of detached cell-type probabilities or label indicators."""
+
+    source: str = "head"
+    temperature: float = 1.0
+
+    def __call__(self, model, b: dict, out: dict) -> torch.Tensor:
+        mu = out["mu"].float()
+        with torch.no_grad():
+            if self.source == "head":
+                target = torch.softmax(model.cell_type_head(out["mu"])[-1].float() / self.temperature, dim=-1)
+            elif self.source == "labels":
+                target = F.one_hot(b["cell_type"], model.cfg.cell_type_levels[-1]).float()
+            else:
+                raise ValueError(f"self_gram source must be 'head' or 'labels', got {self.source!r}")
+            target = F.normalize(target, dim=-1)
+        latent = F.normalize(mu, dim=-1)
+        return ((latent @ latent.T - target @ target.T) ** 2).mean()
 
 
 @OBJECTIVES.register("batch_adversary")

@@ -7,10 +7,10 @@ import runpy
 import sys
 from pathlib import Path
 
-from .contracts import DATA_KEY, ROOT, TASKS, load_config, resolved_document, save, sha, validate_bundle
+from .contracts import CONFIG_PATH, DATA_KEY, ROOT, TASKS, load_config, resolved_document, save, sha, validate_bundle
 
 
-def synthetic(root):
+def synthetic(root, masks="cajal_v0"):
     import numpy as np
     import torch
 
@@ -43,7 +43,7 @@ def synthetic(root):
     save(root / "cell_type_vocab.json", {"levels": ["cell_type"], "cell_type": [{"index": i} for i in range(3)]})
     save(root / "anatomy_vocab.json", {"levels": ["anatomy"], "anatomy": [{"index": i} for i in range(2)]})
     ds = Subset(str(root))
-    cfg = DataConfig(root=str(root), dissociated_cells=3, spatial_groups=2, neighbors=k, zero_tokens=2)
+    cfg = DataConfig(root=str(root), dissociated_cells=3, spatial_groups=2, neighbors=k, zero_tokens=2, masks=masks)
     b = build_batch(ds, cfg, g, np.random.default_rng(0))
     maps = {
         name: [torch.as_tensor(v) for v in load_level_maps(str(root / (name + "_vocab.json")))]
@@ -86,7 +86,7 @@ def probe(bundle):
     cfg.loops = cfg.min_loops = 1
     cfg.max_loops = 2
     cfg.activation_checkpointing, cfg.attention_backend, cfg.moe_backend = False, "flex", "loop"
-    b, maps, panels = synthetic("/work/synthetic")
+    b, maps, panels = synthetic("/work/synthetic", document["data"]["masks"])
     model = M.UnifiedModel(cfg)
     if cfg.input_norm == "pearson":
         model.encoder.gene_rate.fill_(1.0 / 24)
@@ -186,7 +186,7 @@ def main():
     ap.add_argument("--holdout", help="age: the training run's age_holdout.npz")
     ap.add_argument("--checkpoint")
     ap.add_argument("--prediction")
-    ap.add_argument("--config", default=str(ROOT / "configs/cajal_react.json"))
+    ap.add_argument("--config", default=str(CONFIG_PATH))
     args = ap.parse_args()
     if args.mode == "probe":
         resource.setrlimit(resource.RLIMIT_AS, (32 * 1024**3, 32 * 1024**3))

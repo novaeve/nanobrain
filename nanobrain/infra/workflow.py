@@ -67,7 +67,16 @@ def plan(cfg):
 
 
 def baseline():
-    return json.loads((ROOT / "reference/opponents.json").read_text())
+    from .existing_reference import snapshot_path
+
+    scores = json.loads((ROOT / "reference/opponents.json").read_text())
+    snapshot = json.loads(snapshot_path().read_text())
+    scores["active_seed_reference"] = {"method": snapshot["method"], "metrics": snapshot["metrics"]}
+    scores["regime"] = (
+        "Reuse the historical Cajal opponent scores and the active seed reference on the fixed research "
+        "evaluation sets. Transductive comparisons remain excluded from promotion."
+    )
+    return scores
 
 
 def code_fingerprint():
@@ -473,7 +482,7 @@ class Workflow:
             raise ValueError("resume requires identical code, data, config, reference and opponents")
         save(contract_path, contract)
         self.store = Store(self.output / "lineage")
-        root = self.store.stage(reference_bundle(), origin={"generation": 0, "role": "existing_cajal_v1"})
+        root = self.store.stage(reference_bundle(), origin={"generation": 0, "role": "existing_cajal_reference"})
         if self.validate(root, reference_bundle())["status"] != "accepted":
             raise ValueError("initial existing Cajal reference failed synthetic acceptance")
         reference = self.evaluate(root, 0)

@@ -3,12 +3,16 @@
 import json
 from pathlib import Path
 
-from .contracts import ROOT, canonical_document, digest, reference_bundle, resolved_document, sha
+from .contracts import DEFINITION, ROOT, canonical_document, digest, reference_bundle, resolved_document, sha
 from .gate import check_metrics
 
 
+def snapshot_path():
+    return ROOT / DEFINITION["campaign"].get("reference_snapshot", "reference/existing_cajal_v1_10k.json")
+
+
 def load(cfg, seed=0):
-    snapshot = json.loads((ROOT / "reference/existing_cajal_v1_10k.json").read_text())
+    snapshot = json.loads(snapshot_path().read_text())
     if (snapshot["seed"], snapshot["step"], snapshot["schedule_steps"]) != (
         seed,
         cfg["stop_at"],
@@ -26,7 +30,7 @@ def load(cfg, seed=0):
         ):
             raise ValueError("existing Cajal reference used different training or evaluation data")
     for path, expected in snapshot["artifact_hashes"].items():
-        if sha(path) != expected:
+        if sha(ROOT / path) != expected:
             raise ValueError("existing Cajal reference artifact changed; do not silently rerun it")
     check_metrics(snapshot["metrics"])
     return snapshot

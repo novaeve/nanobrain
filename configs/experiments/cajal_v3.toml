@@ -1,0 +1,10 @@
+description = "Cajal v3: Cajal v2 + model.impute_context = neighbour_genes (a masked gene also sees the mean expression of that gene over the cell's spatial neighbours; spatial-track winner, stages 1-3), full 30k steps"
+status = "main"
+outcome = "Stage 3 (unified_10m, 30k, two seeds; frontier.py margins over the best opponent, seed 0 / 1): cell type +1.8 / +1.1%, region -0.7 / +0.4%, bio +15.5 / +17.3%, batch +0.1 / +0.8%, gene +11.6 / +11.5%, spatial gene +3.0 / +7.3%; wins 5/6 and 6/6 vs cajal-v2 4/6 and 5/6; mean worst -0.15% vs -1.05%. Two-seed means vs cajal-v2: spatial gene 0.264 vs 0.249, region 0.681 vs 0.679, cell type 0.754 vs 0.763, bio 0.727 vs 0.736. Approved by the user 2026-11-17"
+extends = ["cajal_v2.toml"]
+run = { name = "cajal_v3", out = "runs/cajal_v3" }
+
+[model]
+impute_context = "neighbour_genes"
+recompute_scope = "all"
+recompute_granularity = "block"

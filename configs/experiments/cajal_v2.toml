@@ -1,0 +1,15 @@
+description = "Cajal v2: Cajal v1 + self_gram objective on the head latent + kl_target 60 + spatial residual_mean + cross-platform panel masks (stage-2 recipe R4, the scale-up tournament winner), full 30k steps"
+status = "main"
+outcome = "Stage 3 (unified_10m, 30k, two seeds; frontier.py margins over the best opponent): cell type +3.0 / +2.3%, region -0.5 / -0.3%, bio +17.9 / +17.7%, batch +0.8 / +1.0%, gene +11.6 / +11.7%, spatial -17.3 / -19.0%; wins 4/6 vs B0 2/6, mean worst -18.15% vs -18.45%. Panel imputation 0.75 (kNN 0.68, B0 0.29-0.51). Approved by the user 2026-11-15"
+extends = ["cajal_v1.toml"]
+run = { name = "cajal_v2", out = "runs/cajal_v2" }
+
+[model]
+spatial_residual_mean = true
+
+[data]
+masks = "panel_mix"
+
+[train]
+kl_target = 60.0
+objectives = [{ name = "self_gram", weight = 1.0, source = "head" }]

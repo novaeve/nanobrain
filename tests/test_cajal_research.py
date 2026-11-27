@@ -72,7 +72,7 @@ def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
     assert not output.exists()
 
 
-def test_reference_is_actual_cajal_v1():
+def test_reference_is_actual_cajal_v3():
     ref = C.reference_bundle()
     C.validate_bundle(ref)
     assert ref["model"] == ref["train"] == ref["files"] == {}
@@ -82,6 +82,11 @@ def test_reference_is_actual_cajal_v1():
     assert doc["ModelConfig"]["d_model"] == 256
     assert doc["ModelConfig"]["n_core"] == 2
     assert doc["ModelConfig"]["attention_backend"] == "fa3"
+    assert doc["ModelConfig"]["impute_context"] == "neighbour_genes"
+    assert doc["ModelConfig"]["spatial_residual_mean"]
+    assert doc["DataConfig"]["masks"] == "panel_mix"
+    assert doc["TrainConfig"]["kl_target"] == 60.0
+    assert doc["TrainConfig"]["objectives"] == [{"name": "self_gram", "weight": 1.0, "source": "head"}]
     assert doc["TrainConfig"]["balancer"] == "grad_equal"
     assert doc["TrainConfig"]["balancer_params"] == {"every": 50}
     assert set(doc["TrainConfig"]["task_weights"]) == set(C.TASKS)

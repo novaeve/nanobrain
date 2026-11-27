@@ -5,21 +5,22 @@ import dataclasses
 import json
 from pathlib import Path
 
-from .infra.contracts import ROOT, load_config
+from .infra.contracts import CONFIG_PATH, DEFINITION, ROOT, load_config
 from .infra.workflow import Workflow, plan
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--config", type=Path, default=ROOT / "configs/cajal_react.json")
-    ap.add_argument("--output", type=Path, default=ROOT / "research-runs/cajal-react-self-contained-20261110")
+    ap.add_argument("--config", type=Path, default=CONFIG_PATH)
+    output_directory = DEFINITION["campaign"].get("output_directory", "cajal-react-self-contained-20261110")
+    ap.add_argument("--output", type=Path, default=ROOT / "research-runs" / output_directory)
     ap.add_argument("--execute", action="store_true", help="explicitly start/resume real ReAct evolution")
     ap.add_argument("--freeze", action="store_true", help="lock the campaign definition, data and judges")
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     # Workers use the committed canonical file; avoid a controller/worker config mismatch.
     if (
-        args.config.resolve() != (ROOT / "configs/cajal_react.json").resolve()
+        args.config.resolve() != CONFIG_PATH.resolve()
         and json.loads(args.config.read_text()) != load_config()
     ):
         raise ValueError("workers require the committed canonical configuration")

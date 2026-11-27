@@ -1,0 +1,8 @@
+description = "Cross-platform rehearsal: 70% of rows scattered genes (15%), 30% only a targeted spatial panel visible with 25% of the other measured tokens predicted (whole-transcriptome rows; others fall back to scattered genes)"
+
+[rows]
+specs = [{ name = "random_genes", ratio = 0.15 }, { name = "panel", target_ratio = 0.25 }]
+weights = [0.7, 0.3]
+
+[groups]
+specs = [{ name = "neighbours", ratio = 0.3 }]

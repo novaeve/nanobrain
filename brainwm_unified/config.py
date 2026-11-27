@@ -70,6 +70,8 @@ class ModelConfig:
     # True: the neighbourhood model predicts a correction to the mean of the visible neighbours' latents
     # (output layer zero-initialised, so it starts at that mean); False keeps Cajal v0's direct prediction.
     spatial_residual_mean: bool = False
+    # Cajal v3 adds each masked gene's mean expression in spatial neighbours as context.
+    impute_context: str = ""  # "" or "neighbour_genes"
     # Encoder input values: "log1p" (log1p CP10K, Cajal v0) or "pearson" (analytic Pearson residuals,
     # Lause et al. 2021 / sctransform: (x - n p_g) / sqrt(mu + mu^2 / 100), clipped to +-sqrt(N)); the gene
     # rates p_g and N come from the pretraining set and are kept in the checkpoint (encoder.gene_rate).

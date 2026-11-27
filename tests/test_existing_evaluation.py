@@ -213,17 +213,17 @@ def test_initial_reference_reuses_existing_checkpoint_and_results(tmp_path, monk
     result = workflow.evaluate(identifier, 0)
     assert result["status"] == "complete"
     (row,) = result["seed_results"]
-    assert row["method"] == "cajal_v1@10000" and row["source"] == "existing_Cajal_project_result"
+    assert row["method"] == "scale_v3_1m@10000" and row["source"] == "existing_Cajal_project_result"
     assert not row["training_executed_by_campaign"] and not row["evaluation_executed_by_campaign"]
     assert not (tmp_path / "jobs").exists()
-    snapshot = json.loads((C.ROOT / "reference/existing_cajal_v1_10k.json").read_text())
+    snapshot = json.loads((C.ROOT / "reference/existing_cajal_v3_10k.json").read_text())
     assert row["metrics"] == snapshot["metrics"]
 
 
 def test_changed_existing_reference_fails_without_refitting(monkeypatch):
     from nanobrain.infra import existing_reference
 
-    snapshot = json.loads((C.ROOT / "reference/existing_cajal_v1_10k.json").read_text())
+    snapshot = json.loads((C.ROOT / "reference/existing_cajal_v3_10k.json").read_text())
 
     def changed(path):
         return "changed" if str(path) == snapshot["checkpoint"] else C.sha(path)
