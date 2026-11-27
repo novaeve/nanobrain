@@ -21,6 +21,8 @@ def _ranges(mapping):
 
 
 TASKS = tuple(DEFINITION["objectives"]["names"])
+# The Niche objective is a fixed extra loss, separate from the adjustable task weights.
+WEIGHTED_TASKS = tuple(t for t in TASKS if t != "niche_composition")
 METRICS = tuple(m["name"] for m in DEFINITION["metrics"])
 METRIC_GROUPS = {
     g: tuple(m["name"] for m in DEFINITION["metrics"] if m["group"] == g)
@@ -43,6 +45,8 @@ GPU_REASON = f"GPU whitelist is {list(GPU_WHITELIST)}; {DEFINITION['resources'][
 GATE_FLOOR = DEFINITION["gate"]["regression_floor"]
 # Metric groups scored on another group's data: genes and age read the annotation set.
 DATA_KEY = {"genes": "annotation", "age": "annotation"}
+if "niche" in METRIC_GROUPS:
+    DATA_KEY["niche"] = "spatial"
 # +1 when larger is better (the default), -1 when smaller is better, e.g. an error measured in days.
 METRIC_SIGN = {m["name"]: -1 if m.get("direction", "max") == "min" else 1 for m in DEFINITION["metrics"]}
 # Largest allowed regression against the parent, in the metric's own unit (default: gate.regression_floor).
@@ -219,8 +223,8 @@ def candidate_schema():
             "task_weights": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": list(TASKS),
-                "properties": {k: {"type": "number", "minimum": 0.01, "maximum": 20.0} for k in TASKS},
+                "required": list(WEIGHTED_TASKS),
+                "properties": {k: {"type": "number", "minimum": 0.01, "maximum": 20.0} for k in WEIGHTED_TASKS},
             },
             "objectives": {
                 "type": "array",
@@ -242,7 +246,9 @@ def candidate_schema():
                         "budget": {
                             "type": "object",
                             "additionalProperties": False,
-                            "properties": {k: {"type": "number", "minimum": 1e-6, "maximum": 1e6} for k in TASKS},
+                            "properties": {
+                                k: {"type": "number", "minimum": 1e-6, "maximum": 1e6} for k in WEIGHTED_TASKS
+                            },
                         },
                     },
                 },
@@ -362,7 +368,7 @@ def validate_bundle(bundle, parent_ids=None):
             if value not in OPTIMIZERS:
                 raise ValueError("unsupported optimizer")
         elif key == "task_weights":
-            if set(value) != set(TASKS):
+            if set(value) != set(WEIGHTED_TASKS):
                 raise ValueError("all five joint objectives must remain active")
             for w in value.values():
                 _number(w, 0.01, 20.0)
@@ -501,7 +507,7 @@ def semantic_id(bundle):
     return digest({k: b[k] for k in ("model", "train", "data", "components", "plugins", "files")})
 
 
-def resolved_document(bundle, cfg, seed):
+def resolved_document(bundle, cfg, seed, *, include_optional_tasks=True):
     validate_bundle(bundle)
     if cfg["protocol_id"] != DEFINITION["campaign"]["id"]:
         raise ValueError("execution config must match the selected campaign id")
@@ -525,5 +531,10 @@ def resolved_document(bundle, cfg, seed):
     if bundle["train"].get("balancer", base["TrainConfig"]["balancer"]) != base["TrainConfig"]["balancer"]:
         train["balancer_params"] = bundle["train"].get("balancer_params", {})
     train["objectives"] = copy.deepcopy(train["objectives"])
+    if include_optional_tasks and "niche_composition" in TASKS:
+        from .niche import NICHE_COMPONENT
+
+        model["research_components"] = [*model["research_components"], copy.deepcopy(NICHE_COMPONENT)]
+        train["objectives"].append({"name": "niche_composition", "weight": 1.0})
     data = {**base["DataConfig"], **bundle["data"], "root": cfg["data"]["pretrain"], "seed": seed}
     return {"model": model, "train": train, "data": data}

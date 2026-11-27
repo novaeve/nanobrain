@@ -71,6 +71,8 @@ python -B scripts/cajal_react.py --execute --device cpu
 
 CUDA is the default. The default output directories are `research-runs/cajal-v3-react/` for CUDA and `research-runs/cajal-v3-react-cpu/` for CPU. Each run records its execution mode and must resume in that mode. CPU mode uses the same 10,000-step budget per candidate and can take substantially longer. Follow the current run in its `status.json`.
 
+Set `NANOBRAIN_CAMPAIGN=campaigns/cajal-v3-niche` to include spatial niche composition as a sixth joint task. [Niche campaign guide](docs/seed-cajal-niche.md)
+
 ## Cajal v3 seed model
 
 Cajal v3 supplies the initial architecture and joint-training recipe. Its shared cell representation supports cell-type and brain-region annotation, integration, gene imputation, and spatial imputation.

@@ -109,6 +109,10 @@ def command(root, output, arguments, *, inputs=(), gpu=None):
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
     }
+    if "NANOBRAIN_CAMPAIGN" in os.environ:
+        from .contracts import DEFINITION
+
+        env["NANOBRAIN_CAMPAIGN"] = DEFINITION["directory"]
     if gpu is not None:
         from .contracts import GPU_REASON, GPU_WHITELIST
 

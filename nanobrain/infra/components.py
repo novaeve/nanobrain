@@ -218,6 +218,14 @@ def install_block(block, cfg):
 def install_model(model, cfg):
     import torch
 
+    selected = specs_for(cfg, "niche")
+    if selected:
+        from .niche import NICHE_COMPONENT, install_head
+
+        if selected != [NICHE_COMPONENT]:
+            raise ValueError("the Niche head must use the campaign's fixed component")
+        install_head(model)
+
     selected = specs_for(cfg, "classifier")
     if selected and selected[0]["name"] != "cajal.hierarchical_head":
         spec = selected[0]

@@ -71,6 +71,8 @@ python -B scripts/cajal_react.py --execute --device cpu
 
 默认使用 CUDA。CUDA 和 CPU 的默认输出目录分别为 `research-runs/cajal-v3-react/` 和 `research-runs/cajal-v3-react-cpu/`。每次运行会记录执行模式，续跑时需使用同一模式。CPU 模式仍为每个候选训练 10,000 步，耗时可能明显增加。运行状态见对应目录的 `status.json`。
 
+设置 `NANOBRAIN_CAMPAIGN=campaigns/cajal-v3-niche` 可加入空间 Niche 组成预测，作为第六项联合任务。[Niche campaign 指南](docs/seed-cajal-niche.md)
+
 ## 种子模型 Cajal v3
 
 Cajal v3 提供初始架构和联合训练配方。它用共享细胞表征完成细胞类型注释、脑区注释、整合、基因插补和空间插补。

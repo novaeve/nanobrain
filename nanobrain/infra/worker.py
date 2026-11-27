@@ -109,7 +109,7 @@ def probe(bundle):
         extras[spec["name"]] = obj
     losses, _ = compute_losses(model, b, out, panels, maps, train_cfg.kl_weight, extras)
     if not set(TASKS) <= set(losses) or not all(torch.isfinite(v) for v in losses.values()):
-        raise ValueError("all five Cajal objectives must be finite")
+        raise ValueError("all configured Cajal objectives must be finite")
     for task in TASKS:
         grads = torch.autograd.grad(
             losses[task], list(model.encoder.parameters()), retain_graph=True, allow_unused=True
@@ -134,6 +134,8 @@ def probe(bundle):
             for task in ("cell_type", "anatomy"):
                 for level, logits in enumerate(getattr(net, task + "_head")(out["mu"])):
                     values[f"{task}:{level}"] = logits
+            if hasattr(net, "niche_head"):
+                values["niche_composition"] = net.niche_head(out["mu"])
             values["reconstruction"] = net.decoder(net.recon_input(out), b["batch"])
             members = b["grp_members"]
             pad = members < 0
@@ -182,7 +184,10 @@ def main():
     ap.add_argument("mode", choices=["probe", "train", "predict", "score"])
     ap.add_argument("--bundle")
     ap.add_argument("--seed", type=int)
-    ap.add_argument("--task", choices=["annotation", "integration", "genes", "spatial", "age"])
+    tasks = ["annotation", "integration", "genes", "spatial", "age"]
+    if "niche" in DATA_KEY:
+        tasks.append("niche")
+    ap.add_argument("--task", choices=tasks)
     ap.add_argument("--holdout", help="age: the training run's age_holdout.npz")
     ap.add_argument("--checkpoint")
     ap.add_argument("--prediction")
@@ -236,25 +241,15 @@ def main():
     elif args.mode == "predict":
         cfg = load_config(args.config)
         key = DATA_KEY.get(args.task, args.task)
-        script(
-            "predict_eval.py",
-            [
-                "--checkpoint",
-                args.checkpoint,
-                "--data",
-                cfg["data"][key],
-                "--out",
-                "/work/prediction.npz",
-                "--seed",
-                str(cfg["evaluation_seed"]),
-                "--token-budget",
-                str(cfg["token_budget"]),
-                "--device",
-                args.device,
-                "--task",
-                "embed" if args.task in ("annotation", "integration", "age") else args.task,
-            ],
-        )
+        options = [
+            "--checkpoint", args.checkpoint, "--data", cfg["data"][key], "--out", "/work/prediction.npz",
+            "--seed", str(cfg["evaluation_seed"]), "--token-budget", str(cfg["token_budget"]), "--device", args.device,
+        ]
+        if args.task == "niche":
+            script("predict_niche.py", options)
+        else:
+            task = "embed" if args.task in ("annotation", "integration", "age") else args.task
+            script("predict_eval.py", [*options, "--task", task])
         artifacts = {p.name: sha(p) for p in Path("/work").glob("*.npz")}
         result = {"status": "complete", "task": args.task, "prediction": "prediction.npz", "artifact_hashes": artifacts}
     else:
@@ -270,7 +265,12 @@ def main():
             "--out",
             "/work/scores",
         ]
-        if args.task == "age":
+        if args.task == "niche":
+            script(
+                "eval_niche.py",
+                ["--data", cfg["data"][key], "--prediction", args.prediction, "--out", "/work/scores"],
+            )
+        elif args.task == "age":
             script(
                 "eval_age.py",
                 [

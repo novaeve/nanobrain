@@ -18,6 +18,7 @@ from .contracts import (
     METRIC_GROUPS,
     METRICS,
     ROOT,
+    TASKS,
     digest,
     reference_bundle,
     reference_document,
@@ -35,7 +36,8 @@ def plan(cfg, device="cuda"):
         "reference_recipe": cfg["reference_recipe"],
         "initial_candidate": reference_bundle(),
         "reference_config": reference_document(cfg),
-        "training": "one shared Cajal model, all five objectives, per seed",
+        "training": f"one shared Cajal model, all {len(TASKS)} objectives, per seed",
+        "tasks": list(TASKS),
         "weight_policy": cfg["weight_policy"],
         "external_weight_dependencies": [],
         "seeds": cfg["seeds"],
@@ -69,7 +71,7 @@ def plan(cfg, device="cuda"):
 
 
 def baseline():
-    from .existing_reference import snapshot_path
+    from .existing_reference import niche_reference, snapshot_path
 
     scores = json.loads((ROOT / "reference/opponents.json").read_text())
     snapshot = json.loads(snapshot_path().read_text())
@@ -78,6 +80,12 @@ def baseline():
         "Reuse the historical Cajal opponent scores and the active seed reference on the fixed research "
         "evaluation sets. Transductive comparisons remain excluded from promotion."
     )
+    prior = niche_reference()
+    if prior is not None:
+        scores["niche_reference"] = {"method": prior["method"], "metrics": prior["metrics"]}
+        scores["best_opponents"].update(prior["metrics"])
+        scores["active_seed_reference"]["metrics"].update(prior["metrics"])
+        scores["active_seed_reference"]["niche_metric_source"] = prior["method"]
     return scores
 
 
@@ -513,7 +521,7 @@ class Workflow:
             raise ValueError("initial existing Cajal reference failed synthetic acceptance")
         reference = self.evaluate(root, 0)
         if reference["status"] != "complete":
-            raise ValueError("initial reference requires the configured seed and all five tasks")
+            raise ValueError("initial reference requires the configured seed and all campaign metrics")
         best = baseline()["best_opponents"]
         state_path = self.output / "campaign.json"
         state = (
