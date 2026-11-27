@@ -46,32 +46,34 @@ python scripts/download_data.py
 
 ### 2. 安装并冻结 campaign
 
-完整流程在 Linux NVIDIA GPU 环境中运行，需要 bubblewrap。
+完整演化在 Linux 上运行，需要 bubblewrap。按部署说明准备 CPU 或 CUDA 环境。[部署说明](docs/seed-cajal_zh-CN.md)
 
 ```bash
-pip install -e '.[eval,scvi,dev]'
 nanobrain --config configs/cajal_react_v3.json --freeze
 ```
 
-将数据挂载到配置指定的路径后，再执行冻结命令。按部署说明准备匹配的 PyTorch/CUDA 扩展、组件依赖、Cajal v3 参考工件、整合评估缓存及控制器 API 凭据。campaign 锁和运行契约会核对这些输入。[部署说明](docs/seed-cajal_zh-CN.md) · [组件依赖](component_library/dependencies.json)
+将数据挂载到配置指定的路径后，再执行冻结命令。启动演化前还需准备组件依赖、Cajal v3 参考工件、整合评估缓存和控制器 API 凭据。campaign 锁和运行契约会核对这些输入。[组件依赖](component_library/dependencies.json)
 
 ### 3. 查看计划与启动演化
 
-以下命令在准备好的独立工作目录及其训练环境中执行。
+在准备好的工作目录中查看计划，然后选择一条执行命令。
 
 ```bash
 # 打印演化计划
 python -B scripts/cajal_react.py --config configs/cajal_react_v3.json
 
-# 显式启动或恢复 LLM 提案和真实训练
-python -B scripts/cajal_react.py --config configs/cajal_react_v3.json --execute
+# 在 NVIDIA GPU 上启动或恢复演化
+python -B scripts/cajal_react.py --execute --device cuda
+
+# 在 CPU 上启动或恢复演化
+python -B scripts/cajal_react.py --execute --device cpu
 ```
 
-仓库中的配置标记为 `prepared_not_started`。启动演化后，运行状态记录在 `research-runs/cajal-v3-react/status.json`。
+默认使用 CUDA。CUDA 和 CPU 的默认输出目录分别为 `research-runs/cajal-v3-react/` 和 `research-runs/cajal-v3-react-cpu/`。每次运行会记录执行模式，续跑时需使用同一模式。CPU 模式仍为每个候选训练 10,000 步，耗时可能明显增加。运行状态见对应目录的 `status.json`。
 
-## 种子模型 Cajal
+## 种子模型 Cajal v3
 
-Cajal v3 提供初始模型架构和联合训练配方。它用共享细胞表征完成注释、整合、表达重建和空间预测。执行基因插补时，预测头还会利用可用空间邻居上同一被遮蔽基因的平均表达量。
+Cajal v3 提供初始架构和联合训练配方。它用共享细胞表征完成细胞类型注释、脑区注释、整合、基因插补和空间插补。
 
 | 组成 | 在种子模型中的作用 |
 |---|---|
@@ -79,10 +81,13 @@ Cajal v3 提供初始模型架构和联合训练配方。它用共享细胞表�
 | Attention 与循环 MoE 模块 | 通过共享专家和路由专家学习基因间关系 |
 | N-BEATS 风格残差模块 | 在编码器内部执行残差修正 |
 | 共享 latent 与层级分类头 | 支持整合、细胞类型和脑区注释 |
+| 基因插补头 | 有可见空间邻居时，利用邻居上同一基因的平均表达量 |
 | 负二项表达解码器 | 对测量到的 counts 建模，承担表达重建 |
-| 邻域模型 | 利用可见空间邻居进行空间插补 |
+| 邻域模型 | 以可见邻居的平均表征为起点，预测残差 |
 
-种子配方采用梯度范数损失均衡、分组 Muon + AdamW、混合面板掩码和 SelfGram 正则。性能参照为 Cajal v3 在 `unified_1m` 的 30,000 步学习率日程中保存的第 10,000 步权重，记录为 `scale_v3_1m@10000`。服务器权重位于 `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt`。候选继承架构、源码和超参数，从随机权重开始训练，中断后可恢复自身经过核验的 checkpoint。[种子配方](configs/experiments/cajal_v3.toml) · [参考记录](reference/existing_cajal_v3_10k.json)
+种子配方采用梯度范数损失均衡、分组 Muon + AdamW、混合面板掩码（`panel_mix`）和 SelfGram 正则，KL 容量目标为 60。候选继承架构、源码和超参数，从随机权重开始训练，中断后可恢复自身经过核验的 checkpoint。[种子配方](configs/experiments/cajal_v3.toml)
+
+两种模式都以 `scale_v3_1m@10000` 为性能参照。六项参考分数来自 `unified_1m` 的 30,000 步学习率日程中保存的第 10,000 步权重。服务器权重位于 `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt`。[参考记录](reference/existing_cajal_v3_10k.json) · [六项参考分数](reference/cajal_v3_five_tasks.csv)
 
 ## 演化工作流
 
@@ -147,16 +152,18 @@ python scripts/download_data.py --verify-only
 
 | 协议设置 | 当前源码配置 |
 |---|---|
-| 协议 ID | `CAJAL-V3-JOINT-REACT-UNIFIED-1M` |
+| 协议 ID | `CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2` |
 | 提案模型 | `gpt-6.1-sol`，`reasoning_effort=max` |
 | 演化预算 | 30 代 × 10 候选，最多 300 次新联合训练 |
 | 随机种子 | 训练与评估 seed=0 |
 | 训练预算 | 30,000 步学习率日程，固定在 10,000 步停止 |
 | 权重策略 | `random_init_self_contained` |
-| GPU 调度 | GPU 0–4，最多 16 个并行阶段，每卡最多 3 个 worker |
-| 验收与评估 | 最多 4 个 CPU 验收 worker，每候选最多 2 条任务评估流水线 |
+| 执行模式 | 每次运行固定使用 CPU 或 CUDA |
+| CUDA 调度 | GPU 0–4，最多 16 个并行阶段，每卡最多 3 个 worker |
+| CPU 调度 | 每次只执行一个训练或评估阶段 |
+| 验收与评估 | 最多 4 个 CPU 验收 worker。CUDA 每候选最多并行 2 条任务评估流水线。 |
 
-显存预留和可用主存进一步限制实际并发。同代父代池冻结，晋级判断按候选序号应用，控制器交接接管已运行的阶段。[演化配置](configs/cajal_react_v3.json) · [详细协议](docs/react-protocol.md)
+CUDA 阶段的实际并发受显存预留和可用主存限制，CUDA 控制器交接可接管已运行的阶段。两种模式都固定同代父代池，按候选序号应用晋级判断。[演化配置](configs/cajal_react_v3.json) · [详细协议](docs/react-protocol.md)
 
 ## 商业价值与应用方向
 
@@ -175,12 +182,12 @@ nanoBrain 面向从模型想法走向更大规模训练的研发环节。其潜�
 
 每个候选记录假设、源码、父系、seed、解析配置、训练预算和任务指标。验收失败、资源限制和指标缺失分别保存。恢复时核对代码、配置、数据、参考工件与候选身份。
 
-演化产物写入工作目录的 `research-runs/cajal-v3-react/`。
+演化产物写入本次运行的输出目录。可以使用 `--output` 指定目录。
 
 | 产物 | 内容 |
 |---|---|
 | `status.json` | 实验阶段、代数、活动作业和调度状态 |
-| `run-contract.json` | 代码、配置、输入和参考工件的冻结指纹 |
+| `run-contract.json` | 执行模式及代码、配置、输入和参考工件的冻结指纹 |
 | `lineage/` | 候选 bundle、源码、父系、验收与结果 |
 | `jobs/` | 联合训练、预测和评分的 checkpoint 与回执 |
 | `decisions/` | 候选晋级判断及比较依据 |

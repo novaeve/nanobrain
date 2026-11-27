@@ -46,32 +46,34 @@ The default data directory is `assets/cajal/`. The extracted datasets occupy abo
 
 ### 2. Install and freeze the campaign
 
-The full workflow runs on Linux with NVIDIA GPUs and bubblewrap.
+Full evolution runs on Linux with bubblewrap. Choose a CPU or CUDA environment using the deployment guide. [Deployment instructions](docs/seed-cajal.md)
 
 ```bash
-pip install -e '.[eval,scvi,dev]'
 nanobrain --config configs/cajal_react_v3.json --freeze
 ```
 
-Run the freeze command with the data mounted at the configured paths. Prepare the PyTorch/CUDA extensions, component dependencies, Cajal v3 reference artifacts, integration cache, and controller credentials as described in the deployment guide. The campaign lock and run contract verify these inputs. [Deployment instructions](docs/seed-cajal.md) · [Component dependencies](component_library/dependencies.json)
+Run the freeze command with the data mounted at the configured paths. Prepare the component dependencies, Cajal v3 reference artifacts, integration cache, and controller credentials before starting evolution. The campaign lock and run contract verify these inputs. [Component dependencies](component_library/dependencies.json)
 
 ### 3. Inspect the plan and launch evolution
 
-Run these commands from the prepared independent workspace and its configured training environment.
+Inspect the plan in the prepared workspace, then choose one execution command.
 
 ```bash
 # Print the evolution plan
 python -B scripts/cajal_react.py --config configs/cajal_react_v3.json
 
-# Explicitly start or resume LLM proposals and real training
-python -B scripts/cajal_react.py --config configs/cajal_react_v3.json --execute
+# Start or resume on NVIDIA GPUs
+python -B scripts/cajal_react.py --execute --device cuda
+
+# Start or resume on CPU
+python -B scripts/cajal_react.py --execute --device cpu
 ```
 
-The checked-in configuration is marked `prepared_not_started`. When the campaign runs, its status is recorded in `research-runs/cajal-v3-react/status.json`.
+CUDA is the default. The default output directories are `research-runs/cajal-v3-react/` for CUDA and `research-runs/cajal-v3-react-cpu/` for CPU. Each run records its execution mode and must resume in that mode. CPU mode uses the same 10,000-step budget per candidate and can take substantially longer. Follow the current run in its `status.json`.
 
-## Seed model Cajal
+## Cajal v3 seed model
 
-Cajal v3 supplies the initial model architecture and joint-training recipe. It builds a shared cell representation for annotation, integration, expression reconstruction, and spatial prediction. Its gene-imputation head also uses the mean expression of the masked gene among available spatial neighbors.
+Cajal v3 supplies the initial architecture and joint-training recipe. Its shared cell representation supports cell-type and brain-region annotation, integration, gene imputation, and spatial imputation.
 
 | Part | Role in the seed model |
 |---|---|
@@ -79,10 +81,13 @@ Cajal v3 supplies the initial model architecture and joint-training recipe. It b
 | Attention and recurrent MoE blocks | Learn gene interactions through shared and routed experts |
 | N-BEATS-style residual modules | Apply residual corrections within the encoder |
 | Shared latent representation and hierarchical heads | Support integration, cell-type annotation, and brain-region annotation |
+| Gene-imputation head | Uses the mean expression of the same gene among visible spatial neighbors when available |
 | Negative-binomial expression decoder | Models measured counts for expression reconstruction |
-| Neighborhood model | Uses visible spatial neighbors for spatial imputation |
+| Neighborhood model | Predicts a residual relative to the mean representation of visible neighbors |
 
-The seed recipe uses gradient-norm loss balancing, grouped Muon + AdamW, mixed panel masks, and a self-Gram regularizer. The comparison reference is Cajal v3 at step 10,000, recorded as `scale_v3_1m@10000` from a 30,000-step schedule on `unified_1m`. The checkpoint is at `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt` in the training environment. Candidates inherit architecture, source code, and hyperparameters, start from random initialization, and may resume their own verified checkpoints. [Seed recipe](configs/experiments/cajal_v3.toml) · [Reference record](reference/existing_cajal_v3_10k.json)
+The seed recipe uses gradient-norm loss balancing, grouped Muon + AdamW, mixed panel masks (`panel_mix`), SelfGram regularization, and a KL capacity target of 60. Candidates inherit architecture, source code, and hyperparameters. They start from random weights and can resume their own verified checkpoints. [Seed recipe](configs/experiments/cajal_v3.toml)
+
+Both execution modes use `scale_v3_1m@10000` as their performance reference. Its six scores come from step 10,000 of a 30,000-step learning-rate schedule on `unified_1m`. The prepared server stores the checkpoint at `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt`. [Reference record](reference/existing_cajal_v3_10k.json) · [Six reference scores](reference/cajal_v3_five_tasks.csv)
 
 ## Evolution workflow
 
@@ -147,16 +152,18 @@ The component catalog contains 111 entries. The source snapshot records 52 struc
 
 | Protocol setting | Current source configuration |
 |---|---|
-| Protocol ID | `CAJAL-V3-JOINT-REACT-UNIFIED-1M` |
+| Protocol ID | `CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2` |
 | Proposal model | `gpt-6.1-sol`, `reasoning_effort=max` |
 | Campaign | 30 generations × 10 candidates, at most 300 new joint trainings |
 | Seed | Training and evaluation seed=0 |
 | Training budget | 30,000-step learning-rate schedule, fixed stop at step 10,000 |
 | Weight policy | `random_init_self_contained` |
-| GPU scheduling | GPU 0–4, at most 16 concurrent stages and 3 workers per GPU |
-| Acceptance and evaluation | Up to 4 CPU acceptance workers and 2 task-evaluation pipelines per candidate |
+| Execution mode | CPU or CUDA, fixed for each run |
+| CUDA scheduling | GPU 0–4, at most 16 concurrent stages and 3 workers per GPU |
+| CPU scheduling | One training or evaluation stage at a time |
+| Acceptance and evaluation | Up to 4 CPU acceptance workers. CUDA allows up to 2 task-evaluation pipelines per candidate. |
 
-Memory reservations and available host memory further constrain concurrency. Same-generation parent pools are frozen, promotion decisions follow candidate order, and controller handoff adopts running stages. [Campaign configuration](configs/cajal_react_v3.json) · [Detailed protocol](docs/react-protocol.md)
+CUDA stage concurrency depends on memory reservations and available host memory. The CUDA scheduler can adopt running stages during a handoff. In both modes, same-generation parent pools are frozen and promotion decisions follow candidate order. [Campaign configuration](configs/cajal_react_v3.json) · [Detailed protocol](docs/react-protocol.md)
 
 ## Commercial value and applications
 
@@ -175,12 +182,12 @@ These are intended applications of the research workflow. Teams can assess their
 
 Every candidate records its hypothesis, source, parentage, seed, resolved configuration, training budget, and task metrics. Validation failures, resource limits, and incomplete metrics are recorded separately. The runtime checks code, configuration, data, references, and candidate identity when resuming.
 
-Artifacts are written to `research-runs/cajal-v3-react/` in the campaign workspace.
+Artifacts are written to the selected run directory in the campaign workspace. Use `--output` to set a custom directory.
 
 | Artifact | Contents |
 |---|---|
 | `status.json` | Campaign phase, generation, active jobs, scheduler state |
-| `run-contract.json` | Frozen code, configuration, input, and reference fingerprints |
+| `run-contract.json` | Execution mode and frozen code, configuration, input, and reference fingerprints |
 | `lineage/` | Candidate bundles, source, parentage, acceptance, results |
 | `jobs/` | Joint-training, prediction, and scoring checkpoints and receipts |
 | `decisions/` | Candidate promotion decisions and supporting comparisons |

@@ -29,7 +29,7 @@ from .contracts import (
 )
 
 
-def plan(cfg):
+def plan(cfg, device="cuda"):
     return {
         "status": "prepared_not_started",
         "reference_recipe": cfg["reference_recipe"],
@@ -50,9 +50,11 @@ def plan(cfg):
         "reference_evaluation": cfg["reference_evaluation"],
         "reference_trainings": 0,
         "baseline_policy": "reuse_existing_Cajal_scores_without_refitting_or_rescoring",
-        "gpu_ids": cfg["gpu_ids"],
+        "device": device,
+        "gpu_ids": cfg["gpu_ids"] if device == "cuda" else [],
         "max_workers": cfg["max_workers"],
-        "per_gpu_workers": cfg["per_gpu_workers"],
+        "per_gpu_workers": cfg["per_gpu_workers"] if device == "cuda" else 0,
+        "cpu_job_workers": int(device == "cpu"),
         "cpu_probe_workers": cfg.get("cpu_probe_workers", 1),
         "task_evaluation_workers": cfg.get("task_evaluation_workers", 1),
         "model": cfg["model"],
@@ -79,7 +81,7 @@ def baseline():
     return scores
 
 
-def code_fingerprint():
+def code_fingerprint(device="cuda"):
     from .dependencies import verify
 
     env = {**os.environ, "GIT_OPTIONAL_LOCKS": "0"}
@@ -100,7 +102,7 @@ def code_fingerprint():
         "git_sha": git("rev-parse", "HEAD"),
         "files": {p: sha(ROOT / p) for p in files if (ROOT / p).is_file()},
         "environment": versions,
-        "component_environment": verify(),
+        "component_environment": verify(device),
     }
 
 
@@ -133,18 +135,28 @@ class InfrastructureError(RuntimeError):
 
 
 class Workflow:
-    def __init__(self, cfg, output):
+    def __init__(self, cfg, output, *, device="cuda"):
         # Construction is deliberately read-only; default plan never creates an output directory.
+        if device not in ("cpu", "cuda"):
+            raise ValueError(f"unsupported execution device: {device}")
+        self.device = device
         self.cfg, self.output = cfg, Path(output).resolve()
         from .resources import ResourcePool
 
         self.activity_lock = threading.RLock()
         self.activity, self.status = {}, {}
         self.cpu_slots = threading.Semaphore(cfg.get("cpu_probe_workers", 2))
-        self.resources = ResourcePool(cfg["gpu_ids"], cfg["per_gpu_workers"], cfg["resources"])
+        self.cpu_job_slot = threading.Semaphore(1)
         from .handoff import load_handoff
 
-        self.adopted_stages, self.stage_reservations, self.handoff_plan = load_handoff(self.output, self.resources)
+        if device == "cuda":
+            self.resources = ResourcePool(cfg["gpu_ids"], cfg["per_gpu_workers"], cfg["resources"])
+            self.adopted_stages, self.stage_reservations, self.handoff_plan = load_handoff(self.output, self.resources)
+        else:
+            if (self.output / "scheduler-handoff.json").exists():
+                raise ValueError("a GPU scheduler handoff requires --device cuda")
+            self.resources = None
+            self.adopted_stages, self.stage_reservations, self.handoff_plan = {}, {}, None
         if len(self.adopted_stages) > cfg["max_workers"]:
             raise ValueError("live adopted stages exceed the global concurrency cap")
         self.worker_slots = threading.Semaphore(cfg["max_workers"])
@@ -158,8 +170,10 @@ class Workflow:
                 updated_at=datetime.now(UTC).isoformat(),
                 active_jobs=list(self.activity.values()),
                 maximum_workers=self.cfg["max_workers"],
-                gpu_ids=self.cfg["gpu_ids"],
-                per_gpu_workers=self.cfg["per_gpu_workers"],
+                device=self.device,
+                gpu_ids=self.cfg["gpu_ids"] if self.resources else [],
+                per_gpu_workers=self.cfg["per_gpu_workers"] if self.resources else 0,
+                cpu_job_workers=int(self.device == "cpu"),
                 cpu_probe_workers=self.cfg.get("cpu_probe_workers", 1),
                 task_evaluation_workers=self.cfg.get("task_evaluation_workers", 1),
             )
@@ -189,6 +203,13 @@ class Workflow:
     def _run_stage(self, directory, args, inputs, cpu=False):
         from .sandbox import launch
 
+        cpu_slot = self.cpu_slots if cpu else None
+        timeout = 600 if cpu else self.cfg["job_timeout_seconds"]
+        if not cpu and self.device == "cpu":
+            cpu_slot = self.cpu_job_slot
+            args = [*args, "--device", "cpu"]
+            timeout = None
+
         key = str(directory)
         reserve = (
             self.cfg["minimum_free_gpu_mb"]
@@ -204,10 +225,10 @@ class Workflow:
                 self.activity[key] = {
                     "directory": key,
                     "mode": args[0],
-                    "phase": "waiting_cpu" if cpu else "waiting_gpu",
+                    "phase": "waiting_cpu" if cpu_slot is not None else "waiting_gpu",
                     "attempt": attempt + 1,
                     "gpu": None,
-                    "reservation_mb": 0 if cpu else reserve,
+                    "reservation_mb": 0 if cpu_slot is not None else reserve,
                 }
             self.progress()
             if adopted:
@@ -215,14 +236,14 @@ class Workflow:
                 with self.activity_lock:
                     self.activity[key].update(pid=adopted["pid"], gpu=gpu, phase="running", adopted=True)
                 self.progress()
-            elif cpu:
-                self.cpu_slots.acquire()
+            elif cpu_slot is not None:
+                cpu_slot.acquire()
                 gpu = None
             else:
                 gpu = self.resources.acquire(key, reserve, host)
 
             def started(pid, gpu=gpu):
-                if not cpu:
+                if cpu_slot is None:
                     self.resources.started(key, pid)
                 with self.activity_lock:
                     self.activity[key].update(pid=pid, gpu=gpu, phase="running")
@@ -239,14 +260,14 @@ class Workflow:
                     args,
                     inputs=inputs,
                     gpu=gpu,
-                    timeout=600 if cpu else self.cfg["job_timeout_seconds"],
+                    timeout=timeout,
                     on_started=started,
                 )
             except RuntimeError as exc:
                 log = Path(directory) / "worker.log"
                 text = log.read_text(errors="replace").lower() if log.exists() else ""
                 oom = any(x in text for x in ("out of memory", "resource exhausted", "cuda_error_out_of_memory"))
-                if cpu or not oom:
+                if cpu_slot is not None or not oom:
                     raise
                 log.rename(log.with_name(f"oom-attempt-{attempt}.log"))
                 if attempt == 2:
@@ -255,8 +276,8 @@ class Workflow:
                     ) from exc
                 reserve = min(90112, int(reserve * 1.5))
             finally:
-                if cpu:
-                    self.cpu_slots.release()
+                if cpu_slot is not None:
+                    cpu_slot.release()
                 else:
                     self.resources.release(key)
                 with self.activity_lock:
@@ -299,7 +320,7 @@ class Workflow:
         result_path = folder / "result.json"
         if result_path.exists():
             result = json.loads(result_path.read_text())
-            validate_identity(result, bundle, self.cfg, seed)
+            validate_identity(result, bundle, self.cfg, seed, device=self.device)
             for name, expected in result["artifact_hashes"].items():
                 if sha(Path(name)) != expected:
                     raise ValueError("completed result artifact changed")
@@ -318,7 +339,7 @@ class Workflow:
                 [bundle_path, Path(self.cfg["data"]["pretrain"])],
             )
         receipt = self.verify_stage(train_dir)
-        validate_identity(receipt, bundle, self.cfg, seed)
+        validate_identity(receipt, bundle, self.cfg, seed, device=self.device)
         checkpoint = train_dir / "train/latest.pt"
         artifacts = {str(checkpoint): sha(checkpoint), str(train_receipt): sha(train_receipt)}
 
@@ -369,6 +390,7 @@ class Workflow:
             "checkpoint_sha256": artifacts[str(checkpoint)],
             "joint_model_count": 1,
             "weight_policy": self.cfg["weight_policy"],
+            "device": self.device,
             "external_weight_dependencies": [],
             "training_identity": receipt["training_identity"],
             "training_parameters": json.loads(train_receipt.read_text()).get("record", {}).get("config", {}),
@@ -461,6 +483,23 @@ class Workflow:
     def _execute_locked(self, client):
         from .store import Store
 
+        contract_path = self.output / "run-contract.json"
+        previous_contract = json.loads(contract_path.read_text()) if contract_path.exists() else None
+        if previous_contract is not None and previous_contract.get("device", "cuda") != self.device:
+            raise ValueError("resume requires the original --device; use a different --output for the other device")
+        contract = {
+            "device": self.device,
+            "protocol": self.cfg,
+            "code": code_fingerprint(self.device),
+            "data": input_fingerprint(self.cfg),
+            "campaign": campaign_fingerprint(self.cfg),
+            "reference": reference_document(self.cfg),
+            "reference_bundle": reference_bundle(),
+            "opponents": baseline(),
+        }
+        if previous_contract is not None and previous_contract != contract:
+            raise ValueError("resume requires identical code, data, config, reference and opponents")
+        save(contract_path, contract)
         self.progress(
             status="preflight",
             generations=self.cfg["generations"],
@@ -468,19 +507,6 @@ class Workflow:
             model=self.cfg["model"],
             reasoning_effort=self.cfg["reasoning_effort"],
         )
-        contract = {
-            "protocol": self.cfg,
-            "code": code_fingerprint(),
-            "data": input_fingerprint(self.cfg),
-            "campaign": campaign_fingerprint(self.cfg),
-            "reference": reference_document(self.cfg),
-            "reference_bundle": reference_bundle(),
-            "opponents": baseline(),
-        }
-        contract_path = self.output / "run-contract.json"
-        if contract_path.exists() and json.loads(contract_path.read_text()) != contract:
-            raise ValueError("resume requires identical code, data, config, reference and opponents")
-        save(contract_path, contract)
         self.store = Store(self.output / "lineage")
         root = self.store.stage(reference_bundle(), origin={"generation": 0, "role": "existing_cajal_reference"})
         if self.validate(root, reference_bundle())["status"] != "accepted":

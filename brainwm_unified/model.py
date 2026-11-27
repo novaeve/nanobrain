@@ -590,7 +590,7 @@ class JaggedLayout:
     offsets: torch.Tensor
     n_real: int
     max_len: int = 0
-    kernel: str = "sdpa"  # "sdpa" (nested jagged tensors) or "fa3" (FlashAttention-3 varlen)
+    kernel: str = "sdpa"  # nested SDPA; "cpu" uses per-cell SDPA, "fa3" uses FlashAttention-3 varlen
 
 
 def jagged_layout(doc: torch.Tensor, kernel: str = "sdpa") -> JaggedLayout:
@@ -601,7 +601,7 @@ def jagged_layout(doc: torch.Tensor, kernel: str = "sdpa") -> JaggedLayout:
 
 
 def jagged_attention(q, k, v, layout: JaggedLayout):
-    """Per-cell attention through nested jagged tensors and SDPA (FlashAttention varlen).
+    """Per-cell attention through CPU SDPA, nested SDPA or FlashAttention varlen.
 
     q, k, v are (N, heads, dh) packed tokens; padding rows past `n_real` get zeros.
     """
@@ -614,16 +614,26 @@ def jagged_attention(q, k, v, layout: JaggedLayout):
         qb, kb, vb = (t[:nr].bfloat16() for t in (q, k, v))
         out = flash_attn_varlen_func(qb, kb, vb, cu, cu, layout.max_len, layout.max_len)
         out = (out[0] if isinstance(out, tuple) else out).to(q.dtype)
+    elif layout.kernel == "cpu":
+        # Work on one cell at a time: avoid a dense mask over the whole packed batch.
+        offsets = layout.offsets.tolist()
+        cells = []
+        for start, end in zip(offsets, offsets[1:]):
+            if start < end:
+                qkv = [t[start:end].transpose(0, 1).unsqueeze(0) for t in (q, k, v)]
+                cells.append(F.scaled_dot_product_attention(*qkv).squeeze(0).transpose(0, 1))
+        out = torch.cat(cells, dim=0)
     else:
         nested = [torch.nested.nested_tensor_from_jagged(t[:nr], layout.offsets).transpose(1, 2) for t in (q, k, v)]
         out = F.scaled_dot_product_attention(*nested).transpose(1, 2).values()
-    return torch.cat([out, out.new_zeros(q.shape[0] - nr, *out.shape[1:])]) if q.shape[0] > nr else out
+    return torch.cat([out, out.new_zeros((q.shape[0] - nr, *out.shape[1:]))]) if q.shape[0] > nr else out
 
 
 _ATTENTION_OPS = {
     torch.ops.aten._flash_attention_forward.default,
     torch.ops.aten._efficient_attention_forward.default,
     torch.ops.aten._scaled_dot_product_flash_attention.default,
+    torch.ops.aten._scaled_dot_product_flash_attention_for_cpu.default,
     torch.ops.aten._scaled_dot_product_efficient_attention.default,
     torch.ops.aten._scaled_dot_product_cudnn_attention.default,
 }
@@ -646,8 +656,8 @@ SAVE_ATTENTION = partial(create_selective_checkpoint_contexts, _save_attention)
 
 def attention_layout(doc: torch.Tensor, backend: str):
     """What Attention needs for this packed batch: a FlexAttention BlockMask or a JaggedLayout."""
-    if backend in ("jagged", "fa3"):
-        return jagged_layout(doc, "fa3" if backend == "fa3" else "sdpa")
+    if backend in ("cpu", "jagged", "fa3"):
+        return jagged_layout(doc, "sdpa" if backend == "jagged" else backend)
     return block_mask(doc)
 
 

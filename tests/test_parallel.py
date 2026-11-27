@@ -94,7 +94,7 @@ def test_parallel_generation_is_ordered_and_resumable(tmp_path, monkeypatch):
 
     cfg = C.load_config()
     cfg["generations"] = 1
-    monkeypatch.setattr(W, "code_fingerprint", lambda: {"mock": "unchanged"})
+    monkeypatch.setattr(W, "code_fingerprint", lambda device: {"mock": "unchanged"})
     monkeypatch.setattr(W, "input_fingerprint", lambda cfg: {"mock": "unchanged"})
     monkeypatch.setattr(W, "campaign_fingerprint", lambda cfg: "frozen-test-campaign")
     workflow = W.Workflow(cfg, tmp_path)

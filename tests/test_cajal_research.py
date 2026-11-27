@@ -71,6 +71,11 @@ def test_default_is_read_only_plan(tmp_path, monkeypatch, capsys):
     assert not doc["uncertainty_estimated"]
     assert not output.exists()
 
+    cli.main(["--device", "cpu", "--output", str(output)])
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["device"] == "cpu" and doc["gpu_ids"] == []
+    assert doc["fixed_stop"] == 10000 and not output.exists()
+
 
 def test_reference_is_actual_cajal_v3():
     ref = C.reference_bundle()
@@ -422,23 +427,34 @@ def build(parameters, lr, weight_decay):
     assert result["external_weight_dependencies"] == []
 
 
-def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monkeypatch):
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monkeypatch, device):
     """Exercise train/predict/score orchestration with file-producing fakes, no GPU/API."""
     import csv
     import threading
     import time
 
+    from nanobrain.infra import resources, sandbox
     from nanobrain.infra.workflow import Workflow
 
     cfg = C.load_config()
-    workflow = Workflow(cfg, tmp_path)
+    if device == "cpu":
+        monkeypatch.setattr(resources, "ResourcePool", lambda *a: pytest.fail("CPU initialized the GPU scheduler"))
+    workflow = Workflow(cfg, tmp_path, device=device)
+    if workflow.resources:
+        monkeypatch.setattr(workflow.resources, "acquire", lambda *a: 0)
+        monkeypatch.setattr(workflow.resources, "release", lambda *a: None)
     workflow.store = Store(tmp_path / "lineage")
     identifier = workflow.store.stage(candidate(lr=0.0005))
     calls = []
     lock = threading.Lock()
     predictions = {"active": 0, "peak": 0}
 
-    def fake_worker(directory, args, inputs, cpu=False):
+    def fake_worker(root, directory, args, *, inputs, gpu, timeout, on_started):
+        if device == "cpu":
+            assert gpu is None and timeout is None and args[-2:] == ["--device", "cpu"]
+        else:
+            assert gpu == 0 and timeout == cfg["job_timeout_seconds"]
         directory.mkdir(parents=True, exist_ok=True)
         calls.append(args)
         if args[0] == "train":
@@ -452,7 +468,7 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
                 "seed": int(args[args.index("--seed") + 1]),
                 "weight_policy": cfg["weight_policy"],
                 "external_weight_dependencies": [],
-                "training_identity": identity_for(workflow.store.bundle(identifier), cfg, 0),
+                "training_identity": identity_for(workflow.store.bundle(identifier), cfg, 0, device=device),
                 "artifact_hashes": {"train/latest.pt": C.sha(path)},
             }
         elif args[0] == "predict":
@@ -476,12 +492,13 @@ def test_joint_execution_adapter_and_resume_without_real_training(tmp_path, monk
         C.save(directory / "receipt.json", result)
         return result
 
-    monkeypatch.setattr(workflow, "worker", fake_worker)
+    monkeypatch.setattr(sandbox, "launch", fake_worker)
     result = workflow.evaluate_seed(identifier, cfg["seeds"][0])
     assert result["joint_model_count"] == 1 and set(result["metrics"]) == set(C.METRICS)
+    assert result["device"] == device
     assert sum(c[0] == "train" for c in calls) == 1
     assert len({c[c.index("--checkpoint") + 1] for c in calls if c[0] == "predict"}) == 1
-    assert predictions["peak"] == cfg["task_evaluation_workers"] == 2
+    assert predictions["peak"] == (1 if device == "cpu" else cfg["task_evaluation_workers"])
     before = len(calls)
     workflow.evaluate_seed(identifier, cfg["seeds"][0])
     assert len(calls) == before
@@ -497,7 +514,7 @@ def test_complete_mock_campaign_resume_and_contract_freeze(tmp_path, monkeypatch
 
     cfg = C.load_config()
     cfg.update(generations=1, candidates_per_generation=1)
-    monkeypatch.setattr(W, "code_fingerprint", lambda: {"git_sha": "frozen-test-code"})
+    monkeypatch.setattr(W, "code_fingerprint", lambda device: {"git_sha": "frozen-test-code"})
     monkeypatch.setattr(W, "input_fingerprint", lambda cfg: {"mock_data": "fixed"})
     monkeypatch.setattr(W, "campaign_fingerprint", lambda cfg: "frozen-test-campaign")
     workflow = W.Workflow(cfg, tmp_path)
@@ -559,6 +576,8 @@ def test_complete_mock_campaign_resume_and_contract_freeze(tmp_path, monkeypatch
     before = (tmp_path / "decisions/g01-p00.json").read_bytes()
     workflow.execute(Client())
     assert len(evaluated) == 2 and (tmp_path / "decisions/g01-p00.json").read_bytes() == before
+    with pytest.raises(ValueError, match="original --device"):
+        W.Workflow(cfg, tmp_path, device="cpu").execute(Client())
     cfg["token_budget"] //= 2
     with pytest.raises(ValueError, match="resume requires identical"):
         workflow.execute(Client())

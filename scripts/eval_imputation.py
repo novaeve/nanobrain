@@ -165,6 +165,7 @@ def main():
     ap.add_argument("--pred", action="append", default=[], help="NAME=PATH from predict_eval.py --task (repeatable)")
     ap.add_argument("--mask", default=None, help="genes: masked tokens (default: next to the first --pred)")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--device", choices=["cpu", "cuda"], default="cpu", help="pipeline device (scoring uses CPU)")
     ap.add_argument("--cache", default="runs/eval/imputation_baselines")
     ap.add_argument("--seed", type=int, default=0, help="the mask seed predictions were made with")
     ap.add_argument("--n-genes", type=int, default=65918)

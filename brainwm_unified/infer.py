@@ -119,7 +119,8 @@ def spatial_chunks(ds: Subset, centers: np.ndarray, cfg: DataConfig, token_budge
 def forward_batch(model, b: dict, loops: int) -> dict:
     """Latent mean and per-level label logits for one device batch."""
     layout = M.attention_layout(b["tok_doc"], model.cfg.attention_backend)
-    with torch.autocast("cuda", dtype=torch.bfloat16):
+    device = b["tok_doc"].device
+    with torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
         h = model.encoder(b, layout, loops)
         mu = model.to_latent(h[b["tok_cls"]]).float().chunk(2, -1)[0]
         return {
@@ -144,16 +145,10 @@ def predict(
     """Latents and label logits for `cells`, returned in the order given."""
     model.eval()
     cells = np.asarray(cells, dtype=np.int64)
-    loader = torch.utils.data.DataLoader(
-        EvalBatches(ds, cfg, model.cfg.n_genes, plan_batches(ds, cells, cfg, token_budget), seed),
-        batch_size=None,
-        num_workers=num_workers,
-        pin_memory=True,
-        prefetch_factor=4 if num_workers else None,
-    )
     device = next(model.parameters()).device
+    batches = EvalBatches(ds, cfg, model.cfg.n_genes, plan_batches(ds, cells, cfg, token_budget), seed)
     parts = []
-    for b in loader:
+    for b in _loader(batches, num_workers, device):
         got = b.pop("cells")
         b = M.pad_tokens({k: v.to(device, non_blocking=True) for k, v in b.items()})
         out = forward_batch(model, b, loops or model.cfg.loops)
@@ -178,6 +173,7 @@ def load_model(checkpoint: str, device="cuda", **overrides):
 
     Older checkpoints load too: per-expert weights are stacked, and models with head dim
     below 64 (FA3's minimum) run SDPA varlen attention, uncompiled (nested tensors do not compile).
+    CPU uses per-cell SDPA and grouped PyTorch experts.
     """
     state = torch.load(checkpoint, map_location="cpu", weights_only=False)
     saved = dict(state["config"]["ModelConfig"])
@@ -196,7 +192,10 @@ def load_model(checkpoint: str, device="cuda", **overrides):
     for key, default in compatible_defaults.items():
         if key in saved and saved[key] == default:
             del saved[key]
-    if saved["d_model"] // saved["n_heads"] < 64 and "attention_backend" not in overrides:
+    device = torch.device(device)
+    if device.type == "cpu":
+        overrides = {"attention_backend": "cpu", "compile_blocks": False, "moe_backend": "loop", **overrides}
+    elif saved["d_model"] // saved["n_heads"] < 64 and "attention_backend" not in overrides:
         overrides = {**overrides, "attention_backend": "jagged", "compile_blocks": False}
     cfg = ModelConfig(**{**saved, **overrides})
     model = M.UnifiedModel(cfg)
@@ -204,12 +203,12 @@ def load_model(checkpoint: str, device="cuda", **overrides):
     return model.to(device).eval(), state
 
 
-def _loader(dataset, num_workers: int):
+def _loader(dataset, num_workers: int, device: torch.device):
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=None,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=device.type == "cuda",
         prefetch_factor=4 if num_workers else None,
     )
 
@@ -238,13 +237,13 @@ def predict_genes(
     )
     device = next(model.parameters()).device
     parts = []
-    for b in _loader(batches, num_workers):
+    for b in _loader(batches, num_workers, device):
         got = b.pop("cells")
         masked = b["tok_masked"]
         cell, gene, target = got[b["tok_doc"][masked]], b["tok_gene"][masked], b["tok_target"][masked]
         b = M.pad_tokens({k: v.to(device, non_blocking=True) for k, v in b.items()})
         layout = M.attention_layout(b["tok_doc"], model.cfg.attention_backend)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
             h = model.encoder(b, layout, loops or model.cfg.loops)
             pred = model.impute(h, b).cpu()
         parts.append((cell, gene, target, pred))
@@ -302,11 +301,11 @@ def predict_spatial(
     batches = SpatialEvalBatches(ds, cfg, model.cfg.n_genes, spatial_chunks(ds, centers, cfg, token_budget), seed)
     device = next(model.parameters()).device
     out = {}
-    for b in _loader(batches, num_workers):
+    for b in _loader(batches, num_workers, device):
         chunk = b.pop("centers").numpy()
         b = M.pad_tokens({k: v.to(device, non_blocking=True) for k, v in b.items()})
         layout = M.attention_layout(b["tok_doc"], model.cfg.attention_backend)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
             h = model.encoder(b, layout, loops or model.cfg.loops)
             mu = model.to_latent(h[b["tok_cls"]]).float().chunk(2, -1)[0]
             members, masked = b["grp_members"], b["grp_masked"]

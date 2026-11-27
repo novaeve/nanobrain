@@ -11,6 +11,7 @@ import math
 import os
 import sys
 import time
+from dataclasses import replace
 
 import numpy as np
 import torch
@@ -121,7 +122,12 @@ def main(argv=None):
     )
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--no-compile", action="store_true")
+    ap.add_argument("--device", choices=["cpu", "cuda"], default="cuda", help="training device (default: cuda)")
     args = ap.parse_args(argv)
+    device = torch.device(args.device)
+    use_cuda = device.type == "cuda"
+    if use_cuda and not torch.cuda.is_available():
+        raise SystemExit("CUDA is unavailable; select --device cpu to train on CPU")
 
     doc = experiment.load(args.config) if args.config else {}
     try:  # a sweep config runs one member, chosen by --set (as `cajal run` launches it)
@@ -161,7 +167,6 @@ def main(argv=None):
     if mcfg.likelihood == "nb" and args.value_scale != "counts":
         mcfg.likelihood = "mse_log"
 
-    device = torch.device("cuda")
     os.makedirs(tcfg.out_dir, exist_ok=True)
     with open(os.path.join(tcfg.out_dir, "config.json"), "w") as fh:
         json.dump(to_dict(mcfg, dcfg, tcfg), fh, indent=2)
@@ -175,15 +180,17 @@ def main(argv=None):
         argv=argv or sys.argv[1:],
         config=to_dict(mcfg, dcfg, tcfg),
         data=record.data_fingerprint(dcfg.root),
+        device=device.type,
         status="running",
     )
 
     torch.manual_seed(dcfg.seed)  # initial weights follow the run's seed, like its data order
-    model = M.UnifiedModel(mcfg).to(device)
+    runtime_model = mcfg if use_cuda else replace(mcfg, attention_backend="cpu", moe_backend="loop", compile_blocks=False)
+    model = M.UnifiedModel(runtime_model).to(device)
     if mcfg.input_norm == "pearson":  # residual parameters from the pretraining set (a resume reloads them)
         model.encoder.gene_rate[: mcfg.n_genes] = torch.from_numpy(ds.gene_rates(mcfg.n_genes)).to(device)
         model.encoder.residual_clip.fill_(math.sqrt(ds.n_cells))
-    if tcfg.compile:
+    if use_cuda and tcfg.compile:
         M.enable_compiled_flex()
     panels = ds.panel_matrix(mcfg.n_genes).to(device)
     maps = {k: [torch.as_tensor(m, device=device) for m in v] for k, v in level_maps.items()}
@@ -214,7 +221,10 @@ def main(argv=None):
         state = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(state["model"])
         for o, s in zip(opts, state["opts"]):
+            fused = [g["fused"] for g in o.param_groups] if isinstance(o, (torch.optim.Adam, torch.optim.AdamW)) else []
             o.load_state_dict(s)
+            for group, use_fused in zip(o.param_groups, fused):
+                group["fused"] = use_fused
         for sc, s in zip(scheds, state["scheds"]):
             sc.load_state_dict(s)
         balancer.load_state_dict(state["balancer"] if "balancer" in state else state["normalizer"])
@@ -229,7 +239,7 @@ def main(argv=None):
         BatchStream(ds, dcfg, mcfg.n_genes, seed_offset=step, total_steps=tcfg.steps),
         batch_size=None,
         num_workers=tcfg.num_workers,
-        pin_memory=True,
+        pin_memory=use_cuda,
         persistent_workers=tcfg.num_workers > 0,
         prefetch_factor=4 if tcfg.num_workers else None,
     )
@@ -245,11 +255,11 @@ def main(argv=None):
             if step >= (tcfg.stop_at or tcfg.steps):
                 break
             b = M.pad_tokens(to_device(batch, device))
-            attn_mask = M.attention_layout(b["tok_doc"], mcfg.attention_backend)
+            attn_mask = M.attention_layout(b["tok_doc"], runtime_model.attention_backend)
             loops = int(rng.integers(mcfg.min_loops, mcfg.max_loops + 1))
             kl_weight = (kl_dual.weight if kl_dual else tcfg.kl_weight) * min(1.0, step / max(1, tcfg.kl_warmup_steps))
 
-            with torch.autocast("cuda", dtype=torch.bfloat16):
+            with torch.autocast(device.type, dtype=torch.bfloat16, enabled=use_cuda):
                 out = model(b, attn_mask, loops)
                 active = {n: f for n, f in extras.items() if step >= starts[n]}
                 losses, metrics = compute_losses(model, b, out, panels, maps, kl_weight, active)
@@ -278,7 +288,7 @@ def main(argv=None):
             for sc in scheds:
                 sc.step()
             if balancer.wants_after_step:
-                with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                with torch.no_grad(), torch.autocast(device.type, dtype=torch.bfloat16, enabled=use_cuda):
                     after, _ = compute_losses(model, b, model(b, attn_mask, loops), panels, maps, kl_weight, active)
                 balancer.after_step(after)
 

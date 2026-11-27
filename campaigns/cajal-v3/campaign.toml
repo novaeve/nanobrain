@@ -2,7 +2,7 @@
 # Edit this file to define a new campaign BEFORE it starts; once frozen, any change is a new campaign.
 
 [campaign]
-id = "CAJAL-V3-JOINT-REACT-UNIFIED-1M"
+id = "CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2"
 seed_model = "Cajal v3 shared encoder, five joint pretraining objectives"
 reference_recipe = "configs/experiments/cajal_v3.toml"
 reference_snapshot = "reference/existing_cajal_v3_10k.json"

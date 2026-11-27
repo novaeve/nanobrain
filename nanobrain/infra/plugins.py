@@ -109,7 +109,9 @@ def make_optimizers(model, cfg, muon, groups):
                 momentum=options.get("muon_momentum", 0.95),
                 ns_steps=options.get("muon_ns_steps", 5),
             ),
-            torch.optim.AdamW(b, lr=cfg.lr, weight_decay=cfg.weight_decay, fused=True, **adam),
+            torch.optim.AdamW(
+                b, lr=cfg.lr, weight_decay=cfg.weight_decay, fused=next(model.parameters()).is_cuda, **adam
+            ),
         ]
     parameters = [p for p in model.parameters() if p.requires_grad]
     if cfg.optimizer == "custom":

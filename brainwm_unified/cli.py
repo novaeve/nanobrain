@@ -2,9 +2,9 @@
 
     cajal catalog [masks|plans|experiments]       what can be named in a config
     cajal show EXP.toml [--set k=v ...]           the resolved runs of an experiment, validated
-    cajal run EXP.toml [--set ...] [--gpus 6,7]   launch every run (one per GPU slot); --dry-run prints the plan
-    cajal predict CKPT --data DIR --out X.npz     zero-shot outputs of a checkpoint (training env)
-    cajal eval --pred NAME=X.npz ... --out DIR    score against baselines (runs scripts/eval_zero_shot.py in the eval env)
+    cajal run EXP.toml [--device cpu|cuda] [--gpus 6,7]  launch runs; --dry-run prints the plan
+    cajal predict CKPT --data DIR --out X.npz [--device cpu|cuda]    zero-shot outputs of a checkpoint
+    cajal eval [--device cpu|cuda] --pred NAME=X.npz ... --out DIR  score against baselines
 
 Every train and eval writes record.json (config, git sha and dirty flag, data manifest hash, versions).
 """
@@ -70,34 +70,39 @@ def _train_argv(args, run: dict) -> list[str]:
         str(args.config),
         "--out",
         out,
+        "--device",
+        args.device,
         *(["--set", *sets] if sets else []),
     ]
 
 
 def cmd_run(args):
+    if args.device == "cpu" and args.gpus:
+        raise SystemExit("--gpus requires --device cuda")
     runs = experiment.resolve(args.config, args.set)
     sweep = experiment.load(args.config).get("sweep", {})
     for run in runs:  # index of each sweep value, for stable directory names
         if sweep:
             run["run"]["sweep_index"] = [sweep[k].index(run["run"]["sweep"][k]) for k in sorted(sweep)]
-    gpus = [int(g) for g in args.gpus.split(",")] if args.gpus else [0]
-    slots = {g: [] for g in gpus}
+    devices = [None] if args.device == "cpu" else ([int(g) for g in args.gpus.split(",")] if args.gpus else [0])
+    slots = {device: [] for device in devices}
     for i, run in enumerate(runs):
-        slots[gpus[i % len(gpus)]].append(_train_argv(args, run))
+        slots[devices[i % len(devices)]].append(_train_argv(args, run))
     procs = []
     for gpu, cmds in slots.items():
         if not cmds:
             continue
-        chain = " && ".join(shlex.join(c) for c in cmds)  # runs sharing a GPU go one after another
-        print(f"GPU {gpu}: {chain}")
+        chain = " && ".join(shlex.join(c) for c in cmds)  # runs sharing a device go one after another
+        label = "CPU" if gpu is None else f"GPU {gpu}"
+        print(f"{label}: {chain}")
         if not args.dry_run:
             log = Path(cmds[0][cmds[0].index("--out") + 1] + ".log")
             log.parent.mkdir(parents=True, exist_ok=True)
-            env = {
-                **os.environ,
-                "CUDA_VISIBLE_DEVICES": str(gpu),
-                "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
-            }
+            env = dict(os.environ)
+            if gpu is None:
+                env["CUDA_VISIBLE_DEVICES"] = ""
+            else:
+                env.update(CUDA_VISIBLE_DEVICES=str(gpu), PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True")
             with open(log, "a") as fh:  # the child keeps its own copy of the descriptor
                 procs.append(
                     subprocess.Popen(
@@ -117,7 +122,10 @@ def cmd_run(args):
 
 
 def cmd_predict(args):
-    sys.argv = ["predict_eval.py", "--checkpoint", args.checkpoint, "--data", args.data, "--out", args.out]
+    sys.argv = [
+        "predict_eval.py", "--checkpoint", args.checkpoint, "--data", args.data,
+        "--out", args.out, "--device", args.device,
+    ]
     sys.path.insert(0, str(REPO / "scripts"))
     import predict_eval
 
@@ -126,8 +134,12 @@ def cmd_predict(args):
 
 def cmd_eval(args):
     script = REPO / "scripts" / "eval_zero_shot.py"
-    inner = shlex.join(["python", str(script), *args.rest])
-    raise SystemExit(subprocess.call(["bash", "-c", f"source {REPO / 'scripts' / 'eval_env.sh'} && {inner}"], cwd=REPO))
+    command = [sys.executable, str(script), "--device", args.device, *args.rest]
+    if args.device == "cuda":
+        command[0] = "python"
+        env_script = REPO / "scripts" / "eval_env.sh"
+        command = ["bash", "-c", 'source "$1" && shift && exec "$@"', "cajal-eval", str(env_script), *command]
+    raise SystemExit(subprocess.call(command, cwd=REPO))
 
 
 def main(argv=None):
@@ -146,6 +158,7 @@ def main(argv=None):
         p.add_argument("config", type=Path)
         p.add_argument("--set", nargs="*", action="extend", default=[], help="overrides, e.g. train.steps=1000")
         if name == "run":
+            p.add_argument("--device", choices=["cpu", "cuda"], default="cuda", help="training device (default: cuda)")
             p.add_argument("--gpus", help="comma-separated GPU ids; runs are spread over them")
             p.add_argument("--dry-run", action="store_true")
             p.add_argument("--wait", action="store_true", help="return only when all runs have finished")
@@ -154,11 +167,16 @@ def main(argv=None):
     p.add_argument("checkpoint")
     p.add_argument("--data", default="/data/brainwm/eval_10k")
     p.add_argument("--out", required=True)
+    p.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     p.set_defaults(fn=cmd_predict)
     p = sub.add_parser("eval", help="score predictions (arguments go to scripts/eval_zero_shot.py)")
-    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     p.set_defaults(fn=cmd_eval)
-    args = ap.parse_args(argv)
+    args, rest = ap.parse_known_args(argv)
+    if args.cmd == "eval":
+        args.rest = rest[1:] if rest[:1] == ["--"] else rest
+    elif rest:
+        ap.error("unrecognized arguments: " + " ".join(rest))
     args.fn(args)
 
 

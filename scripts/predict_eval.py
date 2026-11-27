@@ -4,7 +4,7 @@
         --out runs/eval/cajal_step30000.npz
 
 Writes the latent mean (integration), per-level label logits (annotation) and the cells'
-true labels and batches, so scoring needs no GPU or model code.
+true labels and batches. Use --device cpu for prediction without CUDA.
 
 --task genes: the training gene mask (fixed seed) on every cell, imputed by the gene head.
 --task spatial: every centre with a full neighbourhood hidden and rebuilt from its neighbours
@@ -41,6 +41,7 @@ def main():
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--data", default="/data/brainwm/eval_10k")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     ap.add_argument("--token-budget", type=int, default=1 << 19)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--task", choices=["embed", "genes", "spatial"], default="embed")
@@ -55,12 +56,16 @@ def main():
 
     ds = Subset(args.data)
     cells = np.arange(ds.n_cells)
-    model, state = infer.load_model(args.checkpoint)
+    model, state = infer.load_model(args.checkpoint, device=args.device)
+    num_workers = 8 if args.device == "cuda" else 0
     if args.task != "embed":
-        return save_imputation(args, ds, model, state)
+        return save_imputation(args, ds, model, state, num_workers)
     t = time.perf_counter()
-    res = infer.predict(model, ds, cells, DataConfig(root=args.data), args.token_budget, seed=args.seed)
-    torch.cuda.synchronize()
+    res = infer.predict(
+        model, ds, cells, DataConfig(root=args.data), args.token_budget, num_workers=num_workers, seed=args.seed
+    )
+    if args.device == "cuda":
+        torch.cuda.synchronize()
     seconds = time.perf_counter() - t
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     np.savez_compressed(
@@ -84,12 +89,14 @@ def mask_path(out: str, data: str, seed: int) -> str:
     return os.path.join(os.path.dirname(os.path.abspath(out)), f"genes_mask_{os.path.basename(data)}_seed{seed}.npz")
 
 
-def save_imputation(args, ds, model, state):
+def save_imputation(args, ds, model, state, num_workers):
     cfg = DataConfig(root=args.data)
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     t = time.perf_counter()
     if args.task == "genes":
-        res = infer.predict_genes(model, ds, np.arange(ds.n_cells), cfg, args.token_budget, seed=args.seed)
+        res = infer.predict_genes(
+            model, ds, np.arange(ds.n_cells), cfg, args.token_budget, num_workers=num_workers, seed=args.seed
+        )
         rows, pred, true, extra = res["cells"], res["pred"], res["target"], {}
         mask = mask_path(args.out, args.data, args.seed)
         if not os.path.exists(mask):  # the masked tokens depend on data and seed only: baselines reuse them
@@ -103,6 +110,7 @@ def save_imputation(args, ds, model, state):
             ds.spatial_centers,
             cfg,
             args.token_budget,
+            num_workers=num_workers,
             seed=args.seed,
             readout=args.readout,
             source=args.source,
@@ -110,7 +118,8 @@ def save_imputation(args, ds, model, state):
         rows, pred, true = res["centers"], res["pred"], res["true"]
         extra = {f"cell_type_logits_{i}": x for i, x in enumerate(res["cell_type"])}
         extra["cell_type"] = ds.cell_type[rows]
-    torch.cuda.synchronize()
+    if args.device == "cuda":
+        torch.cuda.synchronize()
     seconds = time.perf_counter() - t
     stats = impute_metrics.row_stats(pred, true, res["ptr"])
     np.savez_compressed(

@@ -1,6 +1,6 @@
 # Cajal v3 + ReAct 联合演化协议
 
-协议 `CAJAL-V3-JOINT-REACT-UNIFIED-1M` 设置 30 代、每代 10 候选、最多 16 个并行阶段，使用 GPU 0–4。启动后，运行状态写入 `research-runs/cajal-v3-react/status.json`。
+协议 `CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2` 设置 30 代、每代 10 个候选。每次运行采用固定的 CPU 或 CUDA 模式。运行状态写入所选输出目录的 `status.json`。
 演化定义见 `campaigns/cajal-v3/campaign.toml`，执行配置见 `configs/cajal_react_v3.json`，候选范围由 `nanobrain/infra/contracts.py` 和候选 schema 定义。
 
 ## 种子架构与数据
@@ -90,7 +90,7 @@ capacity、预算权重、对抗目标、分组 Muon 等登记到统一目录和
 教师 Gram 源码仅作为历史实现保留，组件目录标为不可用，不进入搜索。
 当前五任务不用的发育 flow/endpoint 等仍保留源码与不适用原因。缺依赖或未通过检查的条目不能进入
 搜索，没有同名替代实现。新增依赖安装在项目自己的 `.component_deps/`，不修改共享 `.venv`；
-版本与 Torch/CUDA ABI 记录在 `component_library/dependencies.json`。
+CUDA 依赖版本与 Torch/CUDA ABI 记录在 `component_library/dependencies.json`。CPU 模式按所用组件安装相应依赖，运行契约记录实际安装版本及文件指纹。
 
 ## 基线与已有性能
 
@@ -115,7 +115,7 @@ Schema、参数和源码检查后，bwrap CPU 沙箱做合成五目标梯度、�
 不限制插件/文件数量。初始候选不启用替换，参数/前向与原 Cajal 一致。
 
 单 seed 晋级使用预先声明的 0.005 工程改善/退化门槛和 joint-frontier 排序，不作显著性推断。
-六项指标必须完整且有限；资源不足单独记录，不用零补成绩。最多 16 个并行阶段，GPU 0–4 每卡最多 3 个 worker；每代仍为 10 个候选，实际还受候选数量与显存限制。训练任务预留 32GiB，评估任务预留 8GiB，另留每卡 4GiB 余量；预留与实际显存占用共同决定准入，资源不足自动排队。同代父代池冻结，晋级决定按候选序号应用；恢复复用已完成的提案和结果。恢复核对代码、配置、输入、候选身份和结果，不重复已完成工作。
+六项指标必须完整且有限。CUDA 模式最多并行 16 个阶段，GPU 0–4 每卡最多 3 个 worker。训练阶段预留 32 GiB 显存，评估阶段预留 8 GiB，每张卡留 4 GiB 余量。CUDA 资源不足时自动排队。CPU 模式同时只执行一个训练或评估阶段。同代父代池冻结，晋级决定按候选序号应用。续跑核对设备模式、代码、配置、输入与候选身份，并复用已完成的提案和结果。
 
 ## 查看与验证
 
@@ -126,8 +126,12 @@ CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q 
 
 默认只打印计划，不读取 API 凭据、不创建 campaign、不调用 LLM 或真实训练。核验记录在
 `preparation/verification.json` 与 `component_library/verification.json`。明确启动/恢复时执行
-`.venv/bin/python -B scripts/cajal_react.py --config configs/cajal_react_v3.json --execute`。产物写入 `research-runs/cajal-v3-react/`，
-完成后不自动扩量、不更新上游 Cajal 配方或网站。
+下列命令中的一条。CUDA 和 CPU 默认分别写入 `research-runs/cajal-v3-react/` 和 `research-runs/cajal-v3-react-cpu/`。续跑同一输出目录时使用原设备模式。 [部署说明](seed-cajal_zh-CN.md)
+
+```bash
+.venv/bin/python -B scripts/cajal_react.py --execute --device cuda
+.venv/bin/python -B scripts/cajal_react.py --execute --device cpu
+```
 
 ## Cajal v1 历史修订
 

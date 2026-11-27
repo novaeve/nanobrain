@@ -186,6 +186,7 @@ def main():
     ap.add_argument("--holdout", help="age: the training run's age_holdout.npz")
     ap.add_argument("--checkpoint")
     ap.add_argument("--prediction")
+    ap.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     ap.add_argument("--config", default=str(CONFIG_PATH))
     args = ap.parse_args()
     if args.mode == "probe":
@@ -206,8 +207,8 @@ def main():
         ]
         from .training_policy import prepare_training
 
-        resume = prepare_training(Path("/work"), bundle, cfg, args.seed)
-        train.main(["--out", "/work/train", *resume, "--set", *overrides])
+        resume = prepare_training(Path("/work"), bundle, cfg, args.seed, device=args.device)
+        train.main(["--out", "/work/train", "--device", args.device, *resume, "--set", *overrides])
         receipt = json.loads(Path("/work/train/record.json").read_text())
         if (
             receipt.get("status") != "done"
@@ -248,6 +249,8 @@ def main():
                 str(cfg["evaluation_seed"]),
                 "--token-budget",
                 str(cfg["token_budget"]),
+                "--device",
+                args.device,
                 "--task",
                 "embed" if args.task in ("annotation", "integration", "age") else args.task,
             ],
@@ -285,12 +288,30 @@ def main():
         elif args.task in ("annotation", "integration"):
             script(
                 "eval_zero_shot.py",
-                [*common, "--cache", str(ROOT / "reference/baseline_cache"), "--predictions-only", "--task", args.task],
+                [
+                    *common,
+                    "--cache",
+                    str(ROOT / "reference/baseline_cache"),
+                    "--predictions-only",
+                    "--task",
+                    args.task,
+                    "--device",
+                    args.device,
+                ],
             )
         else:
             script(
                 "eval_imputation.py",
-                [*common, "--task", args.task, "--seed", str(cfg["evaluation_seed"]), "--predictions-only"],
+                [
+                    *common,
+                    "--task",
+                    args.task,
+                    "--seed",
+                    str(cfg["evaluation_seed"]),
+                    "--predictions-only",
+                    "--device",
+                    args.device,
+                ],
             )
         result = {
             "status": "complete",
@@ -298,6 +319,8 @@ def main():
             "scores": "scores/summary.csv",
             "artifact_hashes": {"scores/summary.csv": sha("/work/scores/summary.csv")},
         }
+    if args.mode != "probe":
+        result["device"] = args.device
     save("/work/receipt.json", result)
 
 

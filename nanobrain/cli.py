@@ -12,8 +12,8 @@ from .infra.workflow import Workflow, plan
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", type=Path, default=CONFIG_PATH)
-    output_directory = DEFINITION["campaign"].get("output_directory", "cajal-react-self-contained-20261110")
-    ap.add_argument("--output", type=Path, default=ROOT / "research-runs" / output_directory)
+    ap.add_argument("--output", type=Path)
+    ap.add_argument("--device", choices=("cpu", "cuda"), default="cuda", help="device for training and evaluation")
     ap.add_argument("--execute", action="store_true", help="explicitly start/resume real ReAct evolution")
     ap.add_argument("--freeze", action="store_true", help="lock the campaign definition, data and judges")
     args = ap.parse_args(argv)
@@ -31,7 +31,7 @@ def main(argv=None):
         print(json.dumps({k: lock[k] for k in ("campaign_id", "frozen_at")} | {"files": len(lock["files"])}))
         return
     if not args.execute:
-        print(json.dumps(plan(cfg), indent=2))
+        print(json.dumps(plan(cfg, args.device), indent=2))
         return
     # Do not import/read credential configuration in plan or acceptance tests.
     from .agent.api_config import APIConfig
@@ -41,7 +41,11 @@ def main(argv=None):
         APIConfig.from_env(env_file=cfg["api_env_file"]), model=cfg["model"], max_retries=-1, timeout_seconds=900
     )
     api.validate(require_credentials=True)
-    workflow = Workflow(cfg, args.output)
+    output_directory = DEFINITION["campaign"].get("output_directory", "cajal-react-self-contained-20261110")
+    if args.device == "cpu":
+        output_directory += "-cpu"
+    output = args.output or ROOT / "research-runs" / output_directory
+    workflow = Workflow(cfg, output, device=args.device)
     try:
         workflow.execute(OpenAICompatibleClient(api))
     except Exception as exc:  # noqa: BLE001 - redact credentials at the controller boundary

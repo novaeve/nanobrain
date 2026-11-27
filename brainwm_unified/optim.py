@@ -1,7 +1,7 @@
 """Muon with same-shape matrices orthogonalised together (2-D weights and stacked 3-D expert weights).
 
-Numerically the update of torch.optim.Muon (PyTorch 2.9): Nesterov momentum,
-quintic Newton-Schulz in bf16 with the same coefficients, the same learning-rate
+Numerically the CUDA update of torch.optim.Muon (PyTorch 2.9): Nesterov momentum,
+quintic Newton-Schulz in bf16 (fp32 on CPU), the same coefficients and learning-rate
 adjustment and decoupled weight decay. The difference is execution: momentum uses
 foreach kernels, and every group of equal-shape matrices (e.g. the 32 experts of a
 layer) runs Newton-Schulz as one batched matmul instead of one small matmul each.
@@ -16,7 +16,7 @@ import torch
 def batched_newton_schulz(g: torch.Tensor, coefficients, steps: int, eps: float) -> torch.Tensor:
     """Orthogonalise each matrix of a (S, m, n) stack; mirrors torch.optim._muon."""
     a, b, c = coefficients
-    x = g.bfloat16()
+    x = g.bfloat16() if g.device.type == "cuda" else g.float()
     tall = g.shape[-2] > g.shape[-1]
     if tall:
         x = x.mT

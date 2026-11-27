@@ -75,7 +75,7 @@ tests/                                 每一条保证都有对应测试
 
 | 节 | 内容 | Cajal v3 的取值 |
 |---|---|---|
-| `[campaign]` | id、种子说明、参考配方、参考成绩、权重策略、LLM 说明文件 | `CAJAL-V3-JOINT-REACT-UNIFIED-1M`、`random_init_self_contained` |
+| `[campaign]` | id、种子说明、参考配方、参考成绩、权重策略、LLM 说明文件 | `CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2`、`random_init_self_contained` |
 | `[budget]` | 学习率调度长度、固定停止步、种子、checkpoint 选择方式、是否自动扩展 | 30,000 步调度，第 10,000 步停止；seed 0；`fixed_stop`；不扩展 |
 | `[resources]` | 可用 GPU 白名单及理由 | GPU 0–4 |
 | `[objectives]` | 联合训练的目标名，必须与种子模型的损失一致 | gene、integration、cell_type、anatomy、spatial |
@@ -102,7 +102,7 @@ v3 实验沿用六项评估指标。
 | `eval_integration_10k` | 9,867 | 整合评估 |
 | `eval_spatial` | 40,789 | 空间补全评估 |
 
-`configs/cajal_react_v3.json` 设置并发、LLM 模型和凭据文件等执行参数。seed、步数、参考配方、权重策略和 GPU 必须与 campaign 定义一致。
+`configs/cajal_react_v3.json` 设置并发、LLM 模型和凭据文件等执行参数。seed、步数、参考配方和权重策略必须与 campaign 定义一致。CUDA 模式使用定义中允许的 GPU。
 
 **新建一个 campaign**：复制一个已有目录，改 `campaign.toml` 和 `agent_brief.md`，给一个新 id，
 设置 `NANOBRAIN_CAMPAIGN=campaigns/<新目录>`。`[objectives]` 必须与种子模型的损失一致，
@@ -167,9 +167,12 @@ git add campaigns/<id>/campaign.lock.json && git commit
 ## 6. 演化：LLM 提案，系统裁判
 
 ```bash
-nanobrain                   # 只打印计划，不调用 LLM、不训练
-nanobrain --execute         # 显式开始或续跑真实演化
+nanobrain                         # 打印计划
+nanobrain --execute --device cuda  # 在 NVIDIA GPU 上启动或续跑
+nanobrain --execute --device cpu   # 在 CPU 上启动或续跑
 ```
+
+每个运行目录使用一种设备模式，默认使用 CUDA。运行契约记录设备模式，续跑时会校验。两种模式采用同一组数据、参考成绩和每候选训练预算。 [部署说明](seed-cajal_zh-CN.md)
 
 **一个候选是什么**：一份 JSON（`examples/research/candidate.json`），包含父代 id、目标指标、假设、
 相对种子的完整覆盖（`model` / `train` / `data`）、组件选择和插件源码。所有值必须在定义的搜索空间内。
@@ -257,11 +260,11 @@ python scripts/retire_check.py --repo <统一仓库> --source <旧位置> --targ
 
 | 目的 | 命令 |
 |---|---|
-| 安装 | `pip install -e '.[eval,scvi,dev]'` |
+| 安装 | 准备对应的 PyTorch 构建后，CUDA 用 `pip install -e '.[eval,scvi,dev]'`，CPU 用 `pip install -e '.[eval-cpu,scvi,dev]'` |
 | 下载并校验数据 | `python scripts/download_data.py`（`--verify-only` 只校验） |
 | 查看计划 | `nanobrain` |
 | 冻结 campaign | `nanobrain --freeze` |
-| 开始或续跑演化 | `nanobrain --execute` |
+| 开始或续跑演化 | `nanobrain --execute --device cuda` 或 `nanobrain --execute --device cpu` |
 | 切换 campaign | `NANOBRAIN_CAMPAIGN=campaigns/<id> nanobrain ...` |
 | 测试 | `bash scripts/gate.sh <GPU>` |
 | 退役检查 | `python scripts/retire_check.py ...` |

@@ -78,7 +78,7 @@ The default definition is `campaigns/cajal-v3/campaign.toml`.
 
 | Section | Content | Cajal v3 |
 |---|---|---|
-| `[campaign]` | id, seed description, reference recipe, reference result, weight policy, agent brief file | `CAJAL-V3-JOINT-REACT-UNIFIED-1M`, `random_init_self_contained` |
+| `[campaign]` | id, seed description, reference recipe, reference result, weight policy, agent brief file | `CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2`, `random_init_self_contained` |
 | `[budget]` | LR schedule length, fixed stop, seeds, checkpoint selection, automatic scaling | 30,000-step schedule stopped at 10,000; seed 0; `fixed_stop`; no scaling |
 | `[resources]` | GPU whitelist and reason | GPUs 0–4 |
 | `[objectives]` | joint training objectives; must equal the seed model's losses | gene, integration, cell_type, anatomy, spatial |
@@ -104,7 +104,7 @@ The `data` section of `configs/cajal_react_v3.json` points to the same training 
 | `eval_spatial` | 40,789 | Spatial-imputation evaluation |
 
 `configs/cajal_react_v3.json` sets execution choices such as concurrency, the LLM model, and the credential file.
-Its seeds, steps, reference recipe, weight policy and GPUs must match the campaign definition.
+Its seeds, steps, reference recipe and weight policy must match the campaign definition. CUDA execution uses the declared GPU whitelist.
 
 **A new campaign**: copy a campaign directory, edit `campaign.toml` and `agent_brief.md`, give it a new id and
 set `NANOBRAIN_CAMPAIGN=campaigns/<new>`. Objectives must equal the seed model's losses and metric names must be
@@ -171,9 +171,12 @@ can improve between campaigns. Run outputs (checkpoints, logs, predictions) stay
 ## 6. Evolve: the LLM proposes, the system judges
 
 ```bash
-nanobrain                   # print the plan only; no LLM call, no training
-nanobrain --execute         # explicitly start or resume real evolution
+nanobrain                         # print the plan
+nanobrain --execute --device cuda  # start or resume on NVIDIA GPUs
+nanobrain --execute --device cpu   # start or resume on CPU
 ```
+
+Choose one execution mode per run directory. CUDA is the default. The run contract records the device mode and checks it when resuming. Both modes use the same datasets, reference, and per-candidate budget. [Deployment instructions](seed-cajal.md)
 
 **A candidate** is one JSON document (`examples/research/candidate.json`): parent ids, target metrics, a
 hypothesis, complete overrides relative to the seed (`model` / `train` / `data`), component choices and plugin
@@ -273,11 +276,11 @@ On the shared NAS the file list always comes from the path index (`nasfind`); th
 
 | Purpose | Command |
 |---|---|
-| Install | `pip install -e '.[eval,scvi,dev]'` |
+| Install | `pip install -e '.[eval,scvi,dev]'` for CUDA or `pip install -e '.[eval-cpu,scvi,dev]'` for CPU with the corresponding PyTorch build |
 | Download and verify data | `python scripts/download_data.py` (`--verify-only` to check) |
 | Show the plan | `nanobrain` |
 | Freeze a campaign | `nanobrain --freeze` |
-| Start or resume evolution | `nanobrain --execute` |
+| Start or resume evolution | `nanobrain --execute --device cuda` or `nanobrain --execute --device cpu` |
 | Switch campaign | `NANOBRAIN_CAMPAIGN=campaigns/<id> nanobrain ...` |
 | Tests | `bash scripts/gate.sh <GPU>` |
 | Retirement check | `python scripts/retire_check.py ...` |

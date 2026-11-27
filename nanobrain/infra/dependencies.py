@@ -8,7 +8,7 @@ import platform
 from .contracts import ROOT, sha
 
 
-def snapshot():
+def snapshot(*, allow_missing_components=False):
     scoped = []
     for directory in sorted((ROOT / ".component_deps").glob("*.dist-info")):
         distribution = importlib.metadata.PathDistribution(directory)
@@ -22,7 +22,13 @@ def snapshot():
         )
     shared = {}
     for name in ("torch", "numpy", "scvi-tools", "einops"):
-        distribution = importlib.metadata.distribution(name)
+        try:
+            distribution = importlib.metadata.distribution(name)
+        except importlib.metadata.PackageNotFoundError:
+            if not allow_missing_components or name in ("torch", "numpy"):
+                raise
+            shared[name] = None
+            continue
         shared[name] = {
             "version": distribution.version,
             "metadata_sha256": hashlib.sha256(distribution.read_text("METADATA").encode()).hexdigest(),
@@ -30,7 +36,10 @@ def snapshot():
     return {"python": platform.python_version(), "shared_environment": shared, "project_scoped": scoped}
 
 
-def verify():
+def verify(device="cuda"):
+    if device == "cpu":
+        # CPU wheels have different metadata. The run contract pins the installed environment on resume.
+        return snapshot(allow_missing_components=True)
     expected = json.loads((ROOT / "component_library/dependencies.json").read_text())
     current = snapshot()
     if current != expected["environment"]:

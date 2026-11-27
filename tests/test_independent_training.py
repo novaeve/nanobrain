@@ -55,6 +55,8 @@ def test_fresh_run_and_own_interrupted_run_have_distinct_initialization(tmp_path
         prepare_training(tmp_path, other, cfg, 0)
     with pytest.raises(ValueError, match="seed"):
         prepare_training(tmp_path, bundle, cfg, 1)
+    with pytest.raises(ValueError, match="training recipe"):
+        prepare_training(tmp_path, bundle, cfg, 0, device="cpu")
 
 
 def test_a_foreign_or_unidentified_checkpoint_cannot_be_used_to_warm_start(tmp_path):

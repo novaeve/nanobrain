@@ -1,5 +1,5 @@
 {
-  "protocol_id": "CAJAL-V3-JOINT-REACT-UNIFIED-1M",
+  "protocol_id": "CAJAL-V3-JOINT-REACT-UNIFIED-1M-R2",
   "status": "prepared_not_started",
   "reference_recipe": "configs/experiments/cajal_v3.toml",
   "generations": 30,

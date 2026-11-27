@@ -1,4 +1,4 @@
-"""Score zero-shot outputs against ML baselines on an evaluation subset (eval env, GPU, no torch).
+"""Score zero-shot outputs against ML baselines on an evaluation subset (evaluation environment, no torch).
 
     source scripts/eval_env.sh
     python scripts/eval_zero_shot.py --pred Cajal@4000=runs/eval/cajal_step4000.npz --out runs/eval/step4000
@@ -9,8 +9,9 @@ log1p(CP10K) expression of 2000 highly variable genes chosen on the pretraining 
 Metrics at the fine and coarse levels: accuracy, balanced accuracy, macro-F1.
 Logistic regression runs on the GPU (cuML, L-BFGS), XGBoost on the GPU (hist).
 
-Integration: scib-metrics (JAX on the GPU; k-NN by cuML brute force) on each model's latent
-mean vs unintegrated PCA of the same features (batch = integration_batch, label = cell type).
+Integration: scib-metrics on each model's latent mean vs unintegrated PCA of the same features
+(batch = integration_batch, label = cell type). Both devices use exact Euclidean k-NN.
+The GPU uses cuML and --device cpu uses scikit-learn and JAX on CPU.
 Several models (--pred NAME=PATH, repeatable) are scored together, one table row each.
 
 Baselines are fitted once and cached under --cache (later checkpoints score in seconds):
@@ -192,6 +193,15 @@ def gpu_neighbors(x: np.ndarray, k: int):
     return NeighborsResults(indices=np.asarray(idx), distances=np.asarray(dist))
 
 
+def cpu_neighbors(x: np.ndarray, k: int):
+    """Exact Euclidean k-NN with the query cell included, as in the GPU search."""
+    from scib_metrics.nearest_neighbors import NeighborsResults
+    from sklearn.neighbors import NearestNeighbors
+
+    dist, idx = NearestNeighbors(n_neighbors=k, algorithm="brute", metric="euclidean").fit(x).kneighbors(x)
+    return NeighborsResults(indices=idx, distances=dist)
+
+
 def summary_table(results: dict, integration):
     """One row per method, one column per metric; NaN (shown '-') where a method does not do a task."""
     import pandas as pd
@@ -222,6 +232,7 @@ def main():
     ap.add_argument("--pretrain", default="/data/brainwm/unified_1m")
     ap.add_argument("--out", help="output directory for scoring")
     ap.add_argument("--cache", default="runs/eval/baselines")
+    ap.add_argument("--device", choices=["cpu", "cuda"], default="cuda", help="integration scoring backend")
     ap.add_argument("--hvg", type=int, default=2000)
     ap.add_argument("--xgb-device", default="cuda")
     ap.add_argument("--prepare", action="store_true", help="only cache the pretraining features")
@@ -293,6 +304,8 @@ def main():
         table = pd.DataFrame()
     else:
         log("integration metrics")
+        if args.device == "cpu":
+            os.environ["JAX_PLATFORMS"] = "cpu"
         import anndata as ad
         from scib_metrics.benchmark import Benchmarker
 
@@ -308,7 +321,7 @@ def main():
             pre_integrated_embedding_obsm_key="PCA (unintegrated)",
             n_jobs=16,
         )
-        bm.prepare(neighbor_computer=gpu_neighbors)
+        bm.prepare(neighbor_computer=cpu_neighbors if args.device == "cpu" else gpu_neighbors)
         bm.benchmark()
         table = bm.get_results(min_max_scale=False)
     results["integration"] = json.loads(table.to_json(orient="index"))
