@@ -7,8 +7,8 @@
 > 一旦冻结并开始演化，这些就锁死，任何改动都意味着另一个 campaign。
 
 nanoBrain 是一个让 LLM 在受控实验中演化虚拟细胞模型的系统：LLM 提出候选架构、目标函数和训练配方，
-系统负责校验、隔离训练、统一评估和晋级判定，并保留每一步的证据。当前的种子模型是 **Cajal v1**
-（共享编码器，五个目标联合训练），当前 campaign 是 `cajal-v1`。
+系统负责校验、隔离训练、统一评估和晋级判定，并保留每一步的证据。`cajal-v3-seed` 分支默认使用
+**Cajal v3**（共享编码器，五个目标联合训练）及 `cajal-v3` campaign。原分支保留 Cajal v1 实验。
 
 ---
 
@@ -58,9 +58,9 @@ nanobrain/
                                         GPU 调度、交接、谱系存储、工作流、晋级门槛、冻结
   agent/                               ReAct 循环与 LLM 客户端
   cli.py                               命令入口 `nanobrain`
-brainwm_unified/         种子模型      Cajal v1 源码（冻结进 campaign 锁）
+brainwm_unified/         种子模型      Cajal v3 源码（冻结进 campaign 锁）
 component_library/       维护          可组合组件：Cajal、scVI/scANVI 拆分组件、上游方法、旧版 nanoBrain 组件
-configs/                               种子配方（experiments/cajal_v1.toml）与执行配置（cajal_react.json）
+configs/                               种子配方（experiments/cajal_v3.toml）与执行配置（cajal_react_v3.json）
 reference/                             参考成绩、对手、评估协议、数据指纹（被冻结清单引用）
 scripts/                               数据下载、预测、评分、退役检查
 tests/                                 每一条保证都有对应测试
@@ -71,20 +71,20 @@ tests/                                 每一条保证都有对应测试
 
 ## 4. 定义：写一个 campaign
 
-以 `campaigns/cajal-v1/campaign.toml` 为例，每一节的含义如下。
+默认使用 `campaigns/cajal-v3/campaign.toml` 的定义。
 
-| 节 | 内容 | Cajal v1 的取值 |
+| 节 | 内容 | Cajal v3 的取值 |
 |---|---|---|
-| `[campaign]` | id、种子说明、参考配方、参考成绩、权重策略、LLM 说明文件 | `CAJAL-V1-JOINT-REACT-SELF-CONTAINED-20261110`；`random_init_self_contained` |
+| `[campaign]` | id、种子说明、参考配方、参考成绩、权重策略、LLM 说明文件 | `CAJAL-V3-JOINT-REACT-UNIFIED-1M`、`random_init_self_contained` |
 | `[budget]` | 学习率调度长度、固定停止步、种子、checkpoint 选择方式、是否自动扩展 | 30,000 步调度，第 10,000 步停止；seed 0；`fixed_stop`；不扩展 |
 | `[resources]` | 可用 GPU 白名单及理由 | GPU 0–4 |
 | `[objectives]` | 联合训练的目标名，必须与种子模型的损失一致 | gene、integration、cell_type、anatomy、spatial |
 | `[[metrics]]` | 每个评估指标的名字、所属任务组、合法范围；可选 `direction`（默认 `max`，误差类用 `min`）和 `tolerance`（指标自身单位，默认 `regression_floor`） | 6 个指标，见下表 |
 | `[gate]` | 晋级门槛的回退容差 | 0.005 |
 | `[search]` | 可搜索的模型字段与取值、训练/数据/优化器范围、插件种类 | 见 `campaign.toml` |
-| `[freeze]` | 冻结时额外锁定的任务与裁判文件、种子模型目录；可选 `[freeze.data_files]`：数据集旁的标签文件，随数据一起锁定 | 评估脚本 4 个、参考记录 13 个、`brainwm_unified` |
+| `[freeze]` | 冻结时额外锁定的任务与裁判文件、种子模型目录，以及可在 `[freeze.data_files]` 中指定的数据集标签文件 | 评估脚本、参考记录、继承配方和掩码、`brainwm_unified` |
 
-Cajal v1 的六个指标：
+v3 实验沿用六项评估指标。
 
 | 任务组 | 指标 | 范围 |
 |---|---|---|
@@ -93,8 +93,7 @@ Cajal v1 的六个指标：
 | genes | Gene imputation Pearson (cell median) | [-1, 1] |
 | spatial | Spatial imputation Pearson (cell median) | [-1, 1] |
 
-**数据**由执行配置 `configs/cajal_react.json` 的 `data` 指向，每个数据根目录必须有 `manifest.json`；
-冻结时记录它的路径和哈希。当前数据：
+`configs/cajal_react_v3.json` 的 `data` 指向 Cajal v1 实验使用的同一批训练和评估数据。每个数据根需包含 `manifest.json`，冻结时记录它的路径和哈希。
 
 | 数据集 | 细胞数 | 用途 |
 |---|---:|---|
@@ -103,15 +102,13 @@ Cajal v1 的六个指标：
 | `eval_integration_10k` | 9,867 | 整合评估 |
 | `eval_spatial` | 40,789 | 空间补全评估 |
 
-**执行配置与定义的关系**：`configs/cajal_react.json` 放执行层面的选择（并发、LLM 模型、凭据文件、输出位置）。
-它的 seed、步数、参考配方、权重策略和 GPU 必须与定义一致，否则 `load_config` 直接拒绝。
+`configs/cajal_react_v3.json` 设置并发、LLM 模型和凭据文件等执行参数。seed、步数、参考配方、权重策略和 GPU 必须与 campaign 定义一致。
 
 **新建一个 campaign**：复制一个已有目录，改 `campaign.toml` 和 `agent_brief.md`，给一个新 id，
 设置 `NANOBRAIN_CAMPAIGN=campaigns/<新目录>`。`[objectives]` 必须与种子模型的损失一致，
 指标名必须唯一、范围合法，这些在加载时就检查。
 
-> 保证：`tests/test_campaign_definition.py` 断言 Cajal 定义逐项等于重构前写在代码里的常量，
-> 目标与种子模型一致，LLM 说明与原提示词一致。
+`tests/test_campaign_definition.py` 校验 campaign 配置，并保留对历史 Cajal v1 契约的检查。
 
 ### 示例：年龄任务
 
@@ -149,7 +146,7 @@ git add campaigns/<id>/campaign.lock.json && git commit
 | 锁定对象 | 说明 |
 |---|---|
 | 定义 | `campaign.toml`、`agent_brief.md` |
-| 参考配方 | `configs/experiments/cajal_v1.toml` |
+| 参考配方 | `configs/experiments/cajal_v3.toml` |
 | 种子模型 | `brainwm_unified/` 下所有已跟踪文件 |
 | 任务与裁判 | `[freeze].files` 中声明的评估脚本、参考成绩、对手、评估协议、缓存指纹 |
 | 数据 | 每个数据根的绝对路径与 `manifest.json` 的 SHA-256 |
@@ -220,7 +217,7 @@ nanobrain --execute         # 显式开始或续跑真实演化
 
 ## 8. 记录与复现
 
-运行目录（Cajal v1 默认是 `research-runs/cajal-react-self-contained-20261110/`，可用 `--output` 指定）：
+Cajal v3 实验默认写入 `research-runs/cajal-v3-react/`。可通过 `--output` 指定运行目录。
 
 | 文件 | 内容 |
 |---|---|

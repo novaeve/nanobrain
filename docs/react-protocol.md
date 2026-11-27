@@ -1,17 +1,17 @@
-# Cajal v1 + ReAct：合并组件库，单 seed，开放训练参数
+# Cajal v3 + ReAct 联合演化协议
 
-2026-11-10 独立训练修订。30 代、每代 10 候选、最多 16 个并行阶段，仅使用 GPU 0–4，排除5、6、7号卡；实际进度以 research-runs/cajal-react-self-contained-20261110/status.json 为准。
-配置见 `configs/cajal_react.json`，完整范围由 `cajal_research/contracts.py` 和候选 schema 定义。
+协议 `CAJAL-V3-JOINT-REACT-UNIFIED-1M` 设置 30 代、每代 10 候选、最多 16 个并行阶段，使用 GPU 0–4。启动后，运行状态写入 `research-runs/cajal-v3-react/status.json`。
+演化定义见 `campaigns/cajal-v3/campaign.toml`，执行配置见 `configs/cajal_react_v3.json`，候选范围由 `nanobrain/infra/contracts.py` 和候选 schema 定义。
 
 ## 种子架构与数据
 
-起点仍为现成的 `configs/experiments/cajal_v1.toml`：基因 token 编码器、循环 MoE、N-BEATS
-残差、层级分类头、NB 解码器、邻域模型，以及 grad_equal 和分组 Muon + AdamW。
-初始候选的 model/train/data 改动、components、plugins、files 全为空；新组件均为可选。
-代码锚点是 `0ae20748c3b684b7aabecc07e29cbd1ed6767267`；没有把上游候选实验误作正式种子。
+起点是 `configs/experiments/cajal_v3.toml`。它沿用基因 token 编码器、循环 MoE、N-BEATS
+残差、层级分类头、NB 解码器、邻域模型、grad_equal 和分组 Muon + AdamW。v3 配方还包含
+空间邻居同基因补全上下文、空间残差均值、混合面板掩码、SelfGram 和 KL capacity 60。
+初始候选载入 v3 配方参数。模块替换、插件与额外源码由后续提案声明。
 
 每候选只有一份共享模型，联合优化 gene / integration / cell_type / anatomy / spatial 五个目标。
-同一 checkpoint 给出全部任务成绩。初始参考直接复用 Cajal 已有的 cajal_v1@10000 checkpoint 和成绩；新候选从现成架构随机初始化训练，不继承旧演化结果。
+同一 checkpoint 给出全部任务成绩。性能参照是既有的 Cajal v3 第 10,000 步权重，记录为 `scale_v3_1m@10000`，服务器路径为 `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt`。参照分数沿用原评估口径。新候选继承架构、源码与超参数，并从随机权重开始训练。
 
 | 用途 | Cajal 当前数据 | 细胞数 |
 |---|---|---:|
@@ -23,11 +23,11 @@
 不采用旧 nanoBrain 的 100k / 256-gene 数据。保留 Cajal 的 65,918 基因词表、测量 panel、counts、
 标签层级、行身份和全部预训练数据。候选不可修改 data.root/seed/cell_fraction/neighbors/masks；
 cell_fraction 固定 1。Cajal 本身从 V4 train+validation 分片构造预训练和评估数据，unified_1m 不再内部切 train/val/test；评估细胞与预训练细胞不重叠。封存 V4 test 不挂载。数据指纹见 `reference/input_fingerprints.json`，
-初始架构及训练文档见 `reference/initial_cajal_v1.json`。
+初始架构及训练参数见 `reference/initial_cajal_v3.json`。
 
 ## 单 seed 与预算
 
-按本次用户要求移除三 seed：使用 Cajal 原本的 **seed=0**，评估抽样 seed 也固定 0。
+使用 Cajal 原本的 **seed=0**，评估抽样 seed 也固定为 0。
 30 代、每代 10 候选，每代 10 次联合训练，初始参考直接复用已有结果，最多 300 次新训练。没有末尾三 seed 确认。
 结果中 seed_count=1、标准差为 null，不声称统计显著性。
 
@@ -53,13 +53,13 @@ Cajal 的 batch 由表达细胞数量和空间组数量构成，每空间组含�
 | 学习率日程 | cosine | cosine / linear / constant |
 | 最小学习率比例 | 0.1 | 0.01–0.5 |
 | KL warmup | 5000 | 100–10000 |
-| KL 权重 / capacity | 1 / 0 | 0.001–20 / 0–300 |
+| KL 权重 / capacity | 1 / 60 | 0.001–20 / 0–300 |
 | 各任务损失权重 | 1 | 0.01–20，五任务保持开启 |
 | 归一化初始步数 | 200 | 20–1000 |
 
 支持 initial / grad_equal / FAMO 及其实际生效参数。优化器支持 grouped Muon + AdamW、AdamW、
 Adam、SGD、自定义 Optimizer，开放 Adam betas/epsilon、Muon momentum/NS steps、SGD momentum。
-字段必须适用于选中算法，不静默忽略。额外目标支持 HSIC、SIGReg、batch swap、batch adversary，
+字段必须适用于选中算法，不静默忽略。额外目标支持 SelfGram、HSIC、SIGReg、batch swap、batch adversary，
 以及 Cajal 已有的 start / budget / dual_lr 机制。
 
 候选首次训练必须随机初始化。父代只传递架构、源码和超参数，不传递权重、预测或教师表征。
@@ -100,13 +100,13 @@ capacity、预算权重、对抗目标、分组 Muon 等登记到统一目录和
 
 `reference/opponents.json` 保存全部 13 个完整基线及选优对手；`reference/current_method_scores.json`
 保存现有 63 个方法/实验的 checkpoint 轨迹，baseline_detail 工具可按方法查看。
-`reference/cajal_existing_five_tasks.csv` 是原表快照。没有导入旧 100k benchmark 成绩；新组件组合
+`reference/cajal_existing_five_tasks.csv` 是原表快照。`reference/cajal_v3_five_tasks.csv` 记录 v3 参照在同一六项指标下的分数。没有导入旧 100k benchmark 成绩；新组件组合
 须另行训练评估，不能继承来源整方法的分数。 发给 LLM 的历史性能和比较门槛只使用 Cajal 现有结果；旧 nanoBrain 在不同数据、划分或指标下的实验成绩不进入该输入，原组件实现继续复用。演化 worker 使用 predictions-only 评分入口，不重训或重算原基线；整合 PCR 指标继续使用原缓存 PCA 作为度量参考，不拟合新 PCA。完整数据与评估口径见 `reference/evaluation_protocol.json`。
 
 ## ReAct、验收与恢复
 
 保留完整 DAG、全部父系、失败/未选分支、工具式提交、质量/Pareto/结构探索父池及受限源码扩展。
-候选相对冻结 Cajal v1 声明完整 model/train/data/components；不是相对父代的局部 patch。
+候选相对冻结的 Cajal v3 配方声明完整的 model/train/data/components。
 工具：inspect_contract、list_components（分页）、baseline_detail、read_artifact、lineage、
 write_candidate、validate_candidate、submit_candidate。
 
@@ -120,14 +120,16 @@ Schema、参数和源码检查后，bwrap CPU 沙箱做合成五目标梯度、�
 ## 查看与验证
 
 ```bash
-.venv/bin/python -B scripts/cajal_react.py
+.venv/bin/python -B scripts/cajal_react.py --config configs/cajal_react_v3.json
 CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q tests --basetemp=preparation/pytest-tmp
 ```
 
 默认只打印计划，不读取 API 凭据、不创建 campaign、不调用 LLM 或真实训练。核验记录在
 `preparation/verification.json` 与 `component_library/verification.json`。明确启动/恢复时执行
-`.venv/bin/python -B scripts/cajal_react.py --execute`。结果在 research-runs/cajal-react-self-contained-20261110/，
+`.venv/bin/python -B scripts/cajal_react.py --config configs/cajal_react_v3.json --execute`。产物写入 `research-runs/cajal-v3-react/`，
 完成后不自动扩量、不更新上游 Cajal 配方或网站。
+
+## Cajal v1 历史修订
 
 2026-11-10：按用户要求只保留本演化，将调度上限从 10 提至 12。通过 scheduler-handoff.json 接管正在训练的沙箱，完成后退休旧控制器；已完成候选和提案复用。训练数据、30 代、每代 10 候选、seed=0、1 万步预算、指标与晋级规则保持不变。
 

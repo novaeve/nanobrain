@@ -1,0 +1,73 @@
+{
+  "campaign_id": "CAJAL-V3-JOINT-REACT-UNIFIED-1M",
+  "data": {
+    "annotation": {
+      "manifest_sha256": "053113cc74a35c3cbc2b5f130511cdc2ed68e930a1cfa1b06542112c288d8a23",
+      "path": "/data/brainwm/eval_10k"
+    },
+    "integration": {
+      "manifest_sha256": "8a090ed0befbbe701274f51652e2f39783bfa09e808e3d86e7f91bdb6e5f0ca8",
+      "path": "/data/brainwm/eval_integration_10k"
+    },
+    "pretrain": {
+      "manifest_sha256": "eb97187d7b0d771d448410410943f13bfb2eb6d170488ed3accca26d8f830fad",
+      "path": "/data/brainwm/unified_1m"
+    },
+    "spatial": {
+      "manifest_sha256": "07230460c853180f22a620101fab8d5d6d7ce2fe1d48686dc47718f40e1d0c07",
+      "path": "/data/brainwm/eval_spatial"
+    }
+  },
+  "files": {
+    "brainwm_unified/__init__.py": "ef19ba7d9c0c3cc67683a9353626f5c85ed18286e4ff669fd596f5d8f26ab566",
+    "brainwm_unified/age.py": "cff241edab54b8d75be5f8d6654235eb9d4919b1e00750db899be8ba2b3b036f",
+    "brainwm_unified/balance.py": "3c1ad60b6627fec1421d1de54a653f13cb964a71b3f30c70928bed6a9188e9eb",
+    "brainwm_unified/cli.py": "f85bc77a86108470a7e2eb6017ef61a4b64e09ed3df0089f94e85045e68095f6",
+    "brainwm_unified/config.py": "a49747d5b849c59648249affb14a64962efdf522da5aea0d09cec051af33113a",
+    "brainwm_unified/data.py": "651ba143ebe0fadc5c6cb8cce28d27b4b370c9fc0e3003239c4f2101dac47a05",
+    "brainwm_unified/deepinfra.py": "fd394fe19f640885eff559a55b02b19509b9ddcdbcf0af52ceab000e9a3374cf",
+    "brainwm_unified/experiment.py": "2f92739884e47feb02ee24463d57dbd8f08145f3d7e5d24b5ea694787d868cc1",
+    "brainwm_unified/impute_metrics.py": "162c07a43935dd1d7c2f9a49cace4c983259ffa14e3ae26cd833a1e95f788265",
+    "brainwm_unified/infer.py": "a3fa2137854476de3e34ca2db4f3e598dffc324b5f59095d0ecb1bdfb47804be",
+    "brainwm_unified/masking.py": "1579c26bc30e508ade022478d2048cd39450f8d4a03ff7b435e57c710f712b7d",
+    "brainwm_unified/model.py": "83d4826fd920e21b08a2fa16ca453bfd779426a85fba2180cb61853f9338fdd2",
+    "brainwm_unified/objectives.py": "184d00aa5e90e829a77cbdde8f5e8cb4e3e6ba69fb9028474a5d1d12a84566eb",
+    "brainwm_unified/optim.py": "5bcc9878244bd17c01e1583d2a02ac1c484683579e35366f4f51888a7fe124d6",
+    "brainwm_unified/record.py": "a51ae683aca81b283770036c0c89b97e2c7333eac4790e3d45ade53d382c2983",
+    "brainwm_unified/registry.py": "2778151a5ec8f504bc9fe5b0c774d1ae44a61dea86da59a3515b2991a64af76d",
+    "brainwm_unified/regularizers.py": "740bae10cb095ccd6491ffaa4eab77dfeed557b5cd9d8fcab4f02591cced42f0",
+    "brainwm_unified/train.py": "3efe8bdb04f4d05ebe9af39555ff249c5a33c49f82f9fd96a7e898647245f869",
+    "campaigns/cajal-v3/agent_brief.md": "4234fdda1b57e1fef9ad46648b8bb7bda1873bf50ebc7a35118726534e691f01",
+    "campaigns/cajal-v3/campaign.toml": "290373868fd767c85a8d28acba44cf574b1bc90355ebb0c861c2b8ab9f36779d",
+    "configs/base.toml": "9200547565cafa60279b67b4a93f7678036a6bde30f0041dc2ecb89ce83e3bf5",
+    "configs/cajal_react_v3.json": "a92b0185d49efde05fe51d43fa086a6a88440f5e4a3facfb74b614d7a490157e",
+    "configs/data/unified_1m.toml": "ad829fa5b9e6e365c513fb07eabe2da863ae6bd9df1f8181ed9d85f0373e6b17",
+    "configs/experiments/cajal_1m.toml": "6721d37122dcd9eabfba54a7bd0cd51306a344973b5f76c65f807eac027e47f7",
+    "configs/experiments/cajal_v1.toml": "511ad76fb09efdb47266e49291e77d60220f1cc437cf199969c65ab5adf00482",
+    "configs/experiments/cajal_v2.toml": "8b8d7bea65c41896a0715b1b19df40b8d91e9d77bf39c2cd4e5badb3c8e827b8",
+    "configs/experiments/cajal_v3.toml": "93877ef9767433705d14d8e8496cb80c1b1ea484a2c38264b086eb5661899189",
+    "configs/masks/panel_mix.toml": "3949c067e4461ca7bea8bf3b94a2119536654c3863fb88b41d5eca4f6571003d",
+    "configs/model/cajal.toml": "e83c0d782ab8e4531ef1234c5cc8e1f7deda2b489d362508bb827844ef922593",
+    "reference/baseline_cache/features.pkl": "e1eb47b00111e4da504cb0df7f2ec562e0172d5a6150751ee1046751a0b45844",
+    "reference/cache_fingerprints.json": "284d380eea0b89628659b8e15071fba4389390fc0b9b2042bc0170c6884cced4",
+    "reference/cajal_existing_five_tasks.csv": "8daf1f5e66472d3541b5d5332b84c856378d654b11ab63494a516ca4e2deb480",
+    "reference/cajal_v3_five_tasks.csv": "1d85fefda86d7789f3faf4f2411c7a35f4a0cc36af89ce579a3a15eb235b6a4a",
+    "reference/current_method_scores.json": "746a74a6478974b8c062b924ee78171fd3213e380e7103d36b59e42a4c5ad805",
+    "reference/evaluation_protocol.json": "c14718063888ce86a26915398e70ba98af2838d4132488f2ab0c47e8c095dd17",
+    "reference/existing_cajal_v3_10k.json": "9ab35e8bfb1554f69d1af60dd796aeb582cfb5e63c45f94d12a7f812c8ead380",
+    "reference/existing_cajal_v3_config.json": "537cc4edc5f16454a62d926e42a0895b29470ddb5cc83b885263cea24acb9803",
+    "reference/existing_cajal_v3_record.json": "80a8d5a4bd89d9a7a119cd7d64dcc0d8b547d32c57223adc0d44748fd1ffc435",
+    "reference/imputation_cache/genes_eval_10k_seed0.json": "e53e1efa623e04314a72a94b7927fd1662568174b08aba7da2e2ae2cc4ca2b16",
+    "reference/imputation_cache/spatial_eval_spatial_seed0.json": "fab826132add95dae7cf55cd7cbb4dd27b5922fbdc285aac947fb72fb70f7f5d",
+    "reference/initial_cajal_v3.json": "c8657cb435e608409d07a9f91c0c0cd2893b50b2198397b5ebdb12ae7d577cc2",
+    "reference/input_fingerprints.json": "b926e8d5cf6f4c36d9b3cdef0dcd934b0ce1033ab10cabd8180798afe1fb0153",
+    "reference/model_dimensions.json": "e6e005d474875900320660e20969fd79e89c22d324c2bc39b3269b5964fd7378",
+    "reference/opponents.json": "3876e50eff720330df78121b41f3f4e7c77fc69d7961f831849d2ed91c345925",
+    "scripts/eval_env.sh": "dd6f577f68db8632da6671100d9400f841a70063dbcc97d02d69cf695f7fe643",
+    "scripts/eval_imputation.py": "c9133260d3082c367e325577a5faf29b74811033042633363eea1cc68f881f1b",
+    "scripts/eval_zero_shot.py": "d670b6ce23b1030c2e69f292c0ab4843538bfdcd5f87592390c49d8c78f6b78d",
+    "scripts/predict_eval.py": "2bbe96771be96cd40361e90737c131d4dfb4dd362cf6136f73d8dba97f86213a"
+  },
+  "frozen_at": "2026-11-27T03:19:14+00:00",
+  "version": 1
+}

@@ -23,7 +23,7 @@
 
 nanoBrain 让 LLM 在受控实验中演化虚拟细胞模型：LLM 提出架构、目标函数与训练策略，系统负责验收、训练、评估和选择，并保留每一步的证据。**定义是开放的，演化是冻结的**：campaign 开始之前，数据、任务、指标、对手和搜索空间都由你定义；一旦冻结，这些全部锁死，任何改动都是一个新的 campaign。[白皮书](docs/whitepaper_zh-CN.md)是这套生命周期的使用手册。早期的 10 万细胞版 nanoBrain 保存在标签 [`nanobrain-v1-final`](https://github.com/novaeve/nanobrain/tree/nanobrain-v1-final)。
 
-当前采用 **Cajal v1 作为种子模型**。它是一份联合学习五项任务的虚拟细胞共享模型，演化从其架构和训练配方出发。每个新候选使用随机初始化的权重训练，并用同一个共享 checkpoint 接受全部评估。
+本分支采用 **Cajal v3 作为种子模型**。它联合学习五项任务，演化从其架构和训练配方出发。每个新候选使用随机初始化的权重训练，并用同一个共享 checkpoint 接受全部评估。[原分支](https://github.com/novaeve/nanobrain/tree/main)保留 Cajal v1 实验。
 
 nanoBrain 官网将受控实验定位为大规模 Brain World Model 训练之前的模型设计验证环节。nanoBrain 围绕 Cajal 扩展这条研究流程，保留每一次改动背后的提案与实验证据。[项目网站](https://novaeve.github.io/nanobrain/)
 
@@ -37,7 +37,7 @@ nanoBrain 官网将受控实验定位为大规模 Brain World Model 训练之前
 数据下载器要求 Python 3.12+，下载文件按发布清单进行 SHA-256 校验。
 
 ```bash
-git clone https://github.com/novaeve/nanobrain.git
+git clone --branch cajal-v3-seed https://github.com/novaeve/nanobrain.git
 cd nanobrain
 python scripts/download_data.py
 ```
@@ -50,10 +50,10 @@ python scripts/download_data.py
 
 ```bash
 pip install -e '.[eval,scvi,dev]'
-nanobrain --freeze      # 锁定 campaigns/cajal-v1（本仓库中已冻结）
+nanobrain --config configs/cajal_react_v3.json --freeze
 ```
 
-按部署说明准备匹配的 PyTorch/CUDA 扩展、组件依赖、固定数据路径、Cajal 参考工件、整合评估缓存及控制器 API 凭据。campaign 锁和运行契约会核对这些输入。[部署说明](docs/seed-cajal_zh-CN.md) · [组件依赖](component_library/dependencies.json)
+将数据挂载到配置指定的路径后，再执行冻结命令。按部署说明准备匹配的 PyTorch/CUDA 扩展、组件依赖、Cajal v3 参考工件、整合评估缓存及控制器 API 凭据。campaign 锁和运行契约会核对这些输入。[部署说明](docs/seed-cajal_zh-CN.md) · [组件依赖](component_library/dependencies.json)
 
 ### 3. 查看计划与启动演化
 
@@ -61,17 +61,17 @@ nanobrain --freeze      # 锁定 campaigns/cajal-v1（本仓库中已冻结）
 
 ```bash
 # 打印演化计划
-python -B scripts/cajal_react.py
+python -B scripts/cajal_react.py --config configs/cajal_react_v3.json
 
 # 显式启动或恢复 LLM 提案和真实训练
-python -B scripts/cajal_react.py --execute
+python -B scripts/cajal_react.py --config configs/cajal_react_v3.json --execute
 ```
 
-实时进度记录在 `research-runs/cajal-react-self-contained-20261110/status.json`。配置中的 `status` 字段保留源码模板值，运行时文件记录实验的实际状态。
+仓库中的配置标记为 `prepared_not_started`。启动演化后，运行状态记录在 `research-runs/cajal-v3-react/status.json`。
 
 ## 种子模型 Cajal
 
-Cajal v1 提供初始模型架构和联合训练配方。它共同表示基因身份与表达量，形成共享细胞表征，并将该表征连接到分类、表达重建和空间预测。
+Cajal v3 提供初始模型架构和联合训练配方。它用共享细胞表征完成注释、整合、表达重建和空间预测。执行基因插补时，预测头还会利用可用空间邻居上同一被遮蔽基因的平均表达量。
 
 | 组成 | 在种子模型中的作用 |
 |---|---|
@@ -82,7 +82,7 @@ Cajal v1 提供初始模型架构和联合训练配方。它共同表示基因�
 | 负二项表达解码器 | 对测量到的 counts 建模，承担表达重建 |
 | 邻域模型 | 利用可见空间邻居进行空间插补 |
 
-种子配方采用梯度范数损失均衡和分组 Muon + AdamW。固定的 `cajal_v1@10000` checkpoint 与已有成绩作为比较参考。候选继承架构、源码和超参数，每个新候选从随机权重开始训练，中断后可恢复自身经过身份核验的 checkpoint。[种子配方](configs/experiments/cajal_v1.toml) · [参考记录](reference/existing_cajal_v1_10k.json)
+种子配方采用梯度范数损失均衡、分组 Muon + AdamW、混合面板掩码和 SelfGram 正则。性能参照为 Cajal v3 在 `unified_1m` 的 30,000 步学习率日程中保存的第 10,000 步权重，记录为 `scale_v3_1m@10000`。服务器权重位于 `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt`。候选继承架构、源码和超参数，从随机权重开始训练，中断后可恢复自身经过核验的 checkpoint。[种子配方](configs/experiments/cajal_v3.toml) · [参考记录](reference/existing_cajal_v3_10k.json)
 
 ## 演化工作流
 
@@ -114,7 +114,7 @@ flowchart LR
 | 基因插补 | 重建被遮蔽的测量基因表达 | 每细胞 Pearson 相关中位数 ↑ |
 | 空间插补 | 利用可见邻居重建隐藏表达 | 每细胞 Pearson 相关中位数 ↑ |
 
-所有任务成绩来自同一个候选 checkpoint。已有 Cajal 记录提供固定参考和 13 个整方法基线。评估成绩反复参与演化反馈，属于探索性研究结果，记录 `seed_count=1` 和 null 标准差。[评估协议](reference/evaluation_protocol.json) · [参考基线](reference/opponents.json)
+所有任务成绩来自同一个候选 checkpoint。v3 实验沿用 `unified_1m`、三个评估集、六项指标的计算口径及 13 个既有基线，并用 v3 在这套协议下的得分作为参照。评估成绩用于探索性演化反馈，记录 `seed_count=1`，标准差记为 null。[评估协议](reference/evaluation_protocol.json) · [参考基线](reference/opponents.json)
 
 ## 数据与规模
 
@@ -147,7 +147,7 @@ python scripts/download_data.py --verify-only
 
 | 协议设置 | 当前源码配置 |
 |---|---|
-| 协议 ID | `CAJAL-V1-JOINT-REACT-SELF-CONTAINED-20261110` |
+| 协议 ID | `CAJAL-V3-JOINT-REACT-UNIFIED-1M` |
 | 提案模型 | `gpt-6.1-sol`，`reasoning_effort=max` |
 | 演化预算 | 30 代 × 10 候选，最多 300 次新联合训练 |
 | 随机种子 | 训练与评估 seed=0 |
@@ -156,7 +156,7 @@ python scripts/download_data.py --verify-only
 | GPU 调度 | GPU 0–4，最多 16 个并行阶段，每卡最多 3 个 worker |
 | 验收与评估 | 最多 4 个 CPU 验收 worker，每候选最多 2 条任务评估流水线 |
 
-显存预留和可用主存进一步限制实际并发。同代父代池冻结，晋级判断按候选序号应用，控制器交接接管已运行的阶段。[演化配置](configs/cajal_react.json) · [详细协议](docs/react-protocol.md)
+显存预留和可用主存进一步限制实际并发。同代父代池冻结，晋级判断按候选序号应用，控制器交接接管已运行的阶段。[演化配置](configs/cajal_react_v3.json) · [详细协议](docs/react-protocol.md)
 
 ## 商业价值与应用方向
 
@@ -175,7 +175,7 @@ nanoBrain 面向从模型想法走向更大规模训练的研发环节。其潜�
 
 每个候选记录假设、源码、父系、seed、解析配置、训练预算和任务指标。验收失败、资源限制和指标缺失分别保存。恢复时核对代码、配置、数据、参考工件与候选身份。
 
-产物位于独立工作目录下的 `research-runs/cajal-react-self-contained-20261110/`。
+演化产物写入工作目录的 `research-runs/cajal-v3-react/`。
 
 | 产物 | 内容 |
 |---|---|
@@ -190,7 +190,7 @@ nanoBrain 面向从模型想法走向更大规模训练的研发环节。其潜�
 ## 仓库结构
 
 ```text
-campaigns/cajal-v1/   campaign 定义（campaign.toml、agent_brief.md）及其锁文件
+campaigns/cajal-v3/   campaign 定义（campaign.toml、agent_brief.md）及其锁文件
 nanobrain/infra/      封死的基础设施：契约、校验、沙箱、调度、谱系、晋级门槛、冻结
 nanobrain/agent/      ReAct 智能体与 LLM 客户端
 brainwm_unified/      Cajal 种子模型、数据加载、联合目标与训练
@@ -204,7 +204,7 @@ docs/                 白皮书、种子模型、详细协议
 assets/cajal/         下载后的预训练数据与研究评估集
 ```
 
-Cajal ReAct 源码导入自快照 `3891dc162cd9be5aa25876b948e02372ac86318e` 及其后直到 `e00fb1d` 的提交；此前所有分支均已合并进 `main`。[源码来源](reference/source_snapshot.json)
+Cajal ReAct 的初次导入记录覆盖快照 `3891dc162cd9be5aa25876b948e02372ac86318e` 到 `e00fb1d` 的变更。v3 种子单独记录了参考权重的来源与训练配置。[原始源码来源](reference/source_snapshot.json) · [Cajal v3 参考记录](reference/existing_cajal_v3_10k.json)
 
 ## 开发与贡献
 

@@ -9,8 +9,9 @@
 
 nanoBrain lets an LLM evolve virtual-cell models inside a controlled experiment. The LLM proposes candidate
 architectures, objectives and training recipes; the system validates them, trains them in isolation, evaluates
-them with one fixed pipeline, decides promotion, and keeps the evidence for every step. The current seed model
-is **Cajal v1** (one shared encoder trained jointly on five objectives) and the current campaign is `cajal-v1`.
+them with one fixed pipeline, decides promotion, and keeps the evidence for every step. The `cajal-v3-seed`
+branch defaults to **Cajal v3** (one shared encoder trained jointly on five objectives) and the `cajal-v3`
+campaign. The original branch retains the Cajal v1 campaign.
 
 ---
 
@@ -60,9 +61,9 @@ nanobrain/
                                           GPU scheduling, handoff, lineage store, workflow, gate, freeze
   agent/                                 ReAct loop and LLM client
   cli.py                                 the `nanobrain` command
-brainwm_unified/         seed model      Cajal v1 source (locked by the campaign)
+brainwm_unified/         seed model      Cajal v3 source (locked by the campaign)
 component_library/       maintained      composable parts: Cajal, split scVI/scANVI parts, upstream methods, legacy nanoBrain parts
-configs/                                 seed recipe (experiments/cajal_v1.toml) and execution config (cajal_react.json)
+configs/                                 seed recipe (experiments/cajal_v3.toml) and execution config (cajal_react_v3.json)
 reference/                               reference scores, opponents, evaluation protocol, data fingerprints
 scripts/                                 data download, prediction, scoring, retirement check
 tests/                                   every guarantee has a test
@@ -73,18 +74,18 @@ one Markdown file; `nanobrain/infra` and `tests/` make sure those choices are ho
 
 ## 4. Define: write a campaign
 
-Using `campaigns/cajal-v1/campaign.toml` as the example:
+The default definition is `campaigns/cajal-v3/campaign.toml`.
 
-| Section | Content | Cajal v1 |
+| Section | Content | Cajal v3 |
 |---|---|---|
-| `[campaign]` | id, seed description, reference recipe, reference result, weight policy, agent brief file | `CAJAL-V1-JOINT-REACT-SELF-CONTAINED-20261110`; `random_init_self_contained` |
+| `[campaign]` | id, seed description, reference recipe, reference result, weight policy, agent brief file | `CAJAL-V3-JOINT-REACT-UNIFIED-1M`, `random_init_self_contained` |
 | `[budget]` | LR schedule length, fixed stop, seeds, checkpoint selection, automatic scaling | 30,000-step schedule stopped at 10,000; seed 0; `fixed_stop`; no scaling |
 | `[resources]` | GPU whitelist and reason | GPUs 0–4 |
 | `[objectives]` | joint training objectives; must equal the seed model's losses | gene, integration, cell_type, anatomy, spatial |
 | `[[metrics]]` | each metric's name, task group, valid range; optional `direction` (`max` default, `min` for errors) and `tolerance` (in the metric's unit; default `regression_floor`) | six metrics, below |
 | `[gate]` | regression tolerance for promotion | 0.005 |
 | `[search]` | searchable model fields and values, train/data/optimizer ranges, plugin kinds | see `campaign.toml` |
-| `[freeze]` | extra task and judge files locked at freeze time, seed model directory; optional `[freeze.data_files]`: label files next to a dataset, locked with it | 4 evaluation scripts, 13 reference records, `brainwm_unified` |
+| `[freeze]` | extra task and judge files locked at freeze time, seed model directory, and optional dataset label files in `[freeze.data_files]` | Evaluation scripts, reference records, inherited recipes and masks, `brainwm_unified` |
 
 | Task group | Metrics | Range |
 |---|---|---|
@@ -93,8 +94,7 @@ Using `campaigns/cajal-v1/campaign.toml` as the example:
 | genes | Gene imputation Pearson (cell median) | [-1, 1] |
 | spatial | Spatial imputation Pearson (cell median) | [-1, 1] |
 
-**Data** is referenced by `data` in the execution config `configs/cajal_react.json`; every data root needs a
-`manifest.json`, whose path and hash are locked at freeze time. Current data:
+The `data` section of `configs/cajal_react_v3.json` points to the same training and evaluation datasets used by the Cajal v1 campaign. Each data root needs a `manifest.json`. Freezing locks its path and hash.
 
 | Dataset | Cells | Role |
 |---|---:|---|
@@ -103,17 +103,14 @@ Using `campaigns/cajal-v1/campaign.toml` as the example:
 | `eval_integration_10k` | 9,867 | Integration evaluation |
 | `eval_spatial` | 40,789 | Spatial-imputation evaluation |
 
-**Execution config vs. definition**: `configs/cajal_react.json` holds execution choices (concurrency, LLM model,
-credential file, output). Its seeds, steps, reference recipe, weight policy and GPUs must match the definition,
-or `load_config` refuses it.
+`configs/cajal_react_v3.json` sets execution choices such as concurrency, the LLM model, and the credential file.
+Its seeds, steps, reference recipe, weight policy and GPUs must match the campaign definition.
 
 **A new campaign**: copy a campaign directory, edit `campaign.toml` and `agent_brief.md`, give it a new id and
 set `NANOBRAIN_CAMPAIGN=campaigns/<new>`. Objectives must equal the seed model's losses and metric names must be
 unique with valid ranges; this is checked on load.
 
-> Guarantee: `tests/test_campaign_definition.py` asserts that the Cajal definition equals, value by value, the
-> constants that used to be hard-coded, that the objectives match the seed model, and that the brief is the
-> former prompt.
+`tests/test_campaign_definition.py` checks campaign configuration and preserves the historical Cajal v1 contract.
 
 ### Example: an age task
 
@@ -152,7 +149,7 @@ git add campaigns/<id>/campaign.lock.json && git commit
 | Locked | Detail |
 |---|---|
 | Definition | `campaign.toml`, `agent_brief.md` |
-| Reference recipe | `configs/experiments/cajal_v1.toml` |
+| Reference recipe | `configs/experiments/cajal_v3.toml` |
 | Seed model | every tracked file under `brainwm_unified/` |
 | Tasks and judges | evaluation scripts, reference scores, opponents, evaluation protocol and cache fingerprints listed in `[freeze].files` |
 | Data | absolute path and `manifest.json` SHA-256 of every data root |
@@ -234,7 +231,7 @@ accessible. Failed and unpromoted candidates are kept and can serve as parents.
 
 ## 8. Records and reproducibility
 
-Run directory (for Cajal v1 `research-runs/cajal-react-self-contained-20261110/` by default, or `--output`):
+The Cajal v3 campaign writes to `research-runs/cajal-v3-react/` by default. Set `--output` to choose a different run directory.
 
 | File | Content |
 |---|---|

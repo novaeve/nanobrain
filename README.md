@@ -23,7 +23,7 @@
 
 nanoBrain lets an LLM evolve virtual-cell models inside a controlled experiment. The LLM proposes architectures, objectives, and training strategies; the system validates, trains, evaluates, and selects them and keeps the evidence for every step. **Definition is open, evolution is frozen**: before a campaign starts, its data, tasks, metrics, opponents, and search space are yours to define; once it is frozen, all of that is locked, and any change is a new campaign. The [whitepaper](docs/whitepaper.md) is the user manual for this lifecycle. The earlier 100k-cell nanoBrain is preserved at tag [`nanobrain-v1-final`](https://github.com/novaeve/nanobrain/tree/nanobrain-v1-final).
 
-The current seed model is **Cajal v1**, a shared virtual-cell model trained jointly on five tasks. Evolution starts from its architecture and training recipe. Every new candidate is initialized with random weights and evaluated through one shared checkpoint.
+The default seed on this branch is **Cajal v3**, a shared virtual-cell model trained jointly on five tasks. Evolution starts from its architecture and training recipe. Every new candidate is initialized with random weights and evaluated through one shared checkpoint. The [original branch](https://github.com/novaeve/nanobrain/tree/main) retains the Cajal v1 campaign.
 
 The nanoBrain website presents bounded experiments as a way to investigate model designs before larger Brain World Model training campaigns. nanoBrain develops that research workflow around Cajal, retaining the evidence behind each proposed change. [Project website](https://novaeve.github.io/nanobrain/)
 
@@ -37,7 +37,7 @@ The nanoBrain website presents bounded experiments as a way to investigate model
 The data downloader requires Python 3.12+. Downloaded files are checked against the published SHA-256 manifest.
 
 ```bash
-git clone https://github.com/novaeve/nanobrain.git
+git clone --branch cajal-v3-seed https://github.com/novaeve/nanobrain.git
 cd nanobrain
 python scripts/download_data.py
 ```
@@ -50,10 +50,10 @@ The full workflow runs on Linux with NVIDIA GPUs and bubblewrap.
 
 ```bash
 pip install -e '.[eval,scvi,dev]'
-nanobrain --freeze      # lock campaigns/cajal-v1 (already frozen in this repository)
+nanobrain --config configs/cajal_react_v3.json --freeze
 ```
 
-Prepare the matching PyTorch/CUDA extensions, component dependencies, fixed data paths, Cajal reference artifacts, integration evaluation cache, and controller API credentials using the deployment instructions. The campaign lock and the run contract verify these inputs. [Deployment instructions](docs/seed-cajal.md) · [Component dependencies](component_library/dependencies.json)
+Run the freeze command with the data mounted at the configured paths. Prepare the PyTorch/CUDA extensions, component dependencies, Cajal v3 reference artifacts, integration cache, and controller credentials as described in the deployment guide. The campaign lock and run contract verify these inputs. [Deployment instructions](docs/seed-cajal.md) · [Component dependencies](component_library/dependencies.json)
 
 ### 3. Inspect the plan and launch evolution
 
@@ -61,17 +61,17 @@ Run these commands from the prepared independent workspace and its configured tr
 
 ```bash
 # Print the evolution plan
-python -B scripts/cajal_react.py
+python -B scripts/cajal_react.py --config configs/cajal_react_v3.json
 
 # Explicitly start or resume LLM proposals and real training
-python -B scripts/cajal_react.py --execute
+python -B scripts/cajal_react.py --config configs/cajal_react_v3.json --execute
 ```
 
-Live progress is recorded in `research-runs/cajal-react-self-contained-20261110/status.json`. The configuration's `status` field retains its source-template value. The runtime file records the campaign's actual state.
+The checked-in configuration is marked `prepared_not_started`. When the campaign runs, its status is recorded in `research-runs/cajal-v3-react/status.json`.
 
 ## Seed model Cajal
 
-Cajal v1 supplies the initial model architecture and joint-training recipe. It represents gene identity and expression together, builds a shared cell representation, and connects that representation to classification, expression reconstruction, and spatial prediction.
+Cajal v3 supplies the initial model architecture and joint-training recipe. It builds a shared cell representation for annotation, integration, expression reconstruction, and spatial prediction. Its gene-imputation head also uses the mean expression of the masked gene among available spatial neighbors.
 
 | Part | Role in the seed model |
 |---|---|
@@ -82,7 +82,7 @@ Cajal v1 supplies the initial model architecture and joint-training recipe. It r
 | Negative-binomial expression decoder | Models measured counts for expression reconstruction |
 | Neighborhood model | Uses visible spatial neighbors for spatial imputation |
 
-The seed recipe uses gradient-norm loss balancing and grouped Muon + AdamW. The frozen `cajal_v1@10000` checkpoint and its recorded scores provide the comparison reference. Candidate inheritance carries architecture, source code, and hyperparameters. Each new candidate trains from random initialization, and an interrupted candidate may resume its own identified checkpoint. [Seed recipe](configs/experiments/cajal_v1.toml) · [Reference record](reference/existing_cajal_v1_10k.json)
+The seed recipe uses gradient-norm loss balancing, grouped Muon + AdamW, mixed panel masks, and a self-Gram regularizer. The comparison reference is Cajal v3 at step 10,000, recorded as `scale_v3_1m@10000` from a 30,000-step schedule on `unified_1m`. The checkpoint is at `/data/brainwm/BrainWM-Unified/runs/scaling/v3_1m/step10000.pt` in the training environment. Candidates inherit architecture, source code, and hyperparameters, start from random initialization, and may resume their own verified checkpoints. [Seed recipe](configs/experiments/cajal_v3.toml) · [Reference record](reference/existing_cajal_v3_10k.json)
 
 ## Evolution workflow
 
@@ -114,7 +114,7 @@ Promotion requires a target-metric improvement greater than 0.005 over both the 
 | Gene imputation | Reconstruct masked measured gene expression | Median per-cell Pearson correlation ↑ |
 | Spatial imputation | Reconstruct hidden expression using visible neighbors | Median per-cell Pearson correlation ↑ |
 
-All task scores come from the same candidate checkpoint. Frozen Cajal records provide the reference and 13 complete-method baselines. Evaluation scores are reused as exploratory feedback during evolution, with `seed_count=1` and null standard deviations. [Evaluation protocol](reference/evaluation_protocol.json) · [Baselines](reference/opponents.json)
+All task scores come from the same candidate checkpoint. The v3 campaign uses the original `unified_1m` training set, the same three evaluation sets and six metric definitions, and 13 recorded baselines. The new seed supplies its own reference scores under that protocol. Evaluation scores serve as exploratory feedback during evolution, with `seed_count=1` and null standard deviations. [Evaluation protocol](reference/evaluation_protocol.json) · [Baselines](reference/opponents.json)
 
 ## Data and scale
 
@@ -147,7 +147,7 @@ The component catalog contains 111 entries. The source snapshot records 52 struc
 
 | Protocol setting | Current source configuration |
 |---|---|
-| Protocol ID | `CAJAL-V1-JOINT-REACT-SELF-CONTAINED-20261110` |
+| Protocol ID | `CAJAL-V3-JOINT-REACT-UNIFIED-1M` |
 | Proposal model | `gpt-6.1-sol`, `reasoning_effort=max` |
 | Campaign | 30 generations × 10 candidates, at most 300 new joint trainings |
 | Seed | Training and evaluation seed=0 |
@@ -156,7 +156,7 @@ The component catalog contains 111 entries. The source snapshot records 52 struc
 | GPU scheduling | GPU 0–4, at most 16 concurrent stages and 3 workers per GPU |
 | Acceptance and evaluation | Up to 4 CPU acceptance workers and 2 task-evaluation pipelines per candidate |
 
-Memory reservations and available host memory further constrain concurrency. Same-generation parent pools are frozen, promotion decisions follow candidate order, and controller handoff adopts running stages. [Campaign configuration](configs/cajal_react.json) · [Detailed protocol](docs/react-protocol.md)
+Memory reservations and available host memory further constrain concurrency. Same-generation parent pools are frozen, promotion decisions follow candidate order, and controller handoff adopts running stages. [Campaign configuration](configs/cajal_react_v3.json) · [Detailed protocol](docs/react-protocol.md)
 
 ## Commercial value and applications
 
@@ -175,7 +175,7 @@ These are intended applications of the research workflow. Teams can assess their
 
 Every candidate records its hypothesis, source, parentage, seed, resolved configuration, training budget, and task metrics. Validation failures, resource limits, and incomplete metrics are recorded separately. The runtime checks code, configuration, data, references, and candidate identity when resuming.
 
-Artifacts are stored under the independent workspace's `research-runs/cajal-react-self-contained-20261110/` directory.
+Artifacts are written to `research-runs/cajal-v3-react/` in the campaign workspace.
 
 | Artifact | Contents |
 |---|---|
@@ -190,7 +190,7 @@ Artifacts are stored under the independent workspace's `research-runs/cajal-reac
 ## Repository layout
 
 ```text
-campaigns/cajal-v1/   Campaign definition (campaign.toml, agent_brief.md) and its lock
+campaigns/cajal-v3/   Campaign definition (campaign.toml, agent_brief.md) and its lock
 nanobrain/infra/      Sealed infrastructure: contracts, validation, sandbox, scheduling, lineage, gate, freeze
 nanobrain/agent/      ReAct agent and LLM client
 brainwm_unified/      Cajal seed model, data loading, joint objectives, training
@@ -204,7 +204,7 @@ docs/                 Whitepaper, seed model, detailed protocol
 assets/cajal/         Downloaded pretraining and research evaluation datasets
 ```
 
-The Cajal ReAct source was imported from snapshot `3891dc162cd9be5aa25876b948e02372ac86318e` and its later commits through `e00fb1d`; all earlier branches are merged into `main`. [Source provenance](reference/source_snapshot.json)
+The original Cajal ReAct import records snapshot `3891dc162cd9be5aa25876b948e02372ac86318e` and subsequent changes through `e00fb1d`. The v3 seed records the source and configuration of its reference checkpoint separately. [Original source provenance](reference/source_snapshot.json) · [Cajal v3 reference record](reference/existing_cajal_v3_10k.json)
 
 ## Contributing
 
